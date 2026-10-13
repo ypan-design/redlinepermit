@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Redline Permit: AI-assisted plan check for California cities. Every correction circled on the sheet it belongs to.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23C8322B'/%3E%3Ctext x='16' y='23' font-family='Arial' font-weight='700' font-size='19' text-anchor='middle' fill='white'%3ER%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<meta property="og:image" content="https://redlinepermit.com/logo.svg">
 <title>Redline Permit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,6 +57,8 @@ header.top{position:sticky;top:0;z-index:5;background:var(--hdr);backdrop-filter
 .top-in{max-width:1280px;margin:0 auto;padding:12px 16px;display:flex;gap:10px 20px;align-items:center;flex-wrap:wrap}
 .brand{font-weight:700;font-size:24px;letter-spacing:-.035em;line-height:1;position:relative;padding-bottom:5px;color:var(--ink);text-decoration:none}
 .brand::after{content:"";position:absolute;left:0;right:-3px;bottom:0;height:3px;border-radius:2px;background:var(--red)}
+.brandwrap{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.mark{width:34px;height:34px;display:block;flex:none}
 .city{font-size:13px;color:var(--ink2)}
 .city b{color:var(--ink);font-weight:600}
 .spacer{flex:1}
@@ -162,7 +165,7 @@ footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);di
 <div class="bg" aria-hidden="true"><span class="orb a"></span><span class="orb b"></span><span class="orb c"></span></div>
 <div class="topline" aria-hidden="true"></div>
 <header class="top"><div class="top-in">
-  <a class="brand" href="#">Redline Permit</a>
+  <a class="brandwrap" href="#" aria-label="Redline Permit home"><img class="mark" src="logo.svg" alt="" width="34" height="34"><span class="brand">Redline Permit</span></a>
   <span class="city">AI plan check for <b>California cities</b></span>
   <span class="spacer"></span>
   <nav class="seg" aria-label="Sections"><a href="#process">Process</a><a href="#departments">Departments</a><a href="#codes">Codes</a><a href="#security">Security</a></nav>
