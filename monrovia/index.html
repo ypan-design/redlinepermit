@@ -395,6 +395,7 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="config.js"></script>
 <script src="rp-backend.js"></script>
 <script>
@@ -985,15 +986,113 @@ function askHtml(p){
     <div class="row"><input type="text" id="ask-q" placeholder="e.g. What is the ADU's distance to the rear property line?" ${S.asking[p.id]?"disabled":""}><button class="btn sm" data-a="ask" ${S.asking[p.id]?"disabled":""}>${S.asking[p.id]?"Reading…":"Ask"}</button></div></div>`;
 }
 
+/* ---------- response letter: the applicant answers in their own PDF or Excel ---------- */
+const cnum = (p,c) => p.corrections.indexOf(c)+1;
+const openForReply = p => p.corrections.filter(c=>c.state==="approved"&&!c.resolved);
+function downloadRespSheet(p){
+  if(!window.XLSX){ flash("The Excel tool did not load. Refresh the page and try again."); return; }
+  const rows=[["No.","Comment ID","Department","Code section","Sheet","City comment","Your response","Revised sheet(s)"]];
+  openForReply(p).forEach(c=>rows.push([cnum(p,c), c.id, c.dept||"", c.section||"", c.sheet||"", [c.finding, "Required: "+(c.plannerText||c.fix)].filter(Boolean).join("\n"), c.draftResponse||"", ""]));
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"]=[{wch:5},{wch:10},{wch:12},{wch:22},{wch:10},{wch:60},{wch:60},{wch:16}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Responses");
+  const meta=XLSX.utils.aoa_to_sheet([["Project",p.address],["Permit",p.permitNo||""],["Cycle",p.cycle||1],["How to use","Answer each comment in 'Your response' and list the revised sheet. Keep the No. and Comment ID columns. Upload this file back to the portal, or answer the same numbers in your own PDF letter."]]);
+  meta["!cols"]=[{wch:14},{wch:90}]; XLSX.utils.book_append_sheet(wb, meta, "Project");
+  XLSX.writeFile(wb, `Redline_Response_${String(p.address||"project").replace(/[^\w]+/g,"-").replace(/^-|-$/g,"")}_Cycle${p.cycle||1}.xlsx`);
+}
+async function readRespFile(file, p){
+  const name=file.name||"", isPdf=/\.pdf$/i.test(name)||file.type==="application/pdf";
+  if(isPdf){ const rd=await readPdf(file, m=>setBusy(p.id,m)); return {kind:"pdf", text:rd.fullText||rd.text, pages:rd.pages, total:rd.total}; }
+  if(!window.XLSX) throw new Error("The Excel tool did not load. Refresh and try again.");
+  const wb=XLSX.read(await file.arrayBuffer(), {type:"array"});
+  let rows=[];
+  for(const sn of wb.SheetNames){ const r=XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, defval:"", raw:false}); if(r.some(x=>x.some(v=>/response|answer|reply/i.test(String(v))))){ rows=r; break; } if(!rows.length) rows=r; }
+  return {kind:"sheet", rows, text:rows.map(r=>r.join(" | ")).join("\n")};
+}
+/* Excel: read the columns by their headers. */
+function matchSheet(p, rows){
+  const open=openForReply(p), out={};
+  const hi=rows.findIndex(r=>r.some(v=>/response|answer|reply/i.test(String(v))));
+  if(hi<0) return out;
+  const h=rows[hi].map(v=>String(v).toLowerCase());
+  const col=re=>h.findIndex(v=>re.test(v));
+  const cId=col(/comment id|^id$/), cNo=col(/^no\.?$|^#$|^item|^number|comment no|^no /), cResp=col(/your response|response|answer|reply/), cSh=col(/revised sheet|sheet ref|see sheet|revised/);
+  for(const r of rows.slice(hi+1)){
+    const resp=String(r[cResp]??"").trim(); if(!resp) continue;
+    let c=null;
+    if(cId>=0) c=open.find(x=>x.id===String(r[cId]).trim());
+    if(!c && cNo>=0){ const n=parseInt(String(r[cNo]).replace(/\D/g,""),10); c=open.find(x=>cnum(p,x)===n); }
+    if(!c) continue;
+    const sh=cSh>=0&&cSh!==cResp?String(r[cSh]??"").trim():"";
+    out[c.id]=resp+(sh&&!resp.includes(sh)?` (see ${sh})`:"");
+  }
+  return out;
+}
+/* PDF (or an Excel laid out some other way): numbered items, then the AI if numbers don't line up. */
+function matchByNumber(p, text){
+  const open=openForReply(p), out={}, t=" "+String(text||"").replace(/\s+/g," ")+" ";
+  const nums=open.map(c=>cnum(p,c));
+  const hits=[]; const re=/(?:^|\s)(?:comment|item|no\.?|#)?\s*(\d{1,3})[.):]\s+/gi; let m;
+  while((m=re.exec(t))){ const n=+m[1]; if(nums.includes(n)) hits.push({n, at:m.index, end:re.lastIndex}); }
+  const seen=new Set(); const first=hits.filter(h=>!seen.has(h.n)&&seen.add(h.n));
+  first.forEach((h,i)=>{ const next=hits.find(x=>x.at>h.at&&x.n!==h.n&&first.includes(x)); let body=t.slice(h.end, next?next.at:undefined).trim();
+    const c=open.find(x=>cnum(p,x)===h.n); const rq=body.search(/\b(response|answer|reply)\s*:/i); if(rq>=0) body=body.slice(rq).replace(/^\w+\s*:\s*/,"");
+    if(c&&body.length>3) out[c.id]=body.slice(0,1500); });
+  return out;
+}
+async function matchByAI(p, text){
+  const open=openForReply(p);
+  const items=open.map(c=>`${c.id} | #${cnum(p,c)} | ${c.dept} | ${c.section} | sheet ${c.sheet||"-"} | ${c.plannerText||c.fix}`).join("\n");
+  const r=await S.sample.json(`You are matching an applicant's plan check response letter to the City's open comments for ${p.address} (cycle ${p.cycle||1}).
+OPEN COMMENTS (id | number | dept | code | sheet | comment):
+${items}
+
+RESPONSE LETTER TEXT:
+${String(text).slice(0,24000)}
+
+For each open comment, find the applicant's answer in the letter. Match by the comment number first, then by the code section, sheet or subject. Copy the applicant's answer in their own words (trim headers and the restated City comment). Include any sheet references they give. If the letter does not answer a comment, leave it out. Never invent an answer.
+Return JSON only: {"answers":[{"id":"...","response":"...","sheets":"A2.0"}]}`, {modelTier:"default"});
+  const out={};
+  for(const a of (r.answers||[])){ const c=open.find(x=>x.id===a.id); const resp=String(a.response||"").trim(); if(c&&resp) out[c.id]=resp.slice(0,1500)+(a.sheets&&!resp.includes(a.sheets)?` (see ${a.sheets})`:""); }
+  return out;
+}
+async function loadRespLetter(p, file){
+  const pid=p.id, open=openForReply(p);
+  if(file.size>10*1024*1024){ flash("That file is over 10 MB. A response letter is usually much smaller; export it again or trim it."); return; }
+  try{
+    setBusy(pid,"Reading your response letter…");
+    const rd=await readRespFile(file, p);
+    let got = rd.kind==="sheet" ? matchSheet(p, rd.rows) : {}, how = Object.keys(got).length ? "columns" : "";
+    if(Object.keys(got).length<open.length){ const byNum=matchByNumber(p, rd.text); for(const k in byNum) if(!got[k]){ got[k]=byNum[k]; how=how||"numbers"; } }
+    if(Object.keys(got).length<open.length && S.sample){ setBusy(pid,"Matching your answers to the City's comments…");
+      try{ const ai=await matchByAI(p, rd.text); for(const k in ai) if(!got[k]){ got[k]=ai[k]; how=how?how+" + AI":"AI"; } }catch(e){} }
+    const ids=Object.keys(got);
+    if(!ids.length){ setBusy(pid); flash("Redline couldn't find answers in that file. Number each answer the same as the City's comments (1, 2, 3…) or use the Excel response sheet."); return; }
+    ids.forEach(id=>{ const c=p.corrections.find(x=>x.id===id); c.draftResponse=got[id]; c.respFrom=file.name; });
+    let pages=[]; if(rd.kind==="pdf"){ setBusy(pid,"Saving the letter pages…"); for(const pg of rd.pages.slice(0,6)){ const ref=await putImage(await toBlob(scaled(pg.canvas,1100),.72)); pages.push({...ref, page:pg.page}); } }
+    p.respLetter={name:file.name, kind:rd.kind, cycle:p.cycle||1, at:now(), matched:ids.length, of:open.length, missing:open.filter(c=>!got[c.id]).map(c=>cnum(p,c)), pages, total:rd.total||null, how};
+    addLog(p,"applicant",`Uploaded response letter ${file.name}: answers matched to ${ids.length} of ${open.length} comments.`);
+  }catch(e){ flash("Couldn't read that file: "+(e.message||e)); }
+  setBusy(pid); await save(p);
+}
+function letterBox(p, staff){
+  const L=staff?(p.letters||[]).slice(-1)[0]:p.respLetter; if(!L) return "";
+  const pages=(L.pages||[]).filter(x=>imgSrc(x));
+  return `<details class="feebox" ${staff?"":"open"}><summary><b>Response letter</b> · ${esc(L.name)} · cycle ${L.cycle} · ${L.matched} of ${L.of} comments answered</summary>
+    ${!staff&&L.missing&&L.missing.length?`<p class="small" style="color:var(--red)">No answer found for comment${L.missing.length===1?"":"s"} ${L.missing.map(n=>"#"+n).join(", ")}. Type ${L.missing.length===1?"it":"them"} below or upload a corrected letter.</p>`:""}
+    ${!staff?`<p class="small">Each answer is filled in under its comment. Check them, edit if needed, then upload the revised set.</p>`:""}
+    ${pages.length?`<div style="display:flex;gap:8px;overflow-x:auto;margin-top:8px">${pages.map(x=>`<a href="${esc(imgSrc(x))}" target="_blank" rel="noopener"><img src="${esc(imgSrc(x))}" alt="Letter page ${x.page}" style="height:160px;border:1px solid var(--hair);border-radius:6px;background:#fff"></a>`).join("")}</div>`:""}
+  </details>`;
+}
+
 /* ---------- printable correction letter ---------- */
 function printLetter(p){
   const list=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).sort((a,b)=>(PRIO[a.priority]??1)-(PRIO[b.priority]??1));
   const by={}; list.forEach(c=>{ (by[c.dept||"Building"] ||= []).push(c); });
-  let n=0;
   $("#print").innerHTML=`<h1>${esc(CITY.name)} · Plan check corrections</h1>
     <p>${esc(p.address)}${p.permitNo?` · Permit ${esc(p.permitNo)}`:""} · ${esc(appOf(p).name)} · Cycle ${p.cycle||1} · ${fmtD(p.issuedAt||now())}</p>
-    <p>Respond to each item in the portal and upload one revised set. Only these items are rechecked.</p>
-    ${Object.entries(by).map(([d,cs])=>`<h2>${esc(d)}</h2>${cs.map(c=>`<div class="it"><b>${++n}. ${esc(c.section)}</b> · Sheet ${esc(c.sheet||"—")}${c.priority==="critical"?" · Critical":""}
+    <p>Respond to each item, in the portal or in your own response letter (PDF or Excel) that answers each item by its number, then upload one revised set. Only these items are rechecked.</p>
+    ${Object.entries(by).map(([d,cs])=>`<h2>${esc(d)}</h2>${cs.map(c=>`<div class="it"><b>${cnum(p,c)}. ${esc(c.section)}</b> · Sheet ${esc(c.sheet||"—")}${c.priority==="critical"?" · Critical":""}
       ${c.snip&&imgSrc(c.snip)?`<img src="${esc(imgSrc(c.snip))}" alt="">`:""}
       ${c.finding?`<div>${esc(c.finding)}</div>`:""}<div><b>Required:</b> ${esc(c.plannerText||c.fix)}</div></div>`).join("")}`).join("")}
     <p style="margin-top:16px;font-size:10pt">Prepared in Redline Permit. Every comment was reviewed by City staff before it was sent.</p>`;
@@ -1545,7 +1644,7 @@ function corrCard(p,c){
   if(S.editing===c.id) b+=`<textarea id="edit-${c.id}">${esc(text)}</textarea><div class="acts"><button class="btn sm primary" data-a="saveedit" data-c="${c.id}">Save</button><button class="btn sm" data-a="canceledit">Cancel</button></div>`;
   else b+=`<p class="fix"><b>Required:</b> ${esc(text)}</p>`;
   const r=ruleFor(c); if(c.why||r) b+=`<div class="edu"><b>Code note</b>${esc(c.why||"")}${r?` ${c.why?"":""}<span class="small">Rule: ${esc(r.req)}</span>`:""}</div>`;
-  if(c.response) b+=`<div class="sub"><span class="who">Applicant response · cycle ${c.respCycle||p.cycle}</span>${esc(c.response)}</div>`;
+  if(c.response) b+=`<div class="sub"><span class="who">Applicant response · cycle ${c.respCycle||p.cycle}${c.respLetter?` · from ${esc(c.respLetter)}`:""}</span>${esc(c.response)}</div>`;
   if(c.recheck && P){ b+=`<div class="sub"><span class="who">Redline recheck · cycle ${c.recheck.cycle}</span>${c.recheck.likelyResolved?"Looks resolved. ":"Still open. "}${esc(c.recheck.note)}</div>`;
     if(c.recheck.snip) b+=snipHtml(c.recheck.snip, `Revised sheet · cycle ${c.recheck.cycle}`); }
   if(P && (c.replies||[]).length) b+=`<div class="replies">${c.replies.map(r=>`<div class="reply"><span class="who">${esc(nameOf(r))} · ${esc(r.dept)}</span> — ${esc(r.text)} <span class="small">${fmtT(r.at)}</span></div>`).join("")}</div>`;
@@ -1558,7 +1657,7 @@ function corrCard(p,c){
   }
   if(P) acts+=`<div class="reply-form" style="width:100%"><select id="rd-${c.id}" aria-label="Department">${DEPTS.map(d=>`<option ${d===c.dept?"selected":""}>${d}</option>`).join("")}</select><textarea id="rt-${c.id}" placeholder="Add a note for the other reviewers"></textarea><button class="btn sm" data-a="reply" data-c="${c.id}">Add note</button></div>`;
   if(!P && p.status==="corrections" && c.state==="approved" && !c.resolved)
-    acts=`<label class="f" style="width:100%">Your response<textarea data-resp="${c.id}" placeholder="What changed and where, e.g. Window W3 now 5.7 sf net, see A2.1">${esc(c.draftResponse||"")}</textarea></label>`;
+    acts=`<label class="f" style="width:100%">Your response${c.respFrom?` <span class="small">· from ${esc(c.respFrom)}</span>`:""}<textarea data-resp="${c.id}" placeholder="What changed and where, e.g. Window W3 now 5.7 sf net, see A2.1">${esc(c.draftResponse||"")}</textarea></label>`;
   if(acts) b+=`<div class="acts">${acts}</div>`;
   return `<div class="${cls}" ${S.focusC===c.id?'style="box-shadow:0 0 0 2px var(--red)"':""}>${b}</div>`;
 }
@@ -1599,7 +1698,8 @@ function projectView(p){
   if(!P){
     if(p.status==="submitted"||p.status==="resubmitted") head=`<div class="note">${p.status==="resubmitted"?"Revised set received":"Submitted"} ${fmtD(p.updatedAt||p.submittedAt)}. Monrovia reviewers are working on it. Their comments will appear here.</div>`;
     if(p.status==="corrections"){ head=`<div class="note red"><b>${openApproved} comment${openApproved===1?"":"s"} from the City.</b> Each one shows the spot on your sheets. Respond to each, then upload the revised set. Only these items get rechecked.</div>`;
-      primary=`<input type="file" id="re-file" accept="application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="letter">Print the list</button>`; }
+      head+=`<p class="small" style="margin:8px 0 0">Answer below, or upload your own response letter (PDF or Excel) that answers each comment by its number. Redline fills in the answers for you to check.</p>`+letterBox(p,false);
+      primary=`<input type="file" id="re-file" accept="application/pdf" hidden><input type="file" id="resp-file" accept=".pdf,.xlsx,.xls,.csv,application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="respletter">Upload response letter</button><button class="btn" data-a="respsheet">Excel response sheet</button><button class="btn" data-a="letter">Print the list</button>`; }
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
     else if(p.status==="approved") head=`<div class="note ok"><b>Plan check approved.</b> Waiting on the other agencies below. You'll get a pickup notice when they're all cleared.</div>${agencyHtml(p,false)}`;
     if(p.status==="ready") head=`<div class="note ok"><b>Ready for permit pickup.</b> All clearances are in. ${feeOpen(p)?`Pay the fees of ${money2(p.fee.dueNow)} to the City of Monrovia at City Hall, 415 S. Ivy Ave. The permit is issued once City staff record the payment.`:"Fees are paid. The City will issue the permit."}</div>`;
@@ -1620,6 +1720,7 @@ function projectView(p){
     if(noteDrafts&&!busy) primary+=`<button class="btn" data-a="approvenotes">Send ${noteDrafts} standard-note draft${noteDrafts===1?"":"s"}</button>`;
     if(openApproved&&!busy) primary+=`<button class="btn" data-a="letter">Print correction letter</button>`;
     if((p.aiState==="none"||p.aiState==="failed"||p.aiState==="unavailable"||stale) && !busy) primary+= hasSheets ? `<button class="btn primary" data-a="airun">Run AI first read</button>` : `<input type="file" id="fr-file" accept="application/pdf" hidden><button class="btn" data-a="firstread">Attach PDF for AI first read</button>`;
+    if((p.letters||[]).length && (p.status==="resubmitted"||p.status==="submitted")) head+=letterBox(p,true);
     if(p.status==="corrections") head=`<div class="note">Comments sent ${fmtT(p.issuedAt)}. Waiting on the applicant's responses and revised set.</div>`;
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
     else if(p.status==="approved"){ const ag=p.agencies||AGENCIES.map(n=>({name:n,done:false})); const left=ag.filter(a=>!a.done).length;
@@ -1703,8 +1804,10 @@ function bindProject(p){
   document.querySelectorAll("[data-assign]").forEach(sel=>sel.onchange=()=>{ const i=+sel.dataset.assign, r=STAFF.find(x=>x.id===sel.value); p.reviews=reviewsOf(p).map(x=>({...x})); p.reviews[i].reviewerId=r.id; p.reviews[i].reviewerName=r.name; if(i===0){ p.reviewerId=r.id; p.reviewerName=r.name; } addLog(p,"planner",`Reassigned ${p.reviews[i].dept} review to ${r.name}`); save(p); });
   w.querySelectorAll('input[name="cdept"]').forEach(r=>r.onchange=()=>{ S.cDept=r.value; renderWorkspace(); });
   const aq=$("#ask-q"); if(aq) aq.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); act(p,"ask"); } };
+  const lf=$("#resp-file"); if(lf) lf.onchange=()=>{ const f=lf.files[0]; lf.value=""; if(f) loadRespLetter(p,f); };
   const rf=$("#re-file"); if(rf) rf.onchange=()=>{ const f=rf.files[0]; if(!f) return;
-    p.corrections.forEach(c=>{ if(c.state==="approved"&&!c.resolved&&c.draftResponse){ c.response=c.draftResponse; c.respCycle=p.cycle; } });
+    p.corrections.forEach(c=>{ if(c.state==="approved"&&!c.resolved&&c.draftResponse){ c.response=c.draftResponse; c.respCycle=p.cycle; c.respLetter=c.respFrom||""; } });
+    if(p.respLetter){ (p.letters ||= []).push(p.respLetter); delete p.respLetter; }
     runRecheck(p,f); };
   const ff=$("#fr-file"); if(ff) ff.onchange=()=>{ const f=ff.files[0]; if(f) runFirstRead(p,f); };
 }
@@ -1733,8 +1836,10 @@ function act(p,a,cid){
     case "ready": p.status="ready"; addLog(p,"planner","All agency clearances in. Ready for permit pickup."); save(p); break;
     case "issue-permit": if(feeOpen(p)){ flash("Record the fees first. No fee, no permit."); break; } p.status="issued"; p.issuedPermitAt=now(); addLog(p,"planner","Permit issued."); save(p); break;
     case "resubmit": { const miss=p.corrections.filter(c=>c.state==="approved"&&!c.resolved&&!(c.draftResponse||"").trim()).length;
-      if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first.`); return; } $("#re-file").click(); break; }
+      if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first, here or in a response letter.`); return; } $("#re-file").click(); break; }
     case "firstread": $("#fr-file").click(); break;
+    case "respletter": $("#resp-file").click(); break;
+    case "respsheet": downloadRespSheet(p); break;
     case "airun": runFirstRead(p, null); break;
     case "payfee": { if(!p.fee || p.fee.paidAt || !isPlanner()) break; const rc=($("#fee-receipt")?.value||"").trim(); p.fee.paidAt=now(); p.fee.method=`Paid to the City${rc?`, receipt ${rc}`:""}`; p.fee.receipt=rc;
       addLog(p, "planner", `Fees ${money2(p.fee.dueNow)} recorded as paid${rc?` (receipt ${rc})`:""}.`); save(p); break; }
