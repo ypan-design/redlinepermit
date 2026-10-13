@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Redline Permit: AI-assisted plan check for California cities. Every correction circled on the sheet it belongs to.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23C8322B'/%3E%3Ctext x='16' y='23' font-family='Arial' font-weight='700' font-size='19' text-anchor='middle' fill='white'%3ER%3C/text%3E%3C/svg%3E">
+<title>Redline Permit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: same Sand & Glass system as the Monrovia portal — sand page, blurred red/teal orbs, frosted header, glass panels, department cards, 8-stage rail. */
+:root{
+  --sand:#E9E1D4; --sand2:#F2EDE4; --sand3:#DED4C3; --glass:rgba(251,249,245,.72); --glass-solid:#FBF9F5; --hair:#CFC5B4;
+  --ink:#242B31; --ink2:#565F67; --ink3:#8B939A;
+  --red:#C8322B; --red-soft:#F6DCD8; --oxblood:#8C2A2A; --ox-soft:#EFD9D4;
+  --teal:#1E7A78; --teal-deep:#145856; --teal-soft:#D6EBE8;
+  --sheet:#FFFFFF; --line:#3B444C; --hdr:rgba(233,225,212,.72); --rim:rgba(255,255,255,.85);
+  --f-body:"Inter",Helvetica,Arial,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --sand:#17191B; --sand2:#1F2326; --sand3:#2A2F33; --glass:rgba(34,38,42,.72); --glass-solid:#22262A; --hair:#3A4046;
+  --ink:#ECE6DC; --ink2:#B5AEA3; --ink3:#8A857D;
+  --red:#E5574F; --red-soft:#3A1F1E; --oxblood:#C66A62; --ox-soft:#33201F;
+  --teal:#4FB3AE; --teal-deep:#7CCBC6; --teal-soft:#16302F;
+  --sheet:#1B1F23; --line:#C9C2B6; --hdr:rgba(23,25,27,.75); --rim:rgba(255,255,255,.08); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --sand:#17191B; --sand2:#1F2326; --sand3:#2A2F33; --glass:rgba(34,38,42,.72); --glass-solid:#22262A; --hair:#3A4046;
+  --ink:#ECE6DC; --ink2:#B5AEA3; --ink3:#8A857D;
+  --red:#E5574F; --red-soft:#3A1F1E; --oxblood:#C66A62; --ox-soft:#33201F;
+  --teal:#4FB3AE; --teal-deep:#7CCBC6; --teal-soft:#16302F;
+  --sheet:#1B1F23; --line:#C9C2B6; --hdr:rgba(23,25,27,.75); --rim:rgba(255,255,255,.08); color-scheme:dark}
+*{box-sizing:border-box}
+html{background:var(--sand)}
+body{background:var(--sand);color:var(--ink);font:400 15px/1.55 var(--f-body);margin:0;-webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
+a{color:var(--red)}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:6px}
+/* background orbs + top line, as in the portal */
+.bg{position:absolute;inset:0 0 auto 0;height:900px;overflow:hidden;pointer-events:none;z-index:0;-webkit-mask-image:linear-gradient(#000 50%,transparent);mask-image:linear-gradient(#000 50%,transparent)}
+.orb{position:absolute;border-radius:50%;filter:blur(64px)}
+.orb.a{width:560px;height:560px;background:var(--red);top:-280px;right:-170px;opacity:.42}
+.orb.b{width:380px;height:380px;background:var(--teal);top:160px;right:18%;opacity:.26}
+.orb.c{width:320px;height:320px;background:#5FA8A3;top:360px;left:-160px;opacity:.22}
+.topline{height:6px;background:linear-gradient(90deg,var(--red) 0 46%,var(--oxblood) 46% 58%,var(--teal) 58% 100%);position:relative;z-index:6}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 48px;position:relative;z-index:1}
+/* glass */
+.panel{position:relative;background:var(--glass);border:1px solid var(--rim);border-radius:18px;padding:20px;
+  backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);
+  box-shadow:0 1px 0 var(--rim) inset,0 10px 30px -12px rgba(36,43,49,.18)}
+.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(116deg,rgba(255,255,255,.45),rgba(255,255,255,0) 38%)}
+.panel>*{position:relative}
+/* header */
+header.top{position:sticky;top:0;z-index:5;background:var(--hdr);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom:1px solid var(--hair)}
+.top-in{max-width:1280px;margin:0 auto;padding:12px 16px;display:flex;gap:10px 20px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:700;font-size:24px;letter-spacing:-.035em;line-height:1;position:relative;padding-bottom:5px;color:var(--ink);text-decoration:none}
+.brand::after{content:"";position:absolute;left:0;right:-3px;bottom:0;height:3px;border-radius:2px;background:var(--red)}
+.city{font-size:13px;color:var(--ink2)}
+.city b{color:var(--ink);font-weight:600}
+.spacer{flex:1}
+.seg{display:inline-flex;background:var(--glass);border:1px solid var(--rim);border-radius:999px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg a{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink2);text-decoration:none}
+.seg a:hover{background:var(--ink);color:var(--sand)}
+/* type */
+.kicker{font-size:11px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--ink3)}
+.kicker::after{content:"";display:block;width:36px;height:2px;background:var(--red);margin-top:10px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h2{font-weight:600;font-size:clamp(24px,3.2vw,32px);letter-spacing:-.028em;line-height:1.12;margin-top:12px;max-width:26ch}
+.sub{color:var(--ink2);max-width:62ch;margin:10px 0 0}
+.small{font-size:13px;color:var(--ink2)}
+section{margin-top:44px}
+/* buttons + pills */
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hair);background:var(--glass-solid);border-radius:999px;padding:9px 18px;font:600 14px/1.2 var(--f-body);cursor:pointer;color:var(--ink);text-decoration:none}
+.btn:hover{border-color:var(--teal)}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.primary:hover{background:#B42B25}
+.btn.sm{padding:5px 12px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;letter-spacing:.08em;text-transform:uppercase}
+.p-corr{background:var(--red-soft);color:var(--red)}
+.p-ok{background:var(--teal-soft);color:var(--teal-deep)}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:28px;align-items:center;padding:40px 0 8px}
+.hero h1{margin-top:12px;font-size:clamp(32px,5.4vw,54px);font-weight:600;letter-spacing:-.032em;line-height:1.05;max-width:16ch}
+.hero h1 em{font-style:normal;color:var(--red)}
+.hero .sub{font-size:17px}
+.ctas{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2);margin-top:18px}
+.facts b{color:var(--ink);font-weight:600}
+/* demo workspace in hero */
+.ws{display:grid;gap:12px;padding:16px}
+.ws-h{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap}
+.ws-h b{font-size:16px;letter-spacing:-.015em}
+.sheet-main{background:var(--sheet);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sheet-main svg{display:block;width:100%;height:auto}
+.corr{border:1px solid var(--hair);border-left:3px solid var(--red);border-radius:4px 12px 12px 4px;padding:10px 12px;display:grid;gap:6px;background:var(--glass-solid)}
+.corr-h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px}
+.num{width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font:700 12px/22px var(--f-body);text-align:center;flex:none}
+.cite{font-family:var(--f-mono);font-size:12px;font-weight:500;color:var(--ink);background:var(--sand2);border:1px solid var(--sand3);border-radius:6px;padding:1px 7px}
+.dept{font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;font-weight:600;color:var(--teal)}
+.corr p{margin:0;font-size:13.5px;color:var(--ink2)}
+.corr p b{color:var(--ink);font-weight:600}
+/* process rail, as in the portal */
+.rail{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin:20px 0 6px}
+.stage{padding:9px 2px 0;border-top:3px solid var(--hair);font-size:12px;color:var(--ink3);min-width:0}
+.stage b{display:block;font-size:13.5px;color:var(--ink2);font-weight:600;letter-spacing:-.01em}
+.stage.done{border-color:var(--teal)}
+.stage.done b{color:var(--ink)}
+.stage.now{border-color:var(--red)}
+.stage.now b{color:var(--red)}
+.who{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;font-weight:600}
+.stage .round{display:block;font-size:11px;font-weight:700;color:var(--red);margin-top:2px}
+.stage .loop{display:block;font-size:11px;color:var(--teal);font-weight:600;margin-top:2px}
+.rounds{display:flex;gap:3px;margin-top:4px}.rounds i{width:14px;height:4px;border-radius:2px;background:var(--teal)}.rounds i.cur{background:var(--red)}
+@media (max-width:760px){.rail{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* department cards, as on the portal home */
+.deptgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
+.dcard{position:relative;border:1px solid var(--rim);background:var(--glass-solid);border-radius:16px;padding:16px;display:grid;gap:6px;align-content:start}
+.dcard:hover,.dcard:focus-within{border-color:var(--teal)}
+.dcard b{font-size:16px;letter-spacing:-.01em}
+.dcard.main{grid-column:1/-1;background:linear-gradient(120deg,var(--red-soft),var(--glass-solid) 55%,var(--teal-soft));padding:22px}
+.dcard.main b{font-size:22px}
+.dcard .go{font-size:13px;font-weight:600;color:var(--teal)}
+.dcard.main .go{color:var(--red)}
+.tip{display:none;position:absolute;left:12px;right:12px;top:calc(100% - 6px);z-index:20;background:#242B31;color:#fff;border-radius:12px;padding:14px;font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.dcard:hover .tip,.dcard:focus-within .tip{display:block}
+.tip .row{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-top:8px}
+.tip .k{font-weight:700;color:#F6DCD8;white-space:nowrap}
+.hint{font-size:12px;color:var(--teal);font-weight:600;cursor:help}
+/* two sides */
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:20px}
+.two .panel{border-top:3px solid var(--teal)}
+.two .panel.app{border-top-color:var(--red)}
+.two h3{font-size:18px;letter-spacing:-.015em}
+.two ul{margin:12px 0 0;padding-left:18px;display:grid;gap:6px;color:var(--ink2);font-size:14.5px}
+.people{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.person{border:1px solid var(--sand3);border-radius:12px;padding:10px 12px;background:var(--glass-solid);display:grid;gap:2px;font-size:12.5px;min-width:0}
+.person .role{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.person b{font-size:13.5px}
+.person span{color:var(--ink2)}
+/* codes + security */
+.codes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:20px}
+.code{border:1px solid var(--hair);border-left:3px solid var(--teal);border-radius:4px 12px 12px 4px;padding:12px 14px;background:var(--glass-solid);display:grid;gap:4px}
+.code .cite{justify-self:start}
+.code b{font-weight:600;font-size:14.5px}
+.factgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:20px}
+.note{font-size:14px;color:var(--ink2);background:var(--sand2);border-left:3px solid var(--teal);border-radius:0 12px 12px 0;padding:12px 14px}
+.note b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.note.red{background:var(--red-soft);border-left-color:var(--red)}
+/* contact */
+.contact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;padding:clamp(20px,4vw,30px)}
+.mail{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mail code{font:500 17px/1 var(--f-mono);background:var(--sand2);border:1px solid var(--hair);border-radius:10px;padding:12px 14px;user-select:all}
+.copied{font-size:13px;color:var(--teal);min-height:1em;margin-top:6px}
+footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink3)}
+@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.people{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.two,.contact{grid-template-columns:minmax(0,1fr)}.seg{display:none}}
+@media (prefers-reduced-motion:no-preference){#cloud1,#cloud2{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.4s .3s ease forwards}#cloud2{animation-delay:1s}@keyframes draw{to{stroke-dashoffset:0}}}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><span class="orb a"></span><span class="orb b"></span><span class="orb c"></span></div>
+<div class="topline" aria-hidden="true"></div>
+<header class="top"><div class="top-in">
+  <a class="brand" href="#">Redline Permit</a>
+  <span class="city">AI plan check for <b>California cities</b></span>
+  <span class="spacer"></span>
+  <nav class="seg" aria-label="Sections"><a href="#process">Process</a><a href="#departments">Departments</a><a href="#codes">Codes</a><a href="#security">Security</a></nav>
+  <a class="btn primary sm" href="#contact">Start a pilot</a>
+</div></header>
+
+<div class="wrap">
+  <main>
+    <div class="hero">
+      <div>
+        <div class="kicker">AI-assisted plan check</div>
+        <h1>Every correction <em>circled</em> on the sheet it belongs to.</h1>
+        <p class="sub">Redline Permit gives building departments an AI first read of each plan set. Reviewers approve, edit or reject every comment, and applicants get a numbered list with a clip of the exact spot on their drawings.</p>
+        <div class="ctas"><a class="btn primary" href="#contact">Talk to us about a pilot</a><a class="btn" href="#process">See how a set moves</a></div>
+        <div class="facts"><span><b>Piloting</b> in the San Gabriel Valley</span><span><b>Title 24</b> 2025 edition</span><span><b>Google Drive</b> and <b>Dropbox</b> submittals</span></div>
+      </div>
+
+      <figure class="panel ws" style="margin:0" aria-label="Example: a floor plan sheet with two numbered corrections circled in red">
+        <div class="ws-h"><b>Example ADU · Building plan check</b><span class="pill p-corr">Corrections · round 2</span><span class="spacer"></span><span class="small" style="font-family:var(--f-mono)">A2.1</span></div>
+        <div class="sheet-main">
+          <svg viewBox="0 0 520 300" role="img" aria-hidden="true">
+            <g fill="none" stroke="var(--line)" stroke-width="2.2">
+              <rect x="40" y="40" width="300" height="220"/>
+              <line x1="190" y1="40" x2="190" y2="150"/><line x1="40" y1="150" x2="250" y2="150"/><line x1="250" y1="150" x2="250" y2="260"/>
+              <line x1="190" y1="110" x2="190" y2="150" stroke="var(--sheet)" stroke-width="5"/>
+              <path d="M190 110 A40 40 0 0 1 230 150" stroke-width="1.2"/>
+            </g>
+            <g fill="none" stroke="var(--line)" stroke-width="1">
+              <line x1="40" y1="20" x2="340" y2="20"/><line x1="40" y1="14" x2="40" y2="26"/><line x1="340" y1="14" x2="340" y2="26"/>
+              <line x1="360" y1="40" x2="360" y2="260"/><line x1="354" y1="40" x2="366" y2="40"/><line x1="354" y1="260" x2="366" y2="260"/>
+              <rect x="74" y="36" width="70" height="8" fill="var(--sheet)"/>
+            </g>
+            <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--line)">
+              <text x="168" y="15">30'-0"</text><text x="370" y="154">22'-0"</text>
+              <text x="78" y="95">BEDROOM 2</text><text x="78" y="108" font-size="9">108 SF</text>
+              <text x="268" y="95">BATH</text><text x="100" y="210">LIVING / KITCHEN</text>
+              <text x="82" y="58" font-size="9">W3 4'-0" x 2'-4"</text>
+            </g>
+            <path id="cloud1" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linejoin="round"/>
+            <path id="cloud2" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linejoin="round"/>
+            <g font-family="Inter, sans-serif" font-weight="700" font-size="13" text-anchor="middle">
+              <circle cx="166" cy="30" r="12" fill="var(--red)"/><text x="166" y="35" fill="#fff">1</text>
+              <circle cx="338" cy="112" r="12" fill="var(--red)"/><text x="338" y="117" fill="#fff">2</text>
+            </g>
+            <g font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink3)">
+              <rect x="400" y="216" width="104" height="60" fill="none" stroke="var(--line)" stroke-width="1"/>
+              <text x="408" y="234">A2.1</text><text x="408" y="248">FLOOR PLAN</text><text x="408" y="264">CYCLE 2</text>
+            </g>
+          </svg>
+        </div>
+        <div class="corr"><div class="corr-h"><span class="num">1</span><span class="cite">CRC R310.2.1</span><span class="dept">Building</span><span class="pill p-corr">Critical</span></div>
+          <p><b>Bedroom 2 escape window.</b> W3 gives about 3.5 sf clear. Provide 5.7 sf net with a sill no higher than 44 in.</p></div>
+        <div class="corr"><div class="corr-h"><span class="num">2</span><span class="cite">CRC R302.3</span><span class="dept">Building</span></div>
+          <p><b>Dwelling unit separation.</b> Show the 1-hour separation between the house and the attached ADU, extended to the roof sheathing.</p></div>
+      </figure>
+    </div>
+
+    <section id="process">
+      <div class="kicker">How a plan set moves</div>
+      <h2>From submittal to permit pickup, in one shared record.</h2>
+      <p class="sub">The same eight stages applicants and reviewers see in the portal. Correction rounds loop back until the set is clean, and every round is counted.</p>
+      <div class="panel" style="margin-top:18px">
+        <div class="rail" role="list" aria-label="Example project at round 2">
+          <div class="stage done" role="listitem"><b>Submit</b><span class="who">Applicant</span></div>
+          <div class="stage done" role="listitem"><b>AI first read</b><span class="who">Redline</span></div>
+          <div class="stage done" role="listitem"><b>City review</b><span class="who">Reviewer</span></div>
+          <div class="stage now" role="listitem"><b>Corrections</b><span class="who">Applicant</span><span class="round">Round 2</span><span class="rounds"><i></i><i class="cur"></i></span></div>
+          <div class="stage" role="listitem"><b>Resubmit &amp; recheck</b><span class="who">Both</span><span class="loop">Loops until clean</span></div>
+          <div class="stage" role="listitem"><b>Plan check approved</b><span class="who">Reviewer</span></div>
+          <div class="stage" role="listitem"><b>Other agencies</b><span class="who">Applicant</span></div>
+          <div class="stage" role="listitem"><b>Permit pickup</b><span class="who">City</span></div>
+        </div>
+        <div class="people">
+          <div class="person"><span class="role">Owner</span><b>Property owner</b><span>Sees status and rounds</span></div>
+          <div class="person"><span class="role">Designer</span><b>Architect or designer</b><span>Gets every numbered comment</span></div>
+          <div class="person"><span class="role">Applicant</span><b>Who submits</b><span>Uploads and resubmits</span></div>
+          <div class="person"><span class="role">Reviewer</span><b>City plan checker</b><span>Approves every comment</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="departments">
+      <div class="kicker">One portal, every department</div>
+      <h2>Each application goes to the right desk, with its own reviewer.</h2>
+      <div class="deptgrid">
+        <div class="dcard main"><span class="dept">Building &amp; Safety · most applications start here</span><b>Building plan check</b>
+          <span>New homes, ADUs, additions, remodels, multifamily and commercial. One short form, a PDF from Google Drive or Dropbox, and every comment comes back clipped from the sheets and numbered.</span>
+          <span class="go">AI first read in minutes, not weeks →</span></div>
+        <div class="dcard" tabindex="0"><span class="dept">Planning</span><b>Planning</b><span class="small">Zoning review before plan check: larger ADUs, design review, Planning Commission.</span><span class="hint">Hover: which ADU path?</span>
+          <span class="tip"><b>Which Planning path is an ADU?</b>
+            <span class="row"><span class="k">800 sf or less</span><span>Planning takes a quick look at setbacks, height and location, then it goes straight to Building plan check.</span>
+            <span class="k">Over 800 sf</span><span>Full Planning review first, under the state 60-day clock. Plan check starts after Planning signs off.</span></span></span></div>
+        <div class="dcard"><span class="dept">Public Works</span><b>Public Works</b><span class="small">Work in the street or parkway, utilities, grading and drainage.</span></div>
+        <div class="dcard"><span class="dept">Fire</span><b>Fire</b><span class="small">Sprinklers, alarms, access and operational permits.</span></div>
+        <div class="dcard"><span class="dept">City</span><b>City permits</b><span class="small">Special events, filming and other city-issued permits.</span></div>
+      </div>
+    </section>
+
+    <section id="who">
+      <div class="kicker">Who it serves</div>
+      <h2>Built for both sides of the counter.</h2>
+      <div class="two">
+        <div class="panel"><span class="dept">For cities</span><h3 style="margin-top:6px">Building departments</h3><ul>
+          <li>Reviewers see only their own files; an admin sees and searches everything</li>
+          <li>Task lists sorted by urgency, project size and days waiting</li>
+          <li>Standard notes checked on every sheet the moment a set arrives</li>
+          <li>Statutory clocks, like the 60-day ADU deadline, on every file</li>
+          <li>One flat fee for the whole city, not per seat</li></ul></div>
+        <div class="panel app"><span class="dept" style="color:var(--red)">For applicants</span><h3 style="margin-top:6px">Owners, designers and architects</h3><ul>
+          <li>Each application tracked on its own, with its department and reviewer</li>
+          <li>Numbered circles on your sheets that match the comment list</li>
+          <li>Owner, designer, applicant and reviewer contacts on one screen</li>
+          <li>See which round you're on and what's left before pickup</li>
+          <li>Submit straight from Google Drive or Dropbox</li></ul></div>
+      </div>
+    </section>
+
+    <section id="codes">
+      <div class="kicker">California first</div>
+      <h2>Checked against the codes California cities enforce.</h2>
+      <div class="codes">
+        <div class="code"><span class="cite">Title 24 · 2025</span><b>Building, Residential, Electrical, Mechanical, Plumbing, Energy, Fire, CALGreen</b><span class="small">In effect since January 1, 2026, plus each city's local amendments</span></div>
+        <div class="code"><span class="cite">Gov. Code 66310–66342</span><b>ADU and JADU law</b><span class="small">Setbacks, size, height and the 60-day approval clock</span></div>
+        <div class="code"><span class="cite">Gov. Code 65852.21 · 66411.7</span><b>SB 9</b><span class="small">Two units and lot splits in single-family zones</span></div>
+        <div class="code"><span class="cite">Municipal code</span><b>Each city's zoning and building titles</b><span class="small">A rule pack per city, confirmed with its staff</span></div>
+      </div>
+    </section>
+
+    <section id="security">
+      <div class="kicker">Security and data</div>
+      <h2>The city keeps its records. The AI never approves anything.</h2>
+      <div class="factgrid">
+        <div class="note"><b>Drawings stay where they are</b>Applicants share only the files they pick. Redline keeps small clips, about 1–2 MB per project.</div>
+        <div class="note"><b>City sign-in with security keys</b>Staff use the city's own accounts. Admins sign in with hardware keys or passkeys.</div>
+        <div class="note"><b>Every action logged</b>Each view, approval and change goes into an audit log the city can export.</div>
+        <div class="note red"><b>Reviewers decide</b>Every AI comment cites a code section and waits for a reviewer. Nothing reaches the applicant unapproved.</div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="panel contact">
+        <div><div class="kicker">Pilots</div><h2>Bring Redline Permit to your city.</h2>
+          <p class="sub">Our first city profile is being set up in the San Gabriel Valley. Write to us for a live walkthrough with real plan sets.</p></div>
+        <div><div class="mail"><code id="addr">hello@redlinepermit.com</code><button class="btn" id="copy" type="button">Copy</button></div><div class="copied" id="copied" aria-live="polite"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot"><span>redlinepermit.com · © 2026 Redline Permit</span><span>Drawings stay in your Google Drive or Dropbox; Redline keeps only clips</span></footer>
+</div>
+
+<script>
+// Revision clouds: scalloped arcs around a rectangle.
+function cloud(id,x,y,w,h,r){
+  const el=document.getElementById(id); if(!el) return;
+  const pts=[]; const step=r*1.6;
+  const edge=(x1,y1,x2,y2)=>{const len=Math.hypot(x2-x1,y2-y1),n=Math.max(2,Math.round(len/step));for(let i=0;i<n;i++)pts.push([x1+(x2-x1)*i/n,y1+(y2-y1)*i/n]);};
+  edge(x,y,x+w,y);edge(x+w,y,x+w,y+h);edge(x+w,y+h,x,y+h);edge(x,y+h,x,y);
+  let d=`M${pts[0][0]} ${pts[0][1]}`;
+  for(let i=1;i<=pts.length;i++){const p=pts[i%pts.length];d+=` A${r} ${r} 0 0 1 ${p[0].toFixed(1)} ${p[1].toFixed(1)}`;}
+  el.setAttribute("d",d);
+  try{el.style.setProperty("--len",Math.ceil(el.getTotalLength()));}catch(e){}
+}
+cloud("cloud1",62,26,98,40,9);
+cloud("cloud2",238,80,94,44,9);
+document.getElementById("copy").addEventListener("click",()=>{
+  const t=document.getElementById("addr").textContent, out=document.getElementById("copied");
+  const sel=()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("addr"));const s=getSelection();s.removeAllRanges();s.addRange(r);out.textContent="Selected. Press Ctrl+C or Cmd+C to copy.";};
+  try{navigator.clipboard.writeText(t).then(()=>{out.textContent="Copied.";},sel);}catch(e){sel();}
+});
+</script>
+</body>
+</html>
