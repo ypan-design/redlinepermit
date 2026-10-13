@@ -111,9 +111,24 @@
 
   /* ---------- AI first read (Edge Function "ai") ---------- */
   const b64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(blob); });
+  /* Closes a JSON answer that was cut off mid-way, keeping every complete item before the cut. */
+  function salvage(s){
+    const i = s.indexOf("{"); if(i<0) return null; s = s.slice(i);
+    const st = []; let inStr = false, esc = false, cut = -1, cutStack = null;
+    for(let k=0;k<s.length;k++){ const ch = s[k];
+      if(inStr){ if(esc) esc = false; else if(ch==="\\") esc = true; else if(ch==='"') inStr = false; continue; }
+      if(ch==='"') inStr = true;
+      else if(ch==="{"||ch==="[") st.push(ch);
+      else if(ch==="}"||ch==="]"){ st.pop(); if(!st.length) return s.slice(0,k+1); cut = k+1; cutStack = st.slice(); }
+      else if(ch===","){ cut = k; cutStack = st.slice(); }
+    }
+    if(cut<0) return null;
+    return s.slice(0,cut) + cutStack.reverse().map(c=>c==="{"?"}":"]").join("");
+  }
   function parseJson(t){
     let s = String(t||"").trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");
     try{ return JSON.parse(s); }catch(e){}
+    try{ const x = salvage(s); if(x) return JSON.parse(x); }catch(e){}
     const a = s.indexOf("{"), b = s.lastIndexOf("}"), c = s.indexOf("["), d = s.lastIndexOf("]");
     for(const [i,j] of [[a,b],[c,d]]) if(i>=0 && j>i){ try{ return JSON.parse(s.slice(i,j+1)); }catch(e){} }
     throw err("The AI answer was not valid JSON","bad_output");
