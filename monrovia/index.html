@@ -2,127 +2,1743 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Monrovia · Redline Permit</title>
-<meta name="description" content="Redline Permit pilot portal for Monrovia plan check: applicant and plan reviewer sign-in, departments, and the codes applied.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="City of Monrovia plan check portal, run by Redline Permit: sign up as an applicant or plan reviewer, submit plan sets from Google Drive or Dropbox, and track every correction.">
 <link rel="icon" type="image/svg+xml" href="../logo.svg">
-<meta property="og:title" content="Monrovia · Redline Permit">
-<meta property="og:image" content="https://redlinepermit.com/logo.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/rp.css">
 </head>
 <body>
-<div class="pilotbar">Monrovia pilot run by Redline Permit, at no cost to the City for the first two months. This is not an official City of Monrovia website; official permit information is at <a href="https://www.monroviaca.gov" target="_blank" rel="noopener">monroviaca.gov</a>.</div>
+<title>City of Monrovia · Redline Permit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: YDS Sand & Glass system with red in place of teal — sand page, blurred red orbs behind frosted glass panels; queue left, sheet + corrections right; stacks on phone */
+:root{
+  --sand:#E9E1D4; --sand2:#F2EDE4; --sand3:#DED4C3; --glass:rgba(251,249,245,.72); --glass-solid:#FBF9F5; --hair:#CFC5B4;
+  --ink:#242B31; --ink2:#565F67; --ink3:#8B939A;
+  --red:#C8322B; --red-soft:#F6DCD8; --oxblood:#8C2A2A; --ox-soft:#EFD9D4;
+  --teal:#1E7A78; --teal-deep:#145856; --teal-soft:#D6EBE8; --ok:#1E7A78; --ok-soft:#D6EBE8; --warn:#D9792E; --warn-soft:#F7E6D4;
+  --bg:var(--sand); --surface:var(--glass-solid); --sunk:var(--sand2); --line:var(--hair); --muted:var(--ink2);
+  --info:var(--oxblood); --info-soft:var(--ox-soft);
+  --f-display:"Inter",Helvetica,Arial,sans-serif; --f-body:"Inter",Helvetica,Arial,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{background:var(--sand)}
+body{background:var(--sand);color:var(--ink);font:400 15px/1.55 var(--f-body);margin:0;-webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--red)}
+/* background orbs */
+.bg{position:absolute;inset:0 0 auto 0;height:760px;overflow:hidden;pointer-events:none;z-index:0;-webkit-mask-image:linear-gradient(#000 50%,transparent);mask-image:linear-gradient(#000 50%,transparent)}
+.orb{position:absolute;border-radius:50%;filter:blur(64px)}
+.orb.a{width:560px;height:560px;background:var(--red);top:-280px;right:-170px;opacity:.42}
+.orb.b{width:380px;height:380px;background:var(--teal);top:140px;right:16%;opacity:.26}
+.orb.c{width:320px;height:320px;background:#5FA8A3;top:320px;left:-160px;opacity:.22}
+.topline{height:6px;background:linear-gradient(90deg,var(--red) 0 46%,var(--oxblood) 46% 58%,var(--teal) 58% 100%);position:relative;z-index:6}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 48px;position:relative;z-index:1}
+/* glass */
+.panel,.glass{position:relative;background:var(--glass);border:1px solid rgba(255,255,255,.85);border-radius:18px;
+  backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 10px 30px -12px rgba(36,43,49,.18)}
+.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(116deg,rgba(255,255,255,.55),rgba(255,255,255,0) 38%)}
+.panel>*{position:relative}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(233,225,212,.72);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom:1px solid rgba(207,197,180,.7)}
+.top-in{max-width:1280px;margin:0 auto;padding:12px 16px;display:flex;gap:10px 20px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:700;font-size:24px;letter-spacing:-.035em;line-height:1;position:relative;padding-bottom:5px}
+.brand::after{content:"";position:absolute;left:0;right:-3px;bottom:0;height:3px;border-radius:2px;background:var(--red)}
+.city{font-size:13px;color:var(--ink2)}
+.city b{color:var(--ink);font-weight:600}
+.spacer{flex:1}
+.seg{display:inline-flex;background:rgba(251,249,245,.55);border:1px solid rgba(255,255,255,.85);border-radius:999px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.seg button:focus-visible,.btn:focus-visible,.qitem:focus-visible,.tabs button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+/* hero */
+.hero{padding:30px 0 4px}
+.kicker{font-size:11px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--ink3)}
+.kicker::after{content:"";display:block;width:36px;height:2px;background:var(--red);margin-top:10px}
+.hero h1{margin:12px 0 0;font-size:clamp(28px,5vw,44px);font-weight:600;letter-spacing:-.028em;line-height:1.08;text-wrap:balance;max-width:20ch}
+.hero p{margin:10px 0 0;color:var(--ink2);max-width:62ch}
+.tabs{display:flex;gap:22px;margin-top:22px;border-bottom:1px solid var(--hair);overflow-x:auto}
+.tabs button{border:0;background:none;padding:8px 0;cursor:pointer;font-weight:600;color:var(--ink3);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--red)}
+/* process rail */
+.rail{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin:18px 0 6px}
+.stage{padding:9px 2px 0;border-top:3px solid var(--hair);font-size:12px;color:var(--ink3);min-width:0}
+.stage b{display:block;font-size:13.5px;color:var(--ink2);font-weight:600;letter-spacing:-.01em}
+.stage.done{border-color:var(--teal)}
+.stage.done b{color:var(--ink)}
+.stage.now{border-color:var(--red)}
+.stage.now b{color:var(--red)}
+.who{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;font-weight:600}
+@media (max-width:760px){.rail{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stage .round{display:block;font-size:11px;font-weight:700;color:var(--red);margin-top:2px}
+.stage .loop{display:block;font-size:11px;color:var(--teal);font-weight:600;margin-top:2px}
+.rounds{display:flex;gap:3px;margin-top:4px}.rounds i{width:14px;height:4px;border-radius:2px;background:var(--teal)}.rounds i.cur{background:var(--red)}
+.people{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+@media (max-width:900px){.people{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.person{border:1px solid var(--sand3);border-radius:12px;padding:10px 12px;background:rgba(251,249,245,.8);display:grid;gap:2px;font-size:12.5px;min-width:0}
+.person .role{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.person b{font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person a,.person span{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}
+.person a:hover{color:var(--teal);text-decoration:underline}
+.brand{cursor:pointer}
+.agency{display:grid;gap:6px}.agency label{display:flex;gap:8px;align-items:center;font-size:13.5px}
+/* layout */
+.grid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.queue{padding:14px}
+.queue h3,.sec-h{font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--ink3);margin:2px 4px 10px}
+.qitem{width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:12px;padding:10px;cursor:pointer;display:grid;gap:4px}
+.qitem:hover{background:rgba(242,237,228,.8)}
+.qitem[aria-current="true"]{background:var(--glass-solid);border-color:var(--hair)}
+.qitem .t{font-weight:600;font-size:14px;letter-spacing:-.01em}
+.qitem .m{font-size:12px;color:var(--ink2);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;letter-spacing:.08em;text-transform:uppercase}
+.p-draft{background:var(--sand3);color:var(--ink2)}
+.p-submitted,.p-resubmitted{background:var(--ox-soft);color:var(--oxblood)}
+.p-corrections{background:var(--red-soft);color:var(--red)}
+.p-approved,.p-agencies,.p-issued{background:var(--ok-soft);color:var(--teal-deep)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.btn{border:1px solid var(--hair);background:var(--glass-solid);border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink)}
+.btn:hover{background:#fff;border-color:var(--teal)}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.primary:hover{background:#B42B25}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.sm{padding:5px 12px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.full{width:100%}
+.ws{padding:20px;display:grid;gap:18px;min-width:0}
+.ws-h{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.ws-h h2,.ws h2{font-weight:600;font-size:24px;letter-spacing:-.028em;line-height:1.12;margin:0;text-wrap:balance}
+.facts{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2);margin-top:8px;align-items:center}
+.facts span b{color:var(--ink);font-weight:600}
+.note{font-size:13.5px;color:var(--ink2);background:var(--sand2);border-left:3px solid var(--teal);border-radius:0 10px 10px 0;padding:10px 14px}
+.note b{color:var(--ink)}
+.note.red{background:var(--red-soft);border-left-color:var(--red);color:var(--ink)}
+.note.ok{background:var(--ok-soft);border-left-color:var(--ok)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px}
+@media (max-width:1100px){.split{grid-template-columns:minmax(0,1fr)}}
+.sheets{display:grid;gap:10px;min-width:0;align-content:start}
+.sheet-main{background:#fff;border:1px solid var(--hair);border-radius:12px;overflow:hidden;aspect-ratio:3/2;max-width:100%;display:grid;place-items:center}
+.sheet-main img{width:100%;height:100%;object-fit:contain;background:#fff}
+.thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.thumbs button{flex:0 0 auto;width:74px;border:2px solid transparent;border-radius:8px;padding:0;background:var(--sand2);cursor:pointer;overflow:hidden}
+.thumbs button[aria-current="true"]{border-color:var(--red)}
+.thumbs img{display:block;width:100%;height:50px;object-fit:cover;background:#fff}
+.thumbs span{display:block;font-family:var(--f-mono);font-size:10px;padding:2px 4px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nosheet{font-size:13px;color:var(--ink3);padding:20px;text-align:center;background:var(--sand2);width:100%;height:100%;display:grid;place-items:center}
+.clist{display:grid;gap:10px;min-width:0;align-content:start}
+.corr{border:1px solid var(--hair);border-left:3px solid var(--red);border-radius:4px 12px 12px 4px;padding:12px 14px;display:grid;gap:8px;background:var(--glass-solid)}
+.corr.adv{border-left-color:var(--warn)}
+.corr.rejected{opacity:.5;border-left-color:var(--hair)}
+.corr.resolved{border-left-color:var(--ok)}
+.corr-h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px}
+.cite{font-family:var(--f-mono);font-size:12px;font-weight:500;color:var(--ink);background:var(--sand2);border:1px solid var(--sand3);border-radius:6px;padding:1px 7px}
+.dept{font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;font-weight:600;color:var(--teal)}
+.corr p{margin:0}
+.corr .fix{font-size:14px;color:var(--ink2)}
+.corr .fix b{color:var(--ink);font-weight:600}
+.sub{border-top:1px solid var(--sand3);padding-top:8px;font-size:13px;display:grid;gap:4px;color:var(--ink2)}
+.sub .who{color:var(--ink3)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+textarea,input[type=text],input[type=number],select{width:100%;border:1px solid var(--hair);border-radius:10px;background:#fff;padding:9px 12px;font-size:14px}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--red-soft);border-color:var(--red)}
+textarea{min-height:64px;resize:vertical}
+label.f{display:grid;gap:5px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+label.f textarea,label.f input,label.f select{letter-spacing:0;text-transform:none;font-weight:400;color:var(--ink)}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.form .wide{grid-column:1/-1}
+@media (max-width:560px){.form{grid-template-columns:minmax(0,1fr)}}
+.drop{border:1.5px dashed var(--hair);border-radius:16px;padding:24px;text-align:center;cursor:pointer;background:rgba(242,237,228,.7)}
+.drop:hover,.drop.over{border-color:var(--red);background:var(--red-soft)}
+.drop strong{display:block;font-size:17px;font-weight:600;letter-spacing:-.02em}
+.progress{font-family:var(--f-mono);font-size:12px;color:var(--ink2);white-space:pre-wrap}
+.checklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 14px;font-size:13px}
+.checklist div{display:flex;gap:8px;align-items:baseline}
+.mark-y{color:var(--ok);font-weight:700}.mark-n{color:var(--red);font-weight:700}
+.timeline{display:grid;gap:8px;font-size:13px;border-left:2px solid var(--hair);padding-left:14px;margin-left:4px;color:var(--ink2)}
+.timeline div{position:relative}
+.timeline div::before{content:"";position:absolute;left:-19px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--hair)}
+.timeline .ai::before{background:var(--oxblood)}.timeline .planner::before{background:var(--red)}.timeline .applicant::before{background:var(--ink)}
+.timeline time{font-family:var(--f-mono);font-size:11px;color:var(--ink3);margin-right:6px}
+.empty{padding:40px 22px;text-align:center;display:grid;gap:10px;justify-items:center}
+.empty h2{margin:0}
+.empty p{max-width:52ch;margin:0;color:var(--ink2)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--hair);vertical-align:top}
+th{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+tbody tr:nth-child(even) td{background:rgba(222,212,195,.35)}
+td .cite{white-space:nowrap}
+.conf-v{color:var(--ok)}.conf-n{color:var(--warn)}.conf-j{color:var(--oxblood)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink2)}
+.banner{margin-top:14px}
+details summary{list-style:none}
+details summary::-webkit-details-marker{display:none}
+footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink3)}
+@media (prefers-reduced-motion:no-preference){.corr{transition:opacity .2s}}
+.path{font-family:var(--f-mono);font-size:12px;color:var(--ink3);background:rgba(251,249,245,.6);border:1px solid rgba(255,255,255,.85);border-radius:999px;padding:3px 10px}
+.path b{color:var(--red);font-weight:500}
+.snip{display:block;width:100%;max-height:280px;object-fit:contain;background:#fff;border:1px solid var(--hair);border-radius:10px;cursor:zoom-in}
+.snip-cap{font-size:11px;color:var(--ink3);margin-top:4px;letter-spacing:.04em}
+.edu{font-size:13px;background:var(--sand2);border-radius:10px;padding:8px 12px;color:var(--ink2)}
+.edu b{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--oxblood);margin-right:6px}
+.replies{display:grid;gap:6px}
+.reply{font-size:13px;background:rgba(242,237,228,.7);border-radius:10px;padding:7px 10px;color:var(--ink2)}
+.reply .who{color:var(--ink);letter-spacing:.06em}
+.reply-form{display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:6px;align-items:start}
+@media (max-width:560px){.reply-form{grid-template-columns:minmax(0,1fr)}}
+.reply-form textarea{min-height:38px}
+.chg{border:1px solid var(--hair);border-left:3px solid var(--oxblood);border-radius:4px 12px 12px 4px;padding:12px 14px;display:grid;gap:8px;background:var(--glass-solid)}
+.chg.done{opacity:.55}
+.fs{display:grid;gap:12px;padding-top:4px}
+.fs>h3{margin:0;font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--ink3);display:flex;gap:10px;align-items:center}
+.fs>h3::after{content:"";flex:1;height:1px;background:var(--hair)}
+.chks{display:flex;flex-wrap:wrap;gap:6px}
+.chks label{display:inline-flex;gap:6px;align-items:center;font-size:13px;background:#fff;border:1px solid var(--hair);border-radius:999px;padding:5px 11px;cursor:pointer;letter-spacing:0;text-transform:none;font-weight:500;color:var(--ink)}
+.chks input{accent-color:var(--red);margin:0}
+.chks label:has(input:checked){border-color:var(--red);background:var(--red-soft)}
+.lightbox{position:fixed;inset:0;z-index:50;background:rgba(36,43,49,.78);display:grid;place-items:center;padding:24px;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:100%;background:#fff;border-radius:8px}
+.small{font-size:12px;color:var(--ink3)}
+.picker{display:grid;gap:12px}
+.appmain{display:grid;gap:4px;text-align:left;border:1.5px solid var(--hair);background:#fff;border-radius:16px;padding:16px 18px;cursor:pointer;color:var(--ink);transition:padding .2s}
+.appmain b{font-size:20px;font-weight:600;letter-spacing:-.025em}
+.appmain.on{border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+.appmain .kicker::after{display:none}
+.appmain.mini{padding:8px 14px;border-radius:999px;display:inline-flex;gap:10px;align-items:baseline;width:auto;justify-self:start}
+.appmain.mini b{font-size:14px}
+.appsel{display:grid;gap:4px;border:1.5px solid var(--red);box-shadow:0 0 0 3px var(--red-soft);background:#fff;border-radius:16px;padding:16px 18px}
+.appsel b{font-size:20px;font-weight:600;letter-spacing:-.025em}
+.appsel .kicker::after{display:none}
+.bubbles{display:grid;gap:10px}
+.bgroup{display:grid;gap:6px}
+.bubble{border:1px solid var(--hair);background:rgba(251,249,245,.9);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:500;cursor:pointer;color:var(--ink)}
+.bubble:hover{border-color:var(--red)}
+.bubble.on{background:var(--red);border-color:var(--red);color:#fff}
+.bubble:focus-visible,.appmain:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.chks input[type=radio]{accent-color:var(--red);margin:0}
+.bar{display:block;height:4px;border-radius:2px;background:var(--sand3);overflow:hidden;margin-top:2px}
+.bar span{display:block;height:100%;background:var(--ok)}
+.bar span.due{background:var(--warn)}.bar span.overdue{background:var(--red)}
+.brief{background:linear-gradient(135deg,rgba(214,235,232,.85),rgba(251,249,245,.9));border:1px solid rgba(255,255,255,.9);border-radius:16px;padding:14px 16px;display:grid;gap:8px}
+.brief.stale{opacity:.7}
+.brief .kicker::after{margin-top:6px}
+.brief-h{margin:0;font-size:16px;font-weight:600;letter-spacing:-.015em;color:var(--ink)}
+.brief-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;font-size:13.5px;color:var(--ink2)}
+.brief-cols ol,.brief-cols ul{margin:4px 0 0;padding-left:18px;display:grid;gap:3px}
+.bench{border:1px solid rgba(255,255,255,.9);background:rgba(251,249,245,.85);border-radius:16px;padding:12px 16px}
+.bench summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.bench-sum{font-size:14px;color:var(--ink2)}
+.bench-sum b{color:var(--ink)}
+.bench .bar{display:block}
+.num{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:700;padding:0 5px}
+a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
+.prio-critical{background:var(--red);color:#fff}.prio-major{background:var(--warn,#C98A1B);color:#fff}.prio-minor{background:var(--sand3);color:var(--ink2)}
+.prio{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;letter-spacing:.02em}
+.stats{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink2);margin:0 4px 10px}
+.stats b{color:var(--ink)}
+.ready{font-size:11px;font-weight:600;color:var(--ink2)}
+.ask{display:grid;gap:8px}.ask .row{display:flex;gap:8px}.ask input{flex:1;min-width:0}
+.qa{font-size:13.5px;border-left:3px solid var(--teal);padding:4px 0 4px 10px;display:grid;gap:3px}
+.qa .q{font-weight:600;color:var(--ink)}
+.src{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.disc{font-size:11px;font-weight:600;color:var(--ink2);margin:8px 0 4px;letter-spacing:.04em;text-transform:uppercase}
+#print{display:none}
+.who-sel{border:1px solid rgba(255,255,255,.85);background:rgba(251,249,245,.7);border-radius:999px;padding:7px 12px;font:600 13px Inter,system-ui,sans-serif;color:var(--ink);max-width:100%}
+.sheetwrap{position:relative;width:100%;background:#fff}
+.sheetwrap img{display:block;width:100%;height:auto;cursor:zoom-in}
+.sheet-main{aspect-ratio:auto!important;display:block!important}
+.mk{position:absolute;border:2.5px solid var(--red);border-radius:50%;pointer-events:none;box-sizing:border-box}
+.mkn{position:absolute;transform:translate(-30%,-70%);min-width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font:700 12px/22px Inter,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer;padding:0 4px}
+.mkn.on{background:var(--ink)}
+.thumbs button{position:relative}
+.tcount{position:absolute;top:3px;right:3px;background:var(--red);color:#fff;border-radius:999px;font:700 10px/16px Inter,sans-serif;min-width:16px;padding:0 4px;text-align:center}
+.num.go{cursor:pointer;background:var(--red);border:0;font-family:inherit}
+.home{display:grid;gap:18px;margin-top:18px}
+.deptgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.dcard{position:relative;text-align:left;align-content:start;border:1px solid rgba(255,255,255,.9);background:var(--glass-solid);border-radius:16px;padding:16px;display:grid;gap:6px;cursor:pointer;font:inherit;color:inherit}
+.dcard:hover,.dcard:focus-visible{border-color:var(--teal);outline:none}
+.dcard:not(.main) .go{color:var(--teal)}
+.dcard b{font-size:16px;letter-spacing:-.01em}
+.dcard.main{grid-column:1/-1;background:linear-gradient(120deg,rgba(246,220,216,.9),rgba(251,249,245,.95) 55%,rgba(214,235,232,.9));padding:22px}
+.dcard.main b{font-size:22px}
+.dcard .go{font-size:13px;font-weight:600;color:var(--red)}
+.tip{display:none;position:absolute;left:12px;right:12px;top:calc(100% - 6px);z-index:20;background:var(--ink);color:#fff;border-radius:12px;padding:14px;font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.dcard:hover .tip,.dcard:focus-visible .tip{display:block}
+.tip .row{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-top:8px}
+.tip .k{font-weight:700;color:#F6DCD8;white-space:nowrap}
+.adu-path{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.pathc{border:1px solid var(--hair);border-radius:14px;padding:14px;background:var(--glass-solid);display:grid;gap:8px}
+.steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.steps span{background:var(--sand2);border:1px solid var(--sand3);border-radius:999px;padding:3px 10px;font-weight:600}
+.steps i{color:var(--ink3);font-style:normal}
+.lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.lane{border:1px solid var(--hair);border-radius:14px;padding:10px;background:rgba(251,249,245,.6);display:grid;gap:8px;align-content:start}
+.lane h4{margin:0;font-size:13px;display:flex;justify-content:space-between;gap:6px;color:var(--teal-deep)}
+.lane{border-top:3px solid var(--teal)!important}
+.lane .qitem{background:var(--glass-solid);border-color:var(--sand3)}
+.searchbox{width:100%;margin-bottom:10px}
+.wl td,.wl th{white-space:nowrap}
+.lightbox[hidden],[hidden]{display:none!important}
+@media print{body>*:not(#print){display:none!important}#print{display:block;font:12pt/1.45 Inter,system-ui,sans-serif;color:#000;padding:0}
+#print h1{font-size:18pt;margin:0 0 4px}#print .it{break-inside:avoid;border-top:1px solid #999;padding:10px 0}#print img{max-width:60%;max-height:220px;display:block;margin:6px 0}}
+.acct-wrap{position:fixed;inset:0;z-index:60;background:rgba(36,43,49,.55);display:grid;place-items:center;padding:16px;overflow:auto}
+.acct{max-width:640px;width:100%;padding:24px;max-height:calc(100vh - 32px);overflow:auto;background:rgba(251,249,245,.96)}
+.rcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.rcards{grid-template-columns:minmax(0,1fr)}}
+.rcard{display:grid;gap:3px;border:1.5px solid var(--hair);border-radius:14px;padding:12px;background:#fff;cursor:pointer;font-size:12.5px;color:var(--ink2)}
+.rcard b{font-size:15px;color:var(--ink);letter-spacing:-.01em}
+.rcard input{position:absolute;opacity:0;pointer-events:none}
+.rcard.on{border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+.rcard:focus-within{outline:2px solid var(--red);outline-offset:2px}
+#whochip{cursor:pointer}
+#whochip.primary{background:var(--red);border-color:var(--red);color:#fff}
+.pilotbar{background:#242B31;color:#E9E1D4;font-size:12.5px;text-align:center;padding:7px 16px;position:relative;z-index:7}
+.pilotbar a{color:inherit;font-weight:600}
+.brandlogo{display:inline-flex}.brandlogo img{display:block;width:34px;height:34px}
+</style>
 <div class="bg" aria-hidden="true"><span class="orb a"></span><span class="orb b"></span><span class="orb c"></span></div>
-<div class="topline" aria-hidden="true"></div>
+<div class="pilotbar">Redline Permit pilot for Monrovia plan check. Not an official City of Monrovia website. <a href="/">redlinepermit.com</a></div>
+<div class="topline"></div>
 <header class="top"><div class="top-in">
-  <a class="brandwrap" href="../" aria-label="Redline Permit home"><img class="mark" src="../logo.svg" alt="" width="34" height="34"><span class="brand">Redline Permit</span></a>
-  <span class="city">redlinepermit.com/<b>monrovia</b></span>
-  <span class="spacer"></span>
-  <nav class="seg" aria-label="Sections"><a href="#start">Sign in</a><a href="#process">Process</a><a href="#departments">Departments</a><a href="#files">Files</a><a href="#codes">Codes</a></nav>
-  <a class="btn primary sm" href="https://claude.ai/artifact/77v1pAFrKurFUQpetxKeMk" target="_blank" rel="noopener">Open portal</a>
+  <a class="brandlogo" href="/" aria-label="Redline Permit home"><img src="../logo.svg" alt="" width="34" height="34"></a><div class="brand">Redline Permit</div>
+  <span class="path">redlinepermit.com/<b>monrovia</b></span>
+  <div class="city"><b>City of Monrovia</b> · plan check portal</div>
+  <div class="spacer"></div>
+  <button class="who-sel" id="whochip" type="button" hidden title="Your account"></button>
+  <label class="small" id="viewas" hidden for="who" style="display:flex;gap:8px;align-items:center;white-space:nowrap">View as
+    <select id="who" class="who-sel" aria-label="View as"></select></label>
 </div></header>
-<div class="wrap"><main>
-  <div class="hero" style="grid-template-columns:minmax(0,1fr)">
-    <div>
-      <div class="kicker">Monrovia · plan check pilot</div>
-      <h1>Monrovia plan check, <em>circled</em> and numbered.</h1>
-      <p class="sub">Submit a plan set from Google Drive or Dropbox. Redline does a first read against Title 24 and the Monrovia Municipal Code, a City reviewer decides every comment, and you see each correction clipped from your sheets.</p>
-      <div class="facts"><span><b>Building</b>, Planning, Public Works and Fire</span><span><b>Title 24</b> 2025 edition</span><span><b>MMC</b> Titles 12, 15 and 17</span></div>
-    </div>
-  </div>
 
-  <section id="start">
-    <div class="kicker">Sign in or sign up</div>
-    <h2>Two doors into the same record.</h2>
-    <div class="doors">
-      <div class="panel door app"><span class="dept" style="color:var(--red)">Applicants</span><h3>Owners, designers and contractors</h3>
-        <ul><li>Anyone can sign up with an email</li><li>Start an application by department</li><li>Answer each numbered correction and resubmit</li><li>See which round you're on and what's left before pickup</li></ul>
-        <div class="acts"><a class="btn primary" href="https://claude.ai/artifact/77v1pAFrKurFUQpetxKeMk" target="_blank" rel="noopener">Sign up or sign in</a></div></div>
-      <div class="panel door rev"><span class="dept">City staff</span><h3>Plan reviewers and admins</h3>
-        <ul><li>Reviewer accounts need a @monroviaca.gov email</li><li>Each reviewer sees their own department queue</li><li>Approve, edit or reject every AI comment</li><li>Admins assign files and approve staff accounts</li></ul>
-        <div class="acts"><a class="btn" href="https://claude.ai/artifact/77v1pAFrKurFUQpetxKeMk" target="_blank" rel="noopener">Staff sign-in</a></div></div>
-    </div>
-    <p class="small" style="margin-top:12px">The portal opens on Claude, which hosts the pilot; you'll sign in to a free Claude account. During the pilot, new accounts are added by Redline Permit. Not set up yet? <a href="../#contact">Request access</a>.</p>
-  </section>
+<main class="wrap">
+  <div class="hero" id="hero"><div class="kicker">Redline Permit · Monrovia pilot</div>
+    <h1>Plan check without the back-and-forth.</h1>
+    <p>Owners and designers submit the plan set once. Redline does the first read against Monrovia's codes and clips each issue straight from the sheets. Reviewers decide every comment, right in the portal.</p></div>
+  <div id="banner" class="banner"></div>
+  <div id="acctbar" class="banner"></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-home" aria-selected="true">Home</button>
+    <button role="tab" id="tab-projects" aria-selected="false">Projects</button>
+    <button role="tab" id="tab-city" aria-selected="false">City code profile</button>
+    <button role="tab" id="tab-how" aria-selected="false">How it works</button>
+    <button role="tab" id="tab-accounts" aria-selected="false" hidden>Accounts</button>
+  </nav>
 
-  <section id="process">
-    <div class="kicker">How a plan set moves</div>
-    <h2>Eight stages, one shared record.</h2>
-      <div class="panel" style="margin-top:18px">
-        <div class="rail" role="list" aria-label="Example project at round 2">
-          <div class="stage done" role="listitem"><b>Submit</b><span class="who">Applicant</span></div>
-          <div class="stage done" role="listitem"><b>AI first read</b><span class="who">Redline</span></div>
-          <div class="stage done" role="listitem"><b>City review</b><span class="who">Reviewer</span></div>
-          <div class="stage now" role="listitem"><b>Corrections</b><span class="who">Applicant</span><span class="round">Round 2</span><span class="rounds"><i></i><i class="cur"></i></span></div>
-          <div class="stage" role="listitem"><b>Resubmit &amp; recheck</b><span class="who">Both</span><span class="loop">Loops until clean</span></div>
-          <div class="stage" role="listitem"><b>Plan check approved</b><span class="who">Reviewer</span></div>
-          <div class="stage" role="listitem"><b>Other agencies</b><span class="who">Applicant</span></div>
-          <div class="stage" role="listitem"><b>Permit pickup</b><span class="who">City</span></div>
+  <section id="view-home"></section>
+  <section id="view-projects" hidden>
+    <div class="rail" id="rail" aria-label="Review stages"></div>
+    <div class="grid">
+      <aside class="panel queue">
+        <h3 id="queue-title">My applications</h3>
+        <div id="queue"></div>
+        <div style="margin-top:10px;display:grid;gap:8px">
+          <button class="btn full" id="btn-new">+ New application</button>
+          <button class="btn full" id="btn-bulk" hidden>+ Bulk add old files</button>
+          <button class="btn full" id="btn-import" hidden>+ Add one permit</button>
         </div>
-        <div class="people">
-          <div class="person"><span class="role">Owner</span><b>Property owner</b><span>Sees status and rounds</span></div>
-          <div class="person"><span class="role">Designer</span><b>Architect or designer</b><span>Gets every numbered comment</span></div>
-          <div class="person"><span class="role">Applicant</span><b>Who submits</b><span>Uploads and resubmits</span></div>
-          <div class="person"><span class="role">Reviewer</span><b>City plan checker</b><span>Approves every comment</span></div>
-        </div>
-      </div>
-
-  </section>
-    <section id="departments">
-      <div class="kicker">One portal, every department</div>
-      <h2>Each application goes to the right desk, with its own reviewer.</h2>
-      <div class="deptgrid">
-        <div class="dcard main"><span class="dept">Building &amp; Safety · most applications start here</span><b>Building plan check</b>
-          <span>New homes, ADUs, additions, remodels, multifamily and commercial. One short form, a PDF from Google Drive or Dropbox, and every comment comes back clipped from the sheets and numbered.</span>
-          <span class="go">AI first read in minutes, not weeks →</span></div>
-        <div class="dcard" tabindex="0"><span class="dept">Planning</span><b>Planning</b><span class="small">Zoning review before plan check: larger ADUs, design review, Planning Commission.</span><span class="hint">Hover: which ADU path?</span>
-          <span class="tip"><b>Which Planning path is an ADU?</b>
-            <span class="row"><span class="k">800 sf or less</span><span>Planning takes a quick look at setbacks, height and location, then it goes straight to Building plan check.</span>
-            <span class="k">Over 800 sf</span><span>Full Planning review first, under the state 60-day clock. Plan check starts after Planning signs off.</span></span></span></div>
-        <div class="dcard"><span class="dept">Public Works</span><b>Public Works</b><span class="small">Work in the street or parkway, utilities, grading and drainage.</span></div>
-        <div class="dcard"><span class="dept">Fire</span><b>Fire</b><span class="small">Sprinklers, alarms, access and operational permits.</span></div>
-        <div class="dcard"><span class="dept">City</span><b>City permits</b><span class="small">Special events, filming and other city-issued permits.</span></div>
-      </div>
-    </section>
-
-  <section id="files">
-    <div class="kicker">Files and records</div>
-    <h2>Your drawings stay in your Drive. Redline keeps the record.</h2>
-    <p class="sub">The portal reads the plan set where it already lives and keeps only what the review needs: clips, the sheet index, comments and the permit history.</p>
-    <div class="panel flow"><svg viewBox="0 0 900 230" role="img" aria-label="Plan set PDF stays in Google Drive or Dropbox; Redline reads it, keeps clips, sheet index, comments and the permit record, and sends corrections to the applicant and reviewer">
-  <g font-family="Inter, sans-serif">
-    <rect x="10" y="40" width="210" height="150" rx="16" fill="var(--glass-solid)" stroke="var(--hair)"/>
-    <text x="30" y="72" font-size="12" font-weight="700" letter-spacing="2" fill="var(--ink3)">YOUR STORAGE</text>
-    <text x="30" y="102" font-size="17" font-weight="600" fill="var(--ink)">Google Drive</text>
-    <text x="30" y="128" font-size="17" font-weight="600" fill="var(--ink)">or Dropbox</text>
-    <rect x="30" y="146" width="62" height="26" rx="5" fill="var(--red)"/><text x="61" y="164" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">PDF</text>
-    <text x="102" y="164" font-size="12" fill="var(--ink2)">stays here</text>
-    <path d="M226 115 H330" stroke="var(--teal)" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ar)"/>
-    <text x="278" y="104" font-size="11" fill="var(--ink2)" text-anchor="middle">read only</text>
-    <rect x="336" y="20" width="250" height="190" rx="16" fill="var(--glass-solid)" stroke="var(--red)" stroke-width="1.5"/>
-    <text x="356" y="52" font-size="12" font-weight="700" letter-spacing="2" fill="var(--red)">REDLINE KEEPS</text>
-    <g font-size="14" fill="var(--ink)"><text x="356" y="82">Sheet index and thumbnails</text><text x="356" y="108">A clip of each clouded spot</text><text x="356" y="134">Extracted text and notes</text><text x="356" y="160">Comments, rounds, approvals</text><text x="356" y="186">The permit record</text></g>
-    <path d="M592 80 H690" stroke="var(--ink2)" stroke-width="2" marker-end="url(#ar2)"/><path d="M592 150 H690" stroke="var(--ink2)" stroke-width="2" marker-end="url(#ar2)"/>
-    <rect x="696" y="34" width="194" height="76" rx="14" fill="var(--red-soft)"/><text x="714" y="64" font-size="15" font-weight="600" fill="var(--ink)">Applicant</text><text x="714" y="88" font-size="12.5" fill="var(--ink2)">numbered corrections</text>
-    <rect x="696" y="120" width="194" height="76" rx="14" fill="var(--teal-soft)"/><text x="714" y="150" font-size="15" font-weight="600" fill="var(--ink)">Plan reviewer</text><text x="714" y="174" font-size="12.5" fill="var(--ink2)">queue, clips, code cites</text>
-  </g>
-  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--teal)"/></marker>
-  <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink2)"/></marker></defs>
-</svg>
-<div class="legend2"><span><i style="background:var(--red)"></i>The full PDF is never copied to Redline</span><span><i style="background:var(--teal)"></i>About 1–2 MB kept per project instead of 50–200 MB</span></div></div>
+      </aside>
+      <div class="panel" id="workspace"></div>
+    </div>
   </section>
 
-  <section id="codes">
-    <div class="kicker">Monrovia code profile</div>
-    <h2>The codes every Monrovia comment cites.</h2>
-    <p class="sub">State codes are the 2025 California Building Standards Code, which Monrovia adopts with local amendments in MMC Chapter 15.04. Each row opens the source.</p>
-    <div class="codetable"><div class="codeg"><h3>California Building Standards Code (Title 24) · 2025 edition, effective Jan 1, 2026</h3><a class="coderow" href="https://www.dgs.ca.gov/BSC/Codes" target="_blank" rel="noopener"><span class="cite">Part 1</span><b>California Administrative Code</b><small>How the codes are adopted and enforced</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 2</span><b>California Building Code (CBC)</b><small>Commercial, multifamily over 2 units, mixed use; accessibility (Ch. 11A/11B)</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 2.5</span><b>California Residential Code (CRC)</b><small>Houses, duplexes, townhomes and ADUs up to 3 stories</small></a><a class="coderow" href="https://www.dgs.ca.gov/BSC/Codes" target="_blank" rel="noopener"><span class="cite">Part 3</span><b>California Electrical Code (CEC)</b><small>Wiring, panels, GFCI/AFCI, EV and battery-ready circuits</small></a><a class="coderow" href="https://epubs.iapmo.org/" target="_blank" rel="noopener"><span class="cite">Part 4</span><b>California Mechanical Code (CMC)</b><small>HVAC, ducts, exhaust, dryer vents</small></a><a class="coderow" href="https://epubs.iapmo.org/" target="_blank" rel="noopener"><span class="cite">Part 5</span><b>California Plumbing Code (CPC)</b><small>Water, waste, gas piping, water heaters, fixtures</small></a><a class="coderow" href="https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards" target="_blank" rel="noopener"><span class="cite">Part 6</span><b>California Energy Code</b><small>Title 24 energy compliance, insulation, electric-ready, solar</small></a><a class="coderow" href="https://www.dgs.ca.gov/BSC/Codes" target="_blank" rel="noopener"><span class="cite">Part 8</span><b>California Historical Building Code</b><small>Alternative rules for qualified historic buildings</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 9</span><b>California Fire Code (CFC)</b><small>Fire access, hydrants, sprinklers, alarms</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 10</span><b>California Existing Building Code</b><small>Alterations, additions and changes of use in existing buildings</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 11</span><b>CALGreen</b><small>Green building mandatory measures, EV charging, water use</small></a><a class="coderow" href="https://www.dgs.ca.gov/BSC/Codes" target="_blank" rel="noopener"><span class="cite">Part 12</span><b>California Referenced Standards Code</b><small>Standards the other parts point to</small></a></div><div class="codeg"><h3>State law the City must apply</h3><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=66314" target="_blank" rel="noopener"><span class="cite">Gov. Code 66310–66342</span><b>ADU and JADU law</b><small>Size, setbacks, height, parking; 60-day approval clock (66317)</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=65852.21" target="_blank" rel="noopener"><span class="cite">Gov. Code 65852.21 / 66411.7</span><b>SB 9</b><small>Two units per lot and urban lot splits in single-family zones</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=65589.5" target="_blank" rel="noopener"><span class="cite">Gov. Code 65589.5</span><b>Housing Accountability Act</b><small>Objective standards only for housing projects</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=65941.1" target="_blank" rel="noopener"><span class="cite">Gov. Code 65905.5 / 65941.1</span><b>SB 330 (Housing Crisis Act)</b><small>Preliminary applications, limit of 5 hearings, vested rules</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=65920" target="_blank" rel="noopener"><span class="cite">Gov. Code 65920 et seq.</span><b>Permit Streamlining Act</b><small>Deadlines for completeness and decisions</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=HSC&amp;sectionNum=17958" target="_blank" rel="noopener"><span class="cite">Health &amp; Safety Code 17958</span><b>State Housing Law</b><small>Local amendments must be reasonably necessary and filed with the state</small></a></div><div class="codeg"><h3>Monrovia Municipal Code</h3><a class="coderow" href="https://codelibrary.amlegal.com/codes/monrovia" target="_blank" rel="noopener"><span class="cite">Title 15</span><b>Buildings and Construction</b><small>15.04 codes adopted and local amendments · 15.08 building security · 15.20 fire code · 15.28 grading</small></a><a class="coderow" href="https://codelibrary.amlegal.com/codes/monrovia" target="_blank" rel="noopener"><span class="cite">Title 17</span><b>Zoning</b><small>17.12 residential zones · 17.24 parking · 17.44 special uses incl. ADUs · 17.52 administration</small></a><a class="coderow" href="https://codelibrary.amlegal.com/codes/monrovia" target="_blank" rel="noopener"><span class="cite">Title 12</span><b>Streets, Sidewalks and Public Places</b><small>Encroachments, driveway approaches, work in the right-of-way</small></a></div></div>
-  </section>
+  <section id="view-city" hidden></section>
+  <section id="view-how" hidden></section>
+  <section id="view-accounts" hidden></section>
+  <footer class="foot"><span>redlinepermit.com/monrovia · Redline Permit pilot · not an official City of Monrovia website</span><span>v0.4 · drawings stay in your Google Drive or Dropbox; Redline keeps only clips</span></footer>
 </main>
-<footer class="foot"><span>redlinepermit.com/monrovia · © 2026 Redline Permit</span><span>Pilot portal · not an official City of Monrovia website</span></footer>
-</div>
+<div id="acct" class="acct-wrap" hidden><div class="panel acct" role="dialog" aria-modal="true" aria-labelledby="acct-h" id="acct-body"></div></div>
+<div id="lightbox" class="lightbox" hidden><img alt="Enlarged clip" id="lightbox-img"></div>
+<div id="print"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="rp-backend.js"></script>
+<script>
+/* ---------- Monrovia jurisdiction profile (redline-city-codes skill) ---------- */
+const CITY = {
+  slug:"monrovia", name:"City of Monrovia", county:"Los Angeles County",
+  cycle:"2025 California Building Standards Code (Title 24), effective Jan 1, 2026 — confirm local adoption in MMC 15.04",
+  intake:"Today: plan submittals are emailed to building@monroviaca.gov with two forms (Plan Review Application and Permit Application) that repeat most fields.",
+  depts:[
+    {d:"Building & Safety", checks:"CRC/CBC, CEC, CMC, CPC, Title 24 energy, CALGreen", where:"MMC Title 15, Ch. 15.04 Codes Adopted", contact:"415 S. Ivy Ave · 626-932-5581 · building@monroviaca.gov"},
+    {d:"Planning", checks:"Zoning, setbacks, height, FAR, parking, ADU, SB 9, neighborhood compatibility, historic", where:"MMC Title 17 (17.12 Residential, 17.24 Parking, 17.44 Special Uses, 17.52 Administration)", contact:"Planning Division · 626-932-5565"},
+    {d:"Fire", checks:"CFC, sprinklers, access, hydrants, fire hazard zone construction", where:"MMC Ch. 15.20 Fire Code · Monrovia Fire & Rescue", contact:"Fire Station 101, 141 E. Lemon Ave · 626-256-8181"},
+    {d:"Police", checks:"Building security: doors, locks, lighting, glazing near locks", where:"MMC Ch. 15.08 Building Security", contact:"Routed through Building & Safety"},
+    {d:"Public Works", checks:"Grading, erosion control, drainage/LID, undergrounding, driveway approaches", where:"MMC 15.28 Grading, 15.36 Undergrounding, Title 12 Streets", contact:"Engineering Division"}
+  ],
+  rules:[
+    {id:"MON-Z-01",dept:"Planning",section:"MMC 17.12.020",req:"Side yards: both sides combined at least 24% of lot width, 5 ft minimum each side; second story 12 ft (RF/RE/RL).",look:"Site plan dimensions to property lines",conf:"needs-verification"},
+    {id:"MON-Z-02",dept:"Planning",section:"MMC 17.12.020",req:"Rear yard: RE 25% of lot depth (20 ft min); RL 20% of lot depth (20 ft min); second story adds 10 ft.",look:"Site plan, lot depth",conf:"needs-verification"},
+    {id:"MON-Z-03",dept:"Planning",section:"MMC 17.12.020",req:"Two stories max; 27 ft height if lot under 75 ft wide, 30 ft if 75 ft or wider.",look:"Elevations, building sections, lot width on site plan",conf:"needs-verification"},
+    {id:"MON-Z-04",dept:"Planning",section:"MMC 17.12.010",req:"RF zone: 15,000 sf minimum lot; FAR 35% of first 20,000 sf of net lot area plus 10% of remainder.",look:"Project data table, area calcs",conf:"needs-verification"},
+    {id:"MON-Z-05",dept:"Planning",section:"MMC Ch. 17.24",req:"Off-street parking per use; show stall count, dimensions and garage interior clear size.",look:"Site plan, project data",conf:"needs-verification"},
+    {id:"MON-Z-06",dept:"Planning",section:"MMC 17.52.120",req:"Neighborhood compatibility review where triggered (second stories, large additions).",look:"Streetscape, massing, worksheet",conf:"planner-judgment"},
+    {id:"MON-Z-07",dept:"Planning",section:"MMC Ch. 17.20",req:"Landscaping and tree preservation, including protected oak trees; show trees and driplines.",look:"Site plan, landscape plan",conf:"planner-judgment"},
+    {id:"MON-ADU-01",dept:"Planning",section:"MMC 17.44 / Gov. Code §66314 et seq.",req:"ADU: 4 ft side and rear setbacks; size, height and parking limits per state ADU law; city cannot be stricter than state law.",look:"Site plan setbacks, ADU floor area, elevations",conf:"needs-verification"},
+    {id:"MON-ADU-02",dept:"Planning",section:"Gov. Code §66317",req:"City must act on a complete ADU application within 60 days.",look:"Process timer",conf:"verified"},
+    {id:"MON-B-01",dept:"Building",section:"CRC R310",req:"Every sleeping room needs a compliant emergency escape and rescue opening; show size and sill height.",look:"Floor plans, window schedule",conf:"verified"},
+    {id:"MON-B-02",dept:"Building",section:"CRC R302",req:"Fire-resistant construction: dwelling-garage separation, unit separation for attached ADU, rated assemblies called out.",look:"Floor plans, sections, wall types",conf:"verified"},
+    {id:"MON-B-03",dept:"Building",section:"CRC R311.7",req:"Stairways: width, riser/tread, headroom, handrails and guards dimensioned.",look:"Sections, stair details",conf:"verified"},
+    {id:"MON-B-04",dept:"Building",section:"Title 24 Part 6",req:"Energy compliance documentation (CF1R) printed on the plans and signed.",look:"T-sheets / energy sheet",conf:"verified"},
+    {id:"MON-B-05",dept:"Building",section:"Title 24 Part 11 (CALGreen)",req:"CALGreen residential mandatory measures checklist on plans.",look:"General notes / green sheet",conf:"verified"},
+    {id:"MON-B-06",dept:"Building",section:"CRC R301 / structural",req:"Structural sheets and calculations stamped by a licensed engineer where conventional framing does not apply.",look:"S-sheets, calc package",conf:"verified"},
+    {id:"MON-F-01",dept:"Fire",section:"MMC 15.20 / CRC R337",req:"In a Very High Fire Hazard Severity Zone, ignition-resistant construction (roof, vents, eaves, glazing, decking) must be specified.",look:"Site plan FHSZ note, roof plan, details",conf:"needs-verification"},
+    {id:"MON-F-02",dept:"Fire",section:"MMC 15.20 / CFC",req:"Fire sprinkler requirement noted (new dwellings; ADU only if the primary dwelling is sprinklered).",look:"General notes, cover sheet",conf:"needs-verification"},
+    {id:"MON-P-01",dept:"Police",section:"MMC Ch. 15.08",req:"Building security: deadbolts, strike plates, exterior lighting at entries, glazing near locks.",look:"Door schedule, electrical plan",conf:"needs-verification"},
+    {id:"MON-PW-01",dept:"Public Works",section:"MMC Ch. 15.28",req:"Grading and drainage plan, erosion control and LID where grading or new impervious area triggers it.",look:"Grading/drainage sheet, site plan",conf:"needs-verification"},
+    {id:"MON-C-01",dept:"Building",section:"Plan Review Application",req:"Completeness: cover sheet with scope, valuation, APN, occupancy; site plan; floor plans; elevations; sections; structural; energy.",look:"Sheet index",conf:"verified"}
+  ],
+  sources:[
+    ["Monrovia Municipal Code (American Legal)","https://codelibrary.amlegal.com/codes/monrovia"],
+    ["Monrovia code index (third-party, chapter list)","https://gocodebook.com/library/us/ca/monrovia-zoning"],
+    ["Residential standards summary (third-party — verify)","https://gocodebook.com/us/california/monrovia/development-standards"],
+    ["Plan Review Application form","https://monroviaca.gov/home/showpublisheddocument/32422/638282087470370000"],
+    ["Permit Application form","https://monroviaca.gov/home/showpublisheddocument/32424/638282087793170000"],
+    ["ADU forms and resources","https://www.monroviaca.gov/your-government/community-development/planning/accessory-dwelling-units/adu-forms-and-resources"]
+  ]
+};
+/* Standard notes checklist: the items plan checkers ask for on almost every residential set.
+   Built from Redline Test 01, where most misses were missing standard notes. Checked by text search, instantly, no AI call. */
+const STD_NOTES = [
+  {id:"SN-01",dept:"Building",section:"BPC 5536.1",note:"All sheets signed by the design professional in charge.",keys:["signature","signed by","wet stamp","digitally signed"]},
+  {id:"SN-02",dept:"Building",section:"CBC 1206 / CRC R302.3",note:"STC 50 / IIC 50 assembly between the dwelling and the attached unit.",keys:["stc 50","stc-50","stc of 50","stc rating of 50","iic 50"],when:/attached|jadu|duplex|multifamily|sb 9/i},
+  {id:"SN-03",dept:"Building",section:"CRC R807.1",note:"Attic access 22 in × 30 in minimum, location shown.",keys:["attic access","r807","22\" x 30","22x30","22\"x30"]},
+  {id:"SN-04",dept:"Building",section:"CRC R308.4",note:"Safety (tempered) glazing at hazardous locations: tubs, showers, doors, near floors.",keys:["tempered","safety glazing","r308"]},
+  {id:"SN-05",dept:"Building",section:"CRC R314 / R315",note:"Smoke and carbon monoxide alarms, hard-wired and interconnected.",keys:["smoke alarm","smoke detector","carbon monoxide","r314","r315"]},
+  {id:"SN-06",dept:"Building",section:"CRC R327 (age-in-place)",note:"Grab-bar backing at toilet, tub and shower; switches and receptacles 15–48 in above floor.",keys:["grab bar","grab-bar","r327","blocking for future"]},
+  {id:"SN-07",dept:"Building",section:"CRC R401.3",note:"Grade slopes away from foundation (5% for 10 ft, 2% at hardscape); no cross-lot drainage.",keys:["r401.3","cross-lot","cross lot","slope away"]},
+  {id:"SN-08",dept:"Building",section:"Title 24 Part 6 / CRRC",note:"Roof covering with ICC-ES report, Class rating and cool-roof CRRC product ID.",keys:["crrc","cool roof","esr-"]},
+  {id:"SN-09",dept:"Building",section:"CALGreen 4.506.1",note:"Bathroom exhaust fans ENERGY STAR, ducted outside, with humidity control.",keys:["humidistat","humidity control","4.506"]},
+  {id:"SN-10",dept:"Building",section:"CALGreen 4.106.4",note:"EV-ready raceway and 40 A, 208/240 V branch circuit at the parking space.",keys:["ev ready","ev-ready","ev capable","4.106.4","electric vehicle"],when:/sfr|single-family|new|sb 9|addition|garage/i},
+  {id:"SN-11",dept:"Building",section:"Energy Code 150.0(k)",note:"Vacancy/occupancy sensors in baths, laundry, garage and closets; high-efficacy exterior lighting with photocell or motion sensor.",keys:["vacancy sensor","occupancy sensor","150.0(k)"]},
+  {id:"SN-12",dept:"Building",section:"Energy Code 150.0(n),(s)–(v)",note:"Electric-ready notes: heat pump water heater, cooktop, clothes dryer, heat pump space heating, and ESS-ready panel space.",keys:["electric ready","electric-ready","heat pump ready","150.0(t)","150.0(u)","150.0(v)","150.0(s)","ess ready","battery ready"]},
+  {id:"SN-13",dept:"Building",section:"Energy Code 150.0(o)",note:"Kitchen range hood and whole-house ventilation per ASHRAE 62.2, with CFM.",keys:["150.0(o)","62.2","range hood"]},
+  {id:"SN-14",dept:"Building",section:"Energy Code 150.0(j) / CPC 609.11",note:"Insulate hot water piping.",keys:["pipe insulation","insulate all hot","609.11","150.0(j)"]},
+  {id:"SN-15",dept:"Building",section:"CMC 504.4",note:"Dryer exhaust 4 in smooth metal duct, 14 ft max with two 90° bends, backdraft damper, terminated outside.",keys:["504.4","dryer duct","dryer exhaust","dryer vent"]},
+  {id:"SN-16",dept:"Building",section:"CMC 501 / 504",note:"Environmental air ducts terminate outside, 3 ft from openings, with backdraft dampers.",keys:["backdraft","back-draft","back draft"]},
+  {id:"SN-17",dept:"Building",section:"CEC 210.8 / 210.12",note:"GFCI and AFCI protection as required (kitchen, baths, laundry, outdoors, bedrooms).",keys:["gfci","afci","210.8","210.12"]},
+  {id:"SN-18",dept:"Building",section:"CEC 406.9",note:"Outdoor receptacles weather-resistant with in-use covers.",keys:["in-use cover","in use cover","weather-resistant","weather resistant","406.9"]},
+  {id:"SN-19",dept:"Building",section:"CEC 230.67",note:"Surge-protective device at the dwelling service.",keys:["surge","230.67","spd"]},
+  {id:"SN-20",dept:"Building",section:"CPC 408.3",note:"Pressure-balance or thermostatic mixing valves at showers and tubs.",keys:["pressure balance","pressure-balance","thermostatic","anti-scald","408.3"]},
+  {id:"SN-21",dept:"Building",section:"CPC 402.5",note:"Water closet 30 in clear width and 24 in clear in front.",keys:["402.5","24\" clear","30\" clear","clear space in front"]},
+  {id:"SN-22",dept:"Building",section:"CPC 408.6",note:"Shower receptor 1,024 sq in min (30 in circle), nonabsorbent walls to 72 in, door swings out.",keys:["1,024","1024","408.6","nonabsorbent","non-absorbent"]}
+];
+/* Codes in force for Monrovia plan check. State codes are the 2025 California Building Standards Code (Title 24), effective Jan 1, 2026; Monrovia adopts them with local amendments in MMC Ch. 15.04. */
+const BSC="https://www.dgs.ca.gov/BSC/Codes", ICC="https://codes.iccsafe.org/codes/california", IAPMO="https://epubs.iapmo.org/", CEC_E="https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards", MMC="https://codelibrary.amlegal.com/codes/monrovia", LEG=(c,s)=>`https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=${c}&sectionNum=${s}`;
+const CODES = [
+  {g:"California Building Standards Code (Title 24) · 2025 edition, effective Jan 1, 2026", rows:[
+    ["Part 1","California Administrative Code","How the codes are adopted and enforced",BSC],
+    ["Part 2","California Building Code (CBC)","Commercial, multifamily over 2 units, mixed use; accessibility (Ch. 11A/11B)",ICC],
+    ["Part 2.5","California Residential Code (CRC)","Houses, duplexes, townhomes and ADUs up to 3 stories",ICC],
+    ["Part 3","California Electrical Code (CEC)","Wiring, panels, GFCI/AFCI, EV and battery-ready circuits",BSC],
+    ["Part 4","California Mechanical Code (CMC)","HVAC, ducts, exhaust, dryer vents",IAPMO],
+    ["Part 5","California Plumbing Code (CPC)","Water, waste, gas piping, water heaters, fixtures",IAPMO],
+    ["Part 6","California Energy Code","Title 24 energy compliance, insulation, electric-ready, solar",CEC_E],
+    ["Part 8","California Historical Building Code","Alternative rules for qualified historic buildings",BSC],
+    ["Part 9","California Fire Code (CFC)","Fire access, hydrants, sprinklers, alarms",ICC],
+    ["Part 10","California Existing Building Code","Alterations, additions and changes of use in existing buildings",ICC],
+    ["Part 11","CALGreen","Green building mandatory measures, EV charging, water use",ICC],
+    ["Part 12","California Referenced Standards Code","Standards the other parts point to",BSC]]},
+  {g:"State law the City must apply", rows:[
+    ["Gov. Code 66310–66342","ADU and JADU law","Size, setbacks, height, parking; 60-day approval clock (66317)",LEG("GOV","66314")],
+    ["Gov. Code 65852.21 / 66411.7","SB 9","Two units per lot and urban lot splits in single-family zones",LEG("GOV","65852.21")],
+    ["Gov. Code 65589.5","Housing Accountability Act","Objective standards only for housing projects",LEG("GOV","65589.5")],
+    ["Gov. Code 65905.5 / 65941.1","SB 330 (Housing Crisis Act)","Preliminary applications, limit of 5 hearings, vested rules",LEG("GOV","65941.1")],
+    ["Gov. Code 65920 et seq.","Permit Streamlining Act","Deadlines for completeness and decisions",LEG("GOV","65920")],
+    ["Health & Safety Code 17958","State Housing Law","Local amendments must be reasonably necessary and filed with the state",LEG("HSC","17958")]]},
+  {g:"Monrovia Municipal Code", rows:[
+    ["Title 15","Buildings and Construction","15.04 codes adopted and local amendments · 15.08 building security · 15.20 fire code · 15.28 grading",MMC],
+    ["Title 17","Zoning","17.12 residential zones · 17.24 parking · 17.44 special uses incl. ADUs · 17.52 administration",MMC],
+    ["Title 12","Streets, Sidewalks and Public Places","Encroachments, driveway approaches, work in the right-of-way",MMC]]}
+];
+const COL = `cities/${CITY.slug}/projects`;
+const STORES = {drive:"Google Drive", dropbox:"Dropbox"};
+const storeOf = url => /dropbox\.com/i.test(url||"") ? "dropbox" : /(drive|docs)\.google\.com/i.test(url||"") ? "drive" : null;
+const DISC = {G:"General",A:"Architectural",S:"Structural",M:"Mechanical",E:"Electrical",P:"Plumbing",T:"Energy",C:"Civil",L:"Landscape",F:"Fire",X:"Other"};
+const PRIO = {critical:0, major:1, minor:2};
+/* Code citations open the source. Municipal code at American Legal, state statutes at leginfo, model codes at the publisher. */
+function codeUrl(sec){
+  const s=String(sec||"");
+  let m;
+  if(/MMC|Monrovia/i.test(s)) return "https://codelibrary.amlegal.com/codes/monrovia";
+  if((m=s.match(/Gov\.?\s*Code\s*§?\s*(\d+(?:\.\d+)?)/i))) return `https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=${m[1]}`;
+  if((m=s.match(/BPC\s*§?\s*(\d+(?:\.\d+)?)/i))) return `https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=${m[1]}`;
+  if(/CPC|CMC/i.test(s)) return "https://epubs.iapmo.org/";
+  if(/Energy|Title 24 Part 6|150\.0/i.test(s)) return "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards";
+  if(/CRC|CBC|CFC|CALGreen|Title 24|R\d{3}/i.test(s)) return "https://codes.iccsafe.org/codes/california";
+  if(/CEC/i.test(s)) return "https://www.dgs.ca.gov/BSC/Codes";
+  return "";
+}
+const citeHtml = sec => { const u=codeUrl(sec); return u?`<a class="cite" href="${esc(u)}" target="_blank" rel="noopener" title="Open the code">${esc(sec)}</a>`:`<span class="cite">${esc(sec)}</span>`; };
+const COMPLETENESS = ["Cover sheet with scope & APN","Site plan","Floor plans","Elevations","Building sections","Structural sheets","Energy (Title 24) sheets","CALGreen checklist"];
+const DEPTS = ["Planning","Building","Fire","Police","Public Works"];
+/* Application types from monroviaca.gov (Permits & Applications, Planning Forms & Fees, Public Works Applications & Permits).
+   target = Redline's suggested review target in calendar days; ADU 60 days is state law (Gov. Code 66317). */
+const APPS = [
+  {id:"plancheck", dept:"Building", name:"Building plan check", main:true, target:30, desc:"New homes, ADUs, additions, remodels, multifamily and commercial buildings."},
+  {id:"mep", dept:"Building", name:"Mechanical, electrical & plumbing", target:5, desc:"Stand-alone MEP work: panel upgrades, HVAC, water heaters, solar, EV chargers.", chips:["Electrical panel","HVAC change-out","Water heater","Solar/PV","Battery","EV charger","Re-pipe","Sewer line"]},
+  {id:"adu-app", dept:"Planning", name:"ADU application", target:60, desc:"Planning review of an accessory dwelling unit before or alongside plan check.", chips:["Detached ADU","Attached ADU","Garage conversion","JADU","Pre-approved plan"]},
+  {id:"drc", dept:"Planning", name:"Development Review Committee", target:30, desc:"Design and site review for projects that need DRC approval.", chips:["Neighborhood compatibility","Hillside","Historic","Minor exception","Variance","Lot split / SB 9"]},
+  {id:"pc", dept:"Planning", name:"Planning Commission", target:60, desc:"Applications heard by the Planning Commission.", chips:["Conditional use permit","Variance","Zone change","Tentative map","Specific plan"]},
+  {id:"dining", dept:"Planning", name:"Outdoor dining", target:15, desc:"Sidewalk or private-property outdoor dining."},
+  {id:"entertain", dept:"Planning", name:"Outdoor entertainment", target:15, desc:"Live music or entertainment outdoors at a business."},
+  {id:"encroach", dept:"Public Works", name:"Encroachment permit", target:10, desc:"Work in the public right-of-way.", chips:["Driveway approach","Curb & gutter","Sidewalk","Utility trench","Sewer lateral","Dumpster / bin","Street closure"]},
+  {id:"pw-construct", dept:"Public Works", name:"Construction permit", target:10, desc:"Public improvements built by a private contractor."},
+  {id:"transport", dept:"Public Works", name:"Transportation permit", target:5, desc:"Oversize or overweight loads on City streets."},
+  {id:"hydrant", dept:"Public Works", name:"Hydrant flow test", target:5, desc:"City witness of a contractor's hydrant flow test."},
+  {id:"water-svc", dept:"Public Works", name:"Water service change-out", target:10, desc:"New, upsized or relocated water service or meter."},
+  {id:"fire", dept:"Fire", name:"Fire Department permit", target:15, desc:"Fire systems and operational permits.", chips:["Fire sprinklers","Fire alarm","Hood & duct suppression","Underground fire line","Operational permit","Tent / event"]},
+  {id:"event", dept:"City", name:"Special event", target:30, desc:"Events on public property or that affect streets."},
+  {id:"film", dept:"City", name:"Film permit", target:10, desc:"Filming and photography in Monrovia."}
+];
+/* Who works the portal. Demo staff: one reviewer per department, plus a City admin who sees everything. */
+const STAFF = [
+  {id:"r-bldg", name:"Daniel Ortiz", dept:"Building", title:"Plan Check Engineer", email:"dortiz@monrovia.redlinepermit.com", phone:"626-555-0141"},
+  {id:"r-plan", name:"Sarah Kim", dept:"Planning", title:"Associate Planner", email:"skim@monrovia.redlinepermit.com", phone:"626-555-0142"},
+  {id:"r-pw", name:"Marcus Lee", dept:"Public Works", title:"Assistant Engineer", email:"mlee@monrovia.redlinepermit.com", phone:"626-555-0143"},
+  {id:"r-fire", name:"Elena Ruiz", dept:"Fire", title:"Fire Prevention Inspector", email:"eruiz@monrovia.redlinepermit.com", phone:"626-555-0144"},
+  {id:"r-city", name:"Tom Nguyen", dept:"City", title:"Permit Coordinator", email:"tnguyen@monrovia.redlinepermit.com", phone:"626-555-0145"}
+];
+const ME = {id:"a-yds", name:"Yifu Pan", firm:"YDS Architects", email:"ypan@ydsarch.com", phone:"626-555-0110"};
+const staffFor = dept => STAFF.find(r=>r.dept===dept) || STAFF[0];
+const appOf = p => APPS.find(a=>a.id===(p?.appType||"plancheck")) || APPS[0];
+const STAGES = [
+  {t:"Submit",who:"Owner / Designer"},
+  {t:"AI first read",who:"Redline"},
+  {t:"City review",who:"Reviewers"},
+  {t:"Corrections",who:"Owner / Designer"},
+  {t:"Resubmit & recheck",who:"Redline + City"},
+  {t:"Plan check approved",who:"City"},
+  {t:"Other agencies",who:"School, sanitation, water"},
+  {t:"Permit pickup",who:"Owner / Contractor"}
+];
+const STATUS_LABEL = {submitted:"In review",corrections:"Corrections issued",resubmitted:"Resubmitted",approved:"Other agencies",ready:"Ready for pickup",issued:"Permit issued"};
+const STATUS_STAGE = {submitted:2,corrections:3,resubmitted:4,approved:6,ready:7,issued:8};
+const DONE = st => ["approved","ready","issued"].includes(st);
+/* Clearances that usually sit between plan check approval and permit issuance. Confirm the list with Monrovia before go-live. */
+const AGENCIES = ["School district fees paid (Monrovia USD)","Sanitation district connection fee","Fire Department sign-off","Contractor license & workers' comp on file"];
+
+/* ---------- state ---------- */
+const S = {app:"plancheck", q:"", deptFilter:"All", cDept:"All", chat:{}, asking:{}, briefing:new Set(), role:"applicant", tab:"home", projects:[], sel:null, mode:null, sheetIdx:0, busy:{}, editing:null, confirmDel:null,
+  db:null, assets:null, sample:null, user:null, me:null, local:false, blobUrls:{}, canv:{}, names:{}, askedNames:new Set()};
+try{ const r=localStorage.getItem("redline-who"); if(r && (r==="applicant"||r==="admin"||STAFF.some(x=>x.id===r))) S.role=r; }catch(e){}
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const now = () => new Date().toISOString();
+const fmtT = iso => { try{ const d=new Date(iso); return d.toLocaleDateString(undefined,{month:"short",day:"numeric"})+" "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}); }catch(e){ return ""; } };
+const fmtD = iso => { try{ return new Date(iso).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}); }catch(e){ return ""; } };
+const uid = () => Math.random().toString(36).slice(2,9);
+const cur = () => S.projects.find(p=>p.id===S.sel) || null;
+const isPlanner = () => S.role!=="applicant";
+const isAdmin = () => S.role==="admin";
+const meRev = () => STAFF.find(r=>r.id===S.role) || null;
+const money = v => v ? "$"+Number(v).toLocaleString() : "—";
+
+/* ---------- persistence ---------- */
+const saveChain = {};
+function save(p){
+  p.updatedAt = now();
+  const data = JSON.parse(JSON.stringify(p)); delete data.id;
+  if(S.local || !S.db){ if(!S.projects.find(x=>x.id===p.id)) S.projects.unshift(p); render(); return Promise.resolve(); }
+  saveChain[p.id] = (saveChain[p.id]||Promise.resolve()).then(()=>S.db.collection(COL).doc(p.id).set(data)).catch(e=>flash("Could not save: "+(e.message||e.code)+"."));
+  render();
+  return saveChain[p.id];
+}
+function addLog(p, who, text){ (p.timeline ||= []).push({at:now(), who, text}); }
+function flash(msg){ $("#banner").innerHTML = `<div class="note red">${esc(msg)}</div>`; setTimeout(()=>{ $("#banner").innerHTML=""; }, 8000); }
+function setBusy(pid,msg){ if(msg) S.busy[pid]=msg; else delete S.busy[pid]; renderWorkspace(); }
+
+/* ---------- light storage: thumbnails + clips only ---------- */
+function toBlob(canvas, q){ return new Promise(r=>canvas.toBlob(r,"image/jpeg",q)); }
+function scaled(canvas, maxSide){
+  const k = Math.min(1, maxSide/Math.max(canvas.width,canvas.height));
+  if(k===1) return canvas;
+  const c = document.createElement("canvas"); c.width=Math.round(canvas.width*k); c.height=Math.round(canvas.height*k);
+  c.getContext("2d").drawImage(canvas,0,0,c.width,c.height); return c;
+}
+async function putImage(blob){
+  let assetId = null;
+  if(S.assets){ try{ assetId = (await S.assets.upload(blob)).id; }catch(e){} }
+  const key = assetId || ("tmp-"+uid());
+  S.blobUrls[key] = URL.createObjectURL(blob);
+  return {key, assetId};
+}
+function imgSrc(ref){ return ref ? (S.blobUrls[ref.key] || (ref.assetId ? ((window.RP&&RP.signed[ref.assetId]) || "") : "")) : ""; }
+async function clip(canvas, box, num){
+  if(!canvas) return null;
+  let [x,y,w,h] = Array.isArray(box)&&box.length===4 ? box.map(Number) : [0,0,1,1];
+  if(![x,y,w,h].every(Number.isFinite)) [x,y,w,h]=[0,0,1,1];
+  const padX = Math.max(w*.25,.04), padY = Math.max(h*.25,.04);
+  x-=padX; y-=padY; w+=padX*2; h+=padY*2;
+  if(w<.24){ x-=(.24-w)/2; w=.24; } if(h<.2){ y-=(.2-h)/2; h=.2; }
+  x=Math.max(0,Math.min(x,1-w)); y=Math.max(0,Math.min(y,1-h)); w=Math.min(w,1); h=Math.min(h,1);
+  const sx=x*canvas.width, sy=y*canvas.height, sw=w*canvas.width, sh=h*canvas.height;
+  const k = Math.min(1, 1100/Math.max(sw,sh));
+  const c = document.createElement("canvas"); c.width=Math.max(1,Math.round(sw*k)); c.height=Math.max(1,Math.round(sh*k));
+  const ctx = c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(canvas,sx,sy,sw,sh,0,0,c.width,c.height);
+  // red markup ring around the flagged area
+  const bx=(box?.[0]??0), by=(box?.[1]??0), bw=(box?.[2]??0), bh=(box?.[3]??0);
+  if(bw>0 && bh>0 && bw<.9){
+    ctx.strokeStyle="#C8322B"; ctx.lineWidth=Math.max(2,c.width/220);
+    const rx=(bx*canvas.width-sx)*k, ry=(by*canvas.height-sy)*k, rw=bw*canvas.width*k, rh=bh*canvas.height*k;
+    ctx.beginPath(); ctx.ellipse(rx+rw/2, ry+rh/2, rw/2+8, rh/2+8, 0, 0, Math.PI*2); ctx.stroke();
+    if(num) numBadge(ctx, c, rx+rw+8, ry-8, num);
+  } else if(num) numBadge(ctx, c, 34, 34, num);
+  return putImage(await toBlob(c,.82));
+}
+
+function numBadge(ctx, c, x, y, n){
+  const r=20; x=Math.min(Math.max(x,r+2),c.width-r-2); y=Math.min(Math.max(y,r+2),c.height-r-2);
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle="#C8322B"; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle="#fff"; ctx.stroke();
+  ctx.fillStyle="#fff"; ctx.font="700 22px Inter,system-ui,sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(String(n),x,y+1);
+}
+/* ---------- PDF ---------- */
+async function readPdf(file, onStep){
+  const lib = window.pdfjsLib; if(!lib) throw new Error("The PDF reader did not load.");
+  const pdf = await lib.getDocument({data:await file.arrayBuffer(), isEvalSupported:false}).promise;
+  const n = Math.min(pdf.numPages, 12); const pages = []; let text = "", fullText = "";
+  for(let i=1;i<=n;i++){
+    onStep(`Reading sheet ${i} of ${n}${pdf.numPages>12?` (first 12 of ${pdf.numPages})`:""}…`);
+    const page = await pdf.getPage(i);
+    const v1 = page.getViewport({scale:1});
+    const vp = page.getViewport({scale:Math.min(2200/Math.max(v1.width,v1.height), 4)});
+    const c = document.createElement("canvas"); c.width=Math.round(vp.width); c.height=Math.round(vp.height);
+    const ctx = c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
+    await page.render({canvasContext:ctx, viewport:vp}).promise;
+    let t=""; try{ t=(await page.getTextContent()).items.map(x=>x.str).join(" "); }catch(e){}
+    text += `\n[Sheet ${i}] ${t.slice(0,1500)}`; fullText += " "+t;
+    pages.push({page:i, canvas:c});
+  }
+  // text only (no rendering) for the rest of the set, so the standard-notes check sees every sheet
+  for(let i=n+1;i<=Math.min(pdf.numPages,80);i++){ try{ fullText += " "+(await (await pdf.getPage(i)).getTextContent()).items.map(x=>x.str).join(" "); }catch(e){} }
+  return {pages, text:text.slice(0,12000), fullText, total:pdf.numPages};
+}
+async function storeThumbs(pages){
+  const out=[]; for(const pg of pages){ const ref = await putImage(await toBlob(scaled(pg.canvas,900),.7)); out.push({...ref, page:pg.page, label:"Sheet "+pg.page}); } return out;
+}
+
+/* ---------- AI ---------- */
+const rulesText = () => CITY.rules.map(r=>`${r.id} | ${r.dept} | ${r.section} | ${r.req} | look at: ${r.look} | ${r.conf}`).join("\n");
+async function imgLimit(){ const l = await S.sample.limits().catch(()=>null); return l?.images?.maxCount || 0; }
+async function aiFirstRead(p, pages, text){
+  const max = await imgLimit();
+  const use = pages.slice(0,max);
+  const imgs = await Promise.all(use.map(pg=>toBlob(scaled(pg.canvas,1600),.85)));
+  const prompt = `You are Redline, doing the first read of a plan set for ${CITY.name} plan check. You draft comments for city reviewers; you never approve or deny.
+
+PROJECT: ${p.projectType} at ${p.address} (APN ${p.apn||"n/a"}), zone ${p.zone}. Flags: ${(p.flags||[]).join(", ")||"none"}. Scope: ${p.scope}. Floor area: ${p.livingSf||"?"} sf living, ${p.garageSf||"?"} sf garage. Units: ${p.units||"?"}. Stories: ${p.stories||"?"}.
+${imgs.length?`Images: sheets 1..${imgs.length} of the set, in order (image k = sheet k).`:"No images attached; use the text."}
+SHEET TEXT:${text||" (none — scanned set)"}
+
+RULE PACK (id | dept | section | requirement | where to look | confidence):
+${rulesText()}
+COMPLETENESS ITEMS: ${COMPLETENESS.join("; ")}
+
+First decide what this PDF is: "plan set" (drawings), "correction letter" (a city or consultant plan check comment list), or "mixed".
+Tasks:
+0. Read the title block or letterhead: address, permit or plan check number, project type, applicant/designer.
+1. Name each sheet or page (e.g. "A1.0 Site Plan", "Correction list p.1") and sort it into a discipline: G general/cover, A architectural, S structural, M mechanical, E electrical, P plumbing, T energy/Title 24, C civil/grading, L landscape, F fire, X other.
+2. Mark each completeness item found true/false.
+3. Draft 4–12 comments ONLY where the drawings show a problem, omission or unclear information against a rule in the pack, most important first. Cite only sections from the pack; never invent one. For each, give the sheet page number (1-based) and a box [x,y,w,h] as fractions 0–1 of that page locating the exact spot (use [0,0,1,1] if the issue is a missing sheet or the whole page). Add "why": one plain sentence teaching why the code requires it. Set "priority": "critical" for life safety, fire, egress, structural, setbacks and height; "major" for other code issues; "minor" for labels and notes. Skip standard notes (GFCI, smoke alarms, pipe insulation and the like): a separate checklist covers them. Rules marked planner-judgment are flags for the reviewer, never decisions.
+4. If it is a correction letter: instead of drafting your own, extract every comment in the letter as an item (keep its own code citation, or "Not cited"), with the page and box of that comment in the letter, and set "fromLetter": true.
+
+Return JSON only:
+{"docType":"plan set","meta":{"address":"","permitNo":"","projectType":"","applicant":""},"sheets":[{"page":1,"label":"A1.0 Site Plan","discipline":"A"}],"completeness":[{"item":"Site plan","found":true}],"corrections":[{"ruleId":"MON-B-01","dept":"Building","section":"CRC R310","sheet":"A2.1","page":3,"box":[0.42,0.30,0.12,0.10],"finding":"what you saw","fix":"what must change","why":"why the code asks for it","severity":"correction","priority":"critical","confidence":"verified"}]}`;
+  return S.sample.json(prompt,{images:imgs.length?imgs:undefined, modelTier:"complex"});
+}
+async function aiRecheck(p, oldThumbs, pages, text, open){
+  const max = await imgLimit();
+  const pairs = Math.min(pages.length, Math.floor(max/2));
+  const imgs = [];
+  for(let i=0;i<pairs;i++){
+    const old = oldThumbs[i]; let ob = null;
+    if(old){ try{ ob = await (await fetch(imgSrc(old))).blob(); }catch(e){} }
+    if(ob) imgs.push(ob); else imgs.push(await toBlob(scaled(pages[i].canvas,600),.5));
+    imgs.push(await toBlob(scaled(pages[i].canvas,1600),.85));
+  }
+  const items = open.map(c=>`${c.id} | ${c.section} | sheet ${c.sheet} | comment: ${c.plannerText||c.fix} | response: ${c.response||"(none)"}`).join("\n");
+  const prompt = `You are Redline, re-checking a revised plan set for ${CITY.name}. You advise reviewers; you do not close items.
+PROJECT: ${p.projectType} at ${p.address}. This is cycle ${p.cycle}.
+${pairs?`Images come in pairs: image 2k-1 is the PREVIOUS sheet k, image 2k is the REVISED sheet k, for k = 1..${pairs}.`:"No images attached; compare the text."}
+PREVIOUS SHEET TEXT:${(p.lastText||"").slice(0,5000)||" (none)"}
+REVISED SHEET TEXT:${text.slice(0,5000)||" (none)"}
+
+OPEN COMMENTS (id | section | sheet | comment | applicant response):
+${items||"(none)"}
+
+Tasks:
+A. For each open comment, say whether the revised sheets likely resolve it, with a note naming the sheet. Give page and box [x,y,w,h] (fractions of the REVISED page) where the fix is.
+B. List every OTHER change between the previous and revised sheets that no comment asked for (e.g. a window enlarged, a wall moved, a height or area changed, a note deleted). These matter: a reviewer may miss them. Give the revised page, box, what it was, what it is now, and any rule from this pack it might affect.
+RULE PACK: ${CITY.rules.map(r=>r.section+" — "+r.req).join(" / ")}
+Return JSON only:
+{"results":[{"id":"...","likelyResolved":true,"note":"...","page":2,"box":[0.1,0.2,0.2,0.1]}],"changes":[{"sheet":"A2.1","page":2,"box":[0.5,0.4,0.1,0.1],"description":"Bedroom 2 window enlarged","previous":"3'-0\\" x 3'-0\\"","now":"4'-0\\" x 4'-0\\"","mayAffect":"CRC R302 / energy"}]}`;
+  return S.sample.json(prompt,{images:imgs.length?imgs:undefined, modelTier:"complex"});
+}
+
+/* ---------- standard notes + readiness (instant, no AI) ---------- */
+function checkNotes(p, fullText){
+  const t=" "+String(fullText||"").toLowerCase().replace(/\s+/g," ")+" ";
+  if(t.length<600){ p.notes={scanned:true, items:[]}; addLog(p,"ai","Set looks scanned, so the standard-notes check needs a manual look."); return; }
+  const kind=`${p.projectType||""} ${p.scope||""}`;
+  const items=STD_NOTES.filter(n=>!n.when||n.when.test(kind)).map(n=>({id:n.id, found:n.keys.some(k=>t.includes(k.toLowerCase()))}));
+  p.notes={scanned:false, items};
+  const miss=items.filter(i=>!i.found).map(i=>STD_NOTES.find(n=>n.id===i.id));
+  p.corrections=p.corrections.filter(c=>c.source!=="notes"||c.state!=="draft");
+  for(const n of miss) p.corrections.push({id:uid(), ruleId:n.id, dept:n.dept, section:n.section, sheet:"General notes", page:null, finding:"This standard note was not found anywhere in the set's text.", fix:"Add note: "+n.note, why:"", severity:"correction", priority:"minor", confidence:"verified", source:"notes", state:"draft", cycle:p.cycle||1, response:"", resolved:false, replies:[], snip:null});
+  addLog(p,"ai",`Standard notes: ${items.length-miss.length} of ${items.length} found; ${miss.length} drafted as comments.`);
+}
+function readiness(p){
+  const c=p.completeness||[], n=p.notes?.items||[];
+  if(!c.length && !n.length) return null;
+  const a=c.length?c.filter(x=>x.found).length/c.length:1, b=n.length?n.filter(x=>x.found).length/n.length:a;
+  return Math.round(100*(.6*a+.4*b));
+}
+
+/* ---------- workflows ---------- */
+async function runFirstRead(p, file){
+  const pid = p.id; let fullText = "";
+  try{
+    const rd = await readPdf(file, m=>setBusy(pid,m)); const {pages, text, total} = rd; fullText = rd.fullText;
+    setBusy(pid,"Saving sheet thumbnails…");
+    p.sheets = await storeThumbs(pages); p.pageCount = total; p.lastText = text.slice(0,8000);
+    S.canv[pid] = pages;
+    if(!S.sample){ p.aiState="unavailable"; addLog(p,"ai","AI first read is not available until you sign in."); if(appOf(p).main) checkNotes(p, fullText); setBusy(pid); await save(p); return; }
+    p.aiState="running"; await save(p);
+    setBusy(pid,"Redline is reading the set against Monrovia's codes… (about a minute)");
+    const r = await aiFirstRead(p, pages, text);
+    (r.sheets||[]).forEach(s=>{ const sh=p.sheets.find(x=>x.page===s.page); if(sh){ if(s.label) sh.label=String(s.label).slice(0,40); if(DISC[s.discipline]) sh.disc=s.discipline; } });
+    p.completeness = (r.completeness||[]).map(c=>({item:String(c.item), found:!!c.found}));
+    p.docType = r.docType||"plan set";
+    const m = r.meta||{};
+    if(p.placeholder && m.address){ p.address=String(m.address).slice(0,80); p.placeholder=false; }
+    if(!p.permitNo && m.permitNo) p.permitNo=String(m.permitNo).slice(0,30);
+    if((!p.projectType||p.projectType==="Unknown") && m.projectType) p.projectType=String(m.projectType).slice(0,40);
+    const list = (r.corrections||[]).slice(0,14);
+    setBusy(pid,`Clipping ${list.length} spots from the sheets…`);
+    p.corrections = [];
+    for(const c of list){
+      const pg = pages.find(x=>x.page===Number(c.page)); const num = p.corrections.length+1;
+      p.corrections.push({id:uid(), ruleId:c.ruleId||"", dept:c.dept||"", section:c.section||"", sheet:c.sheet||"", page:Number(c.page)||null,
+        finding:c.finding||"", fix:c.fix||"", why:c.why||"", severity:c.severity==="advisory"?"advisory":"correction", priority:PRIO[c.priority]!==undefined?c.priority:"major", confidence:c.confidence||"needs-verification",
+        source:c.fromLetter?"letter":"ai", state:c.fromLetter?"approved":"draft", cycle:p.cycle||1, response:"", resolved:false, replies:[], box:Array.isArray(c.box)?c.box.map(Number):null, snip: pg ? await clip(pg.canvas, c.box, num) : null});
+    }
+    p.aiState="done";
+    if(p.docType!=="correction letter" && appOf(p).main) checkNotes(p, fullText);
+    addLog(p,"ai", p.docType==="correction letter" ? `Read the correction letter: ${p.corrections.length} comments now tracked.` : `First read done: ${p.corrections.length} draft comments, ${p.completeness.filter(c=>!c.found).length} completeness gaps.`);
+  }catch(e){
+    p.aiState="failed"; addLog(p,"ai","First read did not finish: "+(e.message||e.code||"error"));
+    flash(e.code==="not_configured" ? "The AI first read isn't switched on yet. The set is saved; a reviewer can still review it." : "AI first read did not finish: "+(e.message||e.code));
+    if(fullText && appOf(p).main && !p.notes) checkNotes(p, fullText);
+  }
+  setBusy(pid); await save(p);
+}
+async function runRecheck(p, file){
+  const pid = p.id;
+  try{
+    const {pages, text, fullText} = await readPdf(file, m=>setBusy(pid,m));
+    const oldThumbs = p.sheets||[];
+    const ft=String(fullText||"").toLowerCase().replace(/\s+/g," ");
+    p.corrections.filter(c=>c.source==="notes"&&c.state==="approved"&&!c.resolved).forEach(c=>{ const n=STD_NOTES.find(x=>x.id===c.ruleId); if(!n||ft.length<600) return;
+      const ok=n.keys.some(k=>ft.includes(k.toLowerCase())); c.recheck={likelyResolved:ok, note:ok?"The note now appears in the set's text.":"Still not found in the set's text.", cycle:(p.cycle||1)+1, snip:null}; });
+    p.cycle = (p.cycle||1)+1; p.status="resubmitted"; p.resubmittedAt=now();
+    addLog(p,"applicant",`Resubmitted revised set (cycle ${p.cycle}) — ${file.name}`);
+    const open = p.corrections.filter(c=>c.state==="approved" && !c.resolved && c.source!=="notes");
+    if(S.sample){
+      setBusy(pid,"Redline is comparing the revised set with the last one…");
+      const r = await aiRecheck(p, oldThumbs, pages, text, open);
+      setBusy(pid,"Clipping the revised spots…");
+      for(const x of (r.results||[])){ const c=p.corrections.find(c=>c.id===x.id); if(!c) continue;
+        const pg=pages.find(q=>q.page===Number(x.page));
+        c.recheck={likelyResolved:!!x.likelyResolved, note:String(x.note||"").slice(0,400), cycle:p.cycle, snip: pg? await clip(pg.canvas,x.box):null}; }
+      const ch=[];
+      for(const x of (r.changes||[]).slice(0,12)){ const pg=pages.find(q=>q.page===Number(x.page));
+        ch.push({id:uid(), sheet:x.sheet||"", page:Number(x.page)||null, description:x.description||"", previous:x.previous||"", now:x.now||"", mayAffect:x.mayAffect||"", cycle:p.cycle, state:"open", snip: pg? await clip(pg.canvas,x.box):null}); }
+      p.changes = [...(p.changes||[]).filter(c=>c.state!=="open"), ...ch];
+      const yes=(r.results||[]).filter(x=>x.likelyResolved).length;
+      addLog(p,"ai",`Recheck: ${yes} of ${open.length} open comments look resolved; ${ch.length} change${ch.length===1?"":"s"} nobody asked for.`);
+    }
+    setBusy(pid,"Saving new thumbnails…");
+    p.sheets = await storeThumbs(pages); p.lastText = text.slice(0,8000); S.canv[pid]=pages; S.sheetIdx=0;
+  }catch(e){ flash("Recheck did not finish: "+(e.message||e.code)); addLog(p,"ai","Recheck did not finish."); }
+  setBusy(pid); await save(p);
+}
+
+/* ---------- reviewer tasks: urgency, size, days ---------- */
+function sizeOf(p){
+  const v=+p.valuation||0, sf=(+p.livingSf||0)+(+p.garageSf||0), u=+p.units||0;
+  if(v>=1e6||u>=5||sf>=5000) return "L"; if(v>=2e5||u>=2||sf>=1200) return "M"; return "S";
+}
+function metrics(p){
+  const app=appOf(p); const target=/ADU/i.test(p.projectType||"")||app.id==="adu-app"?60:app.target;
+  const cityTurn=p.status==="submitted"||p.status==="resubmitted";
+  const since=p.status==="resubmitted"?(p.resubmittedAt||p.updatedAt):(p.submittedAt||p.createdAt);
+  const days=Math.max(0,Math.floor((Date.now()-new Date(since).getTime())/864e5));
+  const ratio=days/target, size=sizeOf(p);
+  const urg=!cityTurn?(DONE(p.status)?"done":"waiting"):ratio>=1?"overdue":ratio>=.7?"due":"ok";
+  const score=(cityTurn?1000:0)+ratio*100+{S:0,M:12,L:25}[size]+(p.status==="resubmitted"?15:0);
+  return {app,target,days,ratio,size,urg,score,cityTurn};
+}
+const URG = {overdue:["Overdue","p-corrections"],due:["Due soon","p-warn"],ok:["On track","p-approved"],waiting:["With applicant","p-draft"],done:["Done","p-approved"]};
+const SIZE = {S:"Small",M:"Medium",L:"Large"};
+
+/* ---------- AI brief when a reviewer opens a project ---------- */
+function briefKey(p){ return `${p.status}-${p.cycle||1}-${p.corrections.length}-${(p.changes||[]).length}-${p.aiState||""}`; }
+async function ensureBrief(p){
+  if(!isPlanner()||!S.sample||S.busy[p.id]||p.aiState==="running") return;
+  const key=briefKey(p); if(p.brief?.key===key||S.briefing.has(p.id+key)) return;
+  S.briefing.add(p.id+key); renderWorkspace();
+  const m=metrics(p);
+  const items=p.corrections.map(c=>`- [${c.state}${c.resolved?", cleared":""}${c.recheck?`, recheck: ${c.recheck.likelyResolved?"looks resolved":"still open"}`:""}] ${c.section} sheet ${c.sheet}: ${c.plannerText||c.fix}${c.response?` | response: ${c.response}`:""}`).join("\n");
+  const chg=(p.changes||[]).map(c=>`- [${c.state}] ${c.description} (was ${c.previous}, now ${c.now})`).join("\n");
+  const prompt=`You are Redline, briefing a ${CITY.name} reviewer who just opened this file. Be specific and short. Do not invent facts.
+Application: ${m.app.name} — ${p.projectType||""} at ${p.address}. Status: ${STATUS_LABEL[p.status]}. Cycle ${p.cycle||1}. Day ${m.days} of a ${m.target}-day target. Size: ${SIZE[m.size]} (valuation ${p.valuation||"n/a"}, ${p.livingSf||"?"} sf, ${p.units||"?"} units). Flags: ${(p.flags||[]).join(", ")||"none"}. Applicant note: ${p.note||"none"}. Scope: ${p.scope}.
+Comments:\n${items||"(none yet)"}
+Unrequested changes:\n${chg||"(none)"}
+Return JSON only: {"headline":"one sentence: where this file stands and what it needs from the reviewer now","next":["up to 3 concrete next actions, most urgent first"],"watch":["up to 3 risks or things easy to miss, e.g. statutory deadline, an unrequested change, a judgment call"]}`;
+  try{
+    const r=await S.sample.json(prompt,{modelTier:"quick"});
+    p.brief={key, headline:String(r.headline||"").slice(0,300), next:(r.next||[]).slice(0,3).map(String), watch:(r.watch||[]).slice(0,3).map(String), at:now()};
+    save(p);
+  }catch(e){ S.briefing.delete(p.id+key); if(e.code!=="not_granted") flash("Brief did not load: "+(e.message||e.code)); renderWorkspace(); }
+}
+function briefHtml(p){
+  if(!isPlanner()) return "";
+  const key=briefKey(p);
+  if(p.brief && p.brief.key===key) return `<div class="brief"><div class="kicker">Redline brief</div><p class="brief-h">${esc(p.brief.headline)}</p>
+    <div class="brief-cols">${p.brief.next.length?`<div><span class="small">Next</span><ol>${p.brief.next.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>`:""}
+    ${p.brief.watch.length?`<div><span class="small">Watch for</span><ul>${p.brief.watch.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}</div></div>`;
+  if(S.briefing.has(p.id+key)) return `<div class="brief"><div class="kicker">Redline brief</div><p class="progress">Reading the file…</p></div>`;
+  if(p.brief) return `<div class="brief stale"><div class="kicker">Redline brief · earlier</div><p class="brief-h">${esc(p.brief.headline)}</p></div>`;
+  return "";
+}
+
+/* ---------- ask about the set (reviewer) ---------- */
+async function askSet(p, q){
+  if(!S.sample){ flash("Sign in to ask questions about the set."); return; }
+  S.asking[p.id]=true; renderWorkspace();
+  try{
+    const max=Math.min(await imgLimit(), 6); const imgs=[];
+    for(const s of (p.sheets||[]).slice(0,max)){ try{ imgs.push(await (await fetch(imgSrc(s))).blob()); }catch(e){} }
+    const prompt=`You are Redline, answering a ${CITY.name} plan reviewer's question about one plan set. Use only what the sheets and text show. If they don't show it, say so plainly. Cite sheets.
+PROJECT: ${p.projectType||""} at ${p.address}. Scope: ${p.scope||""}.
+SHEETS: ${(p.sheets||[]).map((s,i)=>`image ${i+1} = ${s.label}`).slice(0,imgs.length).join("; ")||"no images"}
+SHEET TEXT:${(p.lastText||"").slice(0,7000)||" (none)"}
+QUESTION: ${q}
+Return JSON only: {"answer":"two to four plain sentences","sheets":["A2.1"]}`;
+    const r=await S.sample.json(prompt,{images:imgs.length?imgs:undefined, modelTier:"quick"});
+    (S.chat[p.id] ||= []).push({q, a:String(r.answer||"No answer."), sheets:(r.sheets||[]).slice(0,4).map(String)});
+  }catch(e){ flash("Could not answer: "+(e.message||e.code)); }
+  S.asking[p.id]=false; renderWorkspace();
+}
+function askHtml(p){
+  if(!isPlanner()||!(p.sheets||[]).length) return "";
+  const qs=S.chat[p.id]||[];
+  return `<div class="ask"><div class="sec-h" style="margin:0">Ask about this set</div>
+    ${qs.map(x=>`<div class="qa"><span class="q">${esc(x.q)}</span><span>${esc(x.a)}</span>${x.sheets.length?`<span class="small">Sheets: ${x.sheets.map(esc).join(", ")}</span>`:""}</div>`).join("")}
+    <div class="row"><input type="text" id="ask-q" placeholder="e.g. What is the ADU's distance to the rear property line?" ${S.asking[p.id]?"disabled":""}><button class="btn sm" data-a="ask" ${S.asking[p.id]?"disabled":""}>${S.asking[p.id]?"Reading…":"Ask"}</button></div></div>`;
+}
+
+/* ---------- printable correction letter ---------- */
+function printLetter(p){
+  const list=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).sort((a,b)=>(PRIO[a.priority]??1)-(PRIO[b.priority]??1));
+  const by={}; list.forEach(c=>{ (by[c.dept||"Building"] ||= []).push(c); });
+  let n=0;
+  $("#print").innerHTML=`<h1>${esc(CITY.name)} · Plan check corrections</h1>
+    <p>${esc(p.address)}${p.permitNo?` · Permit ${esc(p.permitNo)}`:""} · ${esc(appOf(p).name)} · Cycle ${p.cycle||1} · ${fmtD(p.issuedAt||now())}</p>
+    <p>Respond to each item in the portal and upload one revised set. Only these items are rechecked.</p>
+    ${Object.entries(by).map(([d,cs])=>`<h2>${esc(d)}</h2>${cs.map(c=>`<div class="it"><b>${++n}. ${esc(c.section)}</b> · Sheet ${esc(c.sheet||"—")}${c.priority==="critical"?" · Critical":""}
+      ${c.snip&&imgSrc(c.snip)?`<img src="${esc(imgSrc(c.snip))}" alt="">`:""}
+      ${c.finding?`<div>${esc(c.finding)}</div>`:""}<div><b>Required:</b> ${esc(c.plannerText||c.fix)}</div></div>`).join("")}`).join("")}
+    <p style="margin-top:16px;font-size:10pt">Prepared in Redline Permit. Every comment was reviewed and approved by City staff.</p>`;
+  setTimeout(()=>{ try{ window.print(); }catch(e){ flash("Printing is blocked in this view. Use your browser's Print menu."); } }, 300);
+}
+
+/* ---------- names for reviewer replies ---------- */
+function nameOf(r){ return (r.by && S.names[r.by]) || r.name || "Reviewer"; }
+async function resolveNames(){
+  if(!S.user) return;
+  const ids=[]; S.projects.forEach(p=>p.corrections.forEach(c=>(c.replies||[]).forEach(r=>{ if(r.by && !S.names[r.by] && !S.askedNames.has(r.by)) ids.push(r.by); })));
+  if(!ids.length) return; ids.forEach(i=>S.askedNames.add(i));
+  try{ const ps = await S.user.profiles(ids); let changed=false; for(const id in ps){ if(ps[id]?.name){ S.names[id]=ps[id].name; changed=true; } } if(changed) renderWorkspace(); }catch(e){}
+}
+
+/* ---------- render ---------- */
+/* Who sees what: applicants see only their own files; a reviewer sees only files assigned to them; the admin sees and searches everything. */
+function mine(){
+  if(!isPlanner()) return S.projects.filter(p=>p.applicantId===ME.id);
+  if(isAdmin()) return S.projects;
+  return S.projects.filter(p=>p.reviewerId===S.role);
+}
+function matchQ(p){
+  const q=S.q.trim().toLowerCase(); if(!q) return true;
+  return [p.address,p.permitNo,p.applicantName,p.designer?.name,p.owner?.name,p.reviewerName,p.projectType,p.dept,appOf(p).name,STATUS_LABEL[p.status]].join(" ").toLowerCase().includes(q);
+}
+function visible(){ return mine().filter(matchQ); }
+function whoOptions(){
+  return `<option value="applicant">Applicant · ${esc(ME.name)}, ${esc(ME.firm)}</option>
+    <optgroup label="City of Monrovia">${STAFF.map(r=>`<option value="${r.id}">${esc(r.name)} · ${esc(r.dept)} reviewer</option>`).join("")}
+    <option value="admin">City admin · all departments</option></optgroup>`;
+}
+function render(){
+  const w=$("#who"); if(!w.options.length) w.innerHTML=whoOptions(); w.value=S.role;
+  ["home","projects","city","how","accounts"].forEach(t=>{ $("#tab-"+t).setAttribute("aria-selected", S.tab===t); $("#view-"+t).hidden = S.tab!==t; });
+  $("#hero").hidden = S.tab!=="home";
+  const r=meRev();
+  $("#queue-title").textContent = !isPlanner() ? "My applications" : isAdmin() ? "All city files" : `${S.acctRole==="reviewer"?ME.name:r.name} · ${r.dept}`;
+  $("#btn-new").hidden = isPlanner(); $("#btn-import").hidden = !isAdmin(); $("#btn-bulk").hidden = !isAdmin();
+  const v=visible();
+  if(S.sel && !mine().some(p=>p.id===S.sel)) S.sel=null;
+  if(!S.sel && !S.mode && !isAdmin() && v[0]) S.sel=(isPlanner()?v.slice().sort((a,b)=>metrics(b).score-metrics(a).score):v)[0].id;
+  $("#tab-accounts").hidden = S.acctRole!=="admin"; if(S.tab==="accounts" && S.acctRole!=="admin") S.tab="home";
+  if(S.tab==="home") renderHome();
+  if(S.tab==="accounts") renderAccounts();
+  renderQueue(); renderRail(); renderWorkspace(); resolveNames();
+}
+function openCount(p){ return isPlanner() ? p.corrections.filter(c=>c.state!=="rejected"&&!c.resolved).length : p.corrections.filter(c=>c.state==="approved"&&!c.resolved).length; }
+function renderQueue(){
+  if(isPlanner()) return renderTasks();
+  const list = visible();
+  if(!list.length){ $("#queue").innerHTML = `<p class="note">${isPlanner()?"Nothing submitted yet. Submissions land here, or add a permit already in review.":"No applications yet."}</p>`; return; }
+  $("#queue").innerHTML = `<p class="small" style="margin:0 4px 8px">${list.length} active · one card per application, each with its own department</p>`+list.map(p=>`<button class="qitem" data-p="${p.id}" aria-current="${p.id===S.sel}">
+      <span class="m"><span class="dept">${esc(appOf(p).dept)}</span><span class="pill p-${p.status}">${p.status==="corrections"?"Corrections sent back":STATUS_LABEL[p.status]||p.status}</span></span>
+      <span class="t">${esc(p.address)}</span>
+      <span class="m">${esc(appOf(p).name)} · ${esc(p.permitNo||"")}</span>
+      <span class="m">Cycle ${p.cycle||1} · ${openCount(p)} open · reviewer ${esc(p.reviewerName||"unassigned")}</span></button>`).join("");
+}
+function statsHtml(){
+  const ps=mine(); if(!ps.length) return "";
+  const live=ps.map(p=>({p,m:metrics(p)})).filter(x=>x.m.cityTurn);
+  const avg=live.length?Math.round(live.reduce((a,x)=>a+x.m.days,0)/live.length):0;
+  let ok=0, dec=0; const secs={};
+  ps.forEach(p=>p.corrections.forEach(c=>{ if(c.source==="ai"||c.source==="notes"){ if(c.state==="approved"){ok++;dec++;} else if(c.state==="rejected") dec++; }
+    if(c.state==="approved") secs[c.section]=(secs[c.section]||0)+1; }));
+  const top=Object.entries(secs).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const ready=ps.map(readiness).filter(x=>x!==null); const r=ready.length?Math.round(ready.reduce((a,b)=>a+b,0)/ready.length):null;
+  return `<div class="stats"><span><b>${live.length}</b> with the City</span><span>avg <b>${avg}</b> days waiting</span>${dec?`<span>AI drafts kept <b>${Math.round(ok/dec*100)}%</b></span>`:""}${r!==null?`<span>sets <b>${r}%</b> ready on arrival</span>`:""}${top.length?`<span>most asked: ${top.map(t=>`<b>${esc(t[0])}</b>`).join(", ")}</span>`:""}</div>`;
+}
+function renderTasks(){
+  const depts=["All",...new Set(APPS.map(a=>a.dept))];
+  let list=visible().map(p=>({p,m:metrics(p)})).filter(x=>!isAdmin()||S.deptFilter==="All"||x.m.app.dept===S.deptFilter).sort((a,b)=>b.m.score-a.m.score);
+  const counts={overdue:0,due:0}; list.forEach(x=>{ if(counts[x.m.urg]!==undefined) counts[x.m.urg]++; });
+  $("#queue").innerHTML=(isAdmin()?`<input type="search" id="q" class="searchbox" placeholder="Search address, permit #, applicant, reviewer" value="${esc(S.q)}">
+    <div class="chks" style="margin-bottom:10px">${depts.map(d=>`<label><input type="radio" name="deptf" value="${d}" ${S.deptFilter===d?"checked":""}>${d}</label>`).join("")}</div>`:`<p class="small" style="margin:0 4px 8px">Only files assigned to you.</p>`)+`
+    ${statsHtml()}
+    <p class="small" style="margin:0 4px 8px">${list.length} file${list.length===1?"":"s"} · ${counts.overdue} overdue · ${counts.due} due soon · sorted by urgency, size and days waiting</p>
+    ${list.length?list.map(({p,m})=>`<button class="qitem" data-p="${p.id}" aria-current="${p.id===S.sel}">
+      <span class="m"><span class="pill ${URG[m.urg][1]}">${URG[m.urg][0]}</span><span class="dept">${esc(m.app.dept)}</span></span>
+      <span class="t">${esc(p.address)}</span>
+      <span class="m">${esc(m.app.main?(p.projectType||m.app.name):m.app.name)}${isAdmin()?` · ${esc(p.reviewerName||"unassigned")}`:""}</span>
+      <span class="m">${m.cityTurn?`Day ${m.days} of ${m.target}`:STATUS_LABEL[p.status]} · ${SIZE[m.size]} · ${openCount(p)} open${readiness(p)!==null?` · <span class="ready">Set ${readiness(p)}% ready</span>`:""}${p.example?" · example":""}</span>
+      ${m.cityTurn?`<span class="bar"><span style="width:${Math.min(100,Math.round(m.ratio*100))}%" class="${m.urg}"></span></span>`:""}</button>`).join(""):'<p class="note">No files for this department.</p>'}`;
+  $("#queue").querySelectorAll('input[name="deptf"]').forEach(r=>r.onchange=()=>{ S.deptFilter=r.value; renderQueue(); if(!cur()) renderWorkspace(); });
+  const q=$("#q"); if(q) q.oninput=()=>{ S.q=q.value; const pos=q.selectionStart; renderQueue(); if(!cur()) renderWorkspace(); const n=$("#q"); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
+}
+function renderRail(){
+  const p = cur(); $("#rail").hidden = isAdmin() && !p; const at = p ? STATUS_STAGE[p.status] : (S.mode==="new"?0:-1);
+  const cyc = p ? (p.cycle||1) : 1;
+  $("#rail").innerHTML = STAGES.map((s,i)=>{
+    let extra="";
+    const rounds = p ? (p.status==="corrections" ? cyc : Math.max(cyc-1,0)) : 0;
+    if(i===3 && p && rounds) extra=`<span class="round">${p.status==="corrections"?`Round ${rounds}`:`${rounds} round${rounds===1?"":"s"} so far`}</span><span class="rounds">${Array.from({length:rounds},(_,k)=>`<i class="${p.status==="corrections"&&k===rounds-1?"cur":""}"></i>`).join("")}</span>`;
+    if(i===4) extra=`<span class="loop">↺ back to Corrections if anything is still open</span>`;
+    if(i===6 && p && (p.agencies||[]).length) extra=`<span class="loop">${p.agencies.filter(a=>a.done).length} of ${p.agencies.length} cleared</span>`;
+    return `<div class="stage ${i<at?"done":""} ${i===at?"now":""}"><b>${s.t}</b><span class="who">${s.who}</span>${extra}</div>`; }).join("");
+}
+function renderWorkspace(){
+  const w = $("#workspace");
+  if(S.mode==="new" && !isPlanner()){ w.innerHTML = newForm(); bindNew(); return; }
+  if(S.mode==="import" && isPlanner()){ w.innerHTML = importForm(); bindImport(); return; }
+  if(S.mode==="bulk" && isPlanner()){ w.innerHTML = bulkForm(); bindBulk(); return; }
+  const p = cur();
+  if(!p && isAdmin()){ w.innerHTML = adminBoard(); w.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ S.sel=b.dataset.p; S.sheetIdx=0; render(); }); return; }
+  if(!p){
+    w.innerHTML = `<div class="empty"><h2>${isPlanner()?"Pick a task, or bring in old files":"Submit an application"}</h2>
+      <p>${isPlanner()?"Every submission arrives with Redline's first read: draft comments, each clipped from the sheet where it applies. You approve, edit or reject each one. Permits already in review can be added with their Google Drive or Dropbox link.":"Fill in one short form and attach the PDF. It goes straight to the City. You'll see the City's comments here, each with a clip of the spot on your sheets."}</p>
+      ${isPlanner()?'<div class="acts" style="justify-content:center"><button class="btn primary" id="btn-bulk2">Review old plan check PDFs</button><button class="btn" id="btn-imp2">Add one permit</button></div>':'<button class="btn primary" id="btn-new2">Start an application</button>'}</div>`;
+    const b=$("#btn-new2"); if(b) b.onclick=()=>{ S.mode="new"; S.sel=null; render(); };
+    const b2=$("#btn-imp2"); if(b2) b2.onclick=()=>{ S.mode="import"; S.sel=null; render(); };
+    const b3=$("#btn-bulk2"); if(b3) b3.onclick=()=>{ S.mode="bulk"; S.sel=null; render(); };
+    return;
+  }
+  w.innerHTML = projectView(p); bindProject(p);
+  if(isPlanner()) ensureBrief(p);
+}
+
+/* ---------- admin: workload and department lanes ---------- */
+function adminBoard(){
+  const all=visible().map(p=>({p,m:metrics(p)})).filter(x=>S.deptFilter==="All"||x.m.app.dept===S.deptFilter);
+  const rows=STAFF.map(r=>{ const xs=all.filter(x=>x.p.reviewerId===r.id); const live=xs.filter(x=>x.m.cityTurn);
+    return {r, total:xs.length, live:live.length, overdue:live.filter(x=>x.m.urg==="overdue").length, due:live.filter(x=>x.m.urg==="due").length,
+      waiting:xs.filter(x=>x.p.status==="corrections").length, done:xs.filter(x=>DONE(x.p.status)).length,
+      avg:live.length?Math.round(live.reduce((a,x)=>a+x.m.days,0)/live.length):0, drafts:xs.reduce((a,x)=>a+x.p.corrections.filter(c=>c.state==="draft").length,0)}; });
+  const unassigned=all.filter(x=>!STAFF.some(r=>r.id===x.p.reviewerId));
+  const card=({p,m})=>`<button class="qitem" data-p="${p.id}"><span class="m"><span class="pill ${URG[m.urg][1]}">${URG[m.urg][0]}</span><span>${esc(p.permitNo||"")}</span></span>
+    <span class="t">${esc(p.address)}</span><span class="m">${esc(m.app.main?(p.projectType||m.app.name):m.app.name)} · ${SIZE[m.size]}</span>
+    <span class="m">${m.cityTurn?`Day ${m.days} of ${m.target}`:STATUS_LABEL[p.status]} · ${openCount(p)} open</span>
+    ${m.cityTurn?`<span class="bar"><span style="width:${Math.min(100,Math.round(m.ratio*100))}%" class="${m.urg}"></span></span>`:""}</button>`;
+  const lanes=STAFF.map(r=>{ const xs=all.filter(x=>x.p.reviewerId===r.id).sort((a,b)=>b.m.score-a.m.score);
+    return `<div class="lane"><h4><span>${esc(r.dept)}</span><span class="small">${esc(r.name)} · ${xs.length}</span></h4>${xs.map(card).join("")||'<p class="small">Nothing here.</p>'}</div>`; }).join("");
+  return `<div class="ws"><div><h2>City overview</h2><p class="small" style="margin-top:6px">${all.length} file${all.length===1?"":"s"}${S.q?` matching “${esc(S.q)}”`:""}. Each lane is one reviewer's queue, most urgent on top: city's turn first, then by share of the review target used, project size and resubmittals.</p></div>
+    <div class="tbl-wrap"><table class="wl"><thead><tr><th>Reviewer</th><th>Dept</th><th>With City</th><th>Overdue</th><th>Due soon</th><th>Avg days</th><th>AI drafts to decide</th><th>With applicant</th><th>Approved</th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><td><b>${esc(x.r.name)}</b><br><span class="small">${esc(x.r.title)}</span></td><td>${esc(x.r.dept)}</td><td>${x.live}</td><td>${x.overdue?`<span class="pill p-corrections">${x.overdue}</span>`:"0"}</td><td>${x.due?`<span class="pill p-warn">${x.due}</span>`:"0"}</td><td>${x.avg}</td><td>${x.drafts}</td><td>${x.waiting}</td><td>${x.done}</td></tr>`).join("")}</tbody></table></div>
+    ${unassigned.length?`<div class="note red">${unassigned.length} file${unassigned.length===1?" has":"s have"} no reviewer. Open one to assign it.</div>`:""}
+    <div class="lanes">${lanes}</div></div>`;
+}
+
+/* ---------- home ---------- */
+function renderHome(){
+  const ap=a=>APPS.filter(x=>x.dept===a);
+  const mineN=isPlanner()?0:mine().length;
+  const small=(dept,blurb,extra="")=>`<button type="button" class="dcard" data-start="${ap(dept)[0]?.id||"plancheck"}" aria-label="${dept}"><span class="dept">${dept}</span><b>${dept==="City"?"City permits":dept}</b><span class="small">${blurb}</span>
+    <span class="small">${ap(dept).map(a=>esc(a.name)).join(" · ")}</span><span class="go">Start →</span>${extra}</button>`;
+  $("#view-home").innerHTML=`<div class="home">
+    ${mineN?`<div class="note"><b>You have ${mineN} active application${mineN===1?"":"s"}.</b> <a href="#" id="go-mine">See them in Projects</a>. Each one is tracked on its own, with its own department and reviewer.</div>`:""}
+    <div class="deptgrid">
+      <button type="button" class="dcard main" data-start="plancheck"><span class="dept">Building & Safety · most applications start here</span><b>Building plan check</b>
+        <span>New homes, ADUs, additions, remodels, multifamily and commercial. Fill in one short form, pick your PDF from Google Drive or Dropbox, and submit. Every comment comes back clipped from your sheets and numbered.</span>
+        <span class="go">Start a plan check application →</span></button>
+      ${small("Planning","Zoning review before plan check: ADUs over 800 sf, design review, Planning Commission.",`<span class="tip"><b>Which Planning path is my ADU?</b>
+        <span class="row"><span class="k">800 sf or less</span><span>Planning takes a quick look (setbacks, height, location), then you submit straight to Building plan check.</span>
+        <span class="k">Over 800 sf</span><span>Goes through Monrovia Planning review first (ADU application, state 60-day clock). Plan check starts after Planning signs off.</span>
+        <span class="k">Other</span><span>Lot splits, hillside, historic and variances go to the Development Review Committee or Planning Commission.</span></span></span>`)}
+      ${small("Public Works","Work in the street or parkway, utilities, grading and drainage.")}
+      ${small("Fire","Fire sprinklers, alarms, access and operational permits.")}
+      ${small("City","Special events and filming in Monrovia.")}
+    </div>
+    <div><div class="sec-h" style="margin:4px 0 8px">ADU: which path?</div><div class="adu-path">
+      <div class="pathc"><b>ADU 800 sf or less</b><div class="steps"><span>Planning quick look</span><i>→</i><span>Building plan check</span><i>→</i><span>Permit</span></div><p class="small" style="margin:0">State law protects ADUs up to 800 sf, so Planning only confirms location, setbacks and height.</p></div>
+      <div class="pathc"><b>ADU over 800 sf</b><div class="steps"><span>Planning review</span><i>→</i><span>Building plan check</span><i>→</i><span>Permit</span></div><p class="small" style="margin:0">Full ADU application with Planning. Monrovia must act within 60 days of a complete application (Gov. Code 66317).</p></div>
+    </div></div></div>`;
+  $("#view-home").querySelectorAll("[data-start]").forEach(b=>b.onclick=()=>{ if(isPlanner()) setRole("applicant"); S.app=b.dataset.start; S.mode="new"; S.sel=null; S.tab="projects"; render(); });
+  const g=$("#go-mine"); if(g) g.onclick=e=>{ e.preventDefault(); S.tab="projects"; render(); };
+}
+
+/* ---------- forms ---------- */
+const chk = (name, opts, sel=[]) => `<div class="chks" id="${name}">${opts.map(o=>`<label><input type="checkbox" value="${esc(o)}" ${sel.includes(o)?"checked":""}>${esc(o)}</label>`).join("")}</div>`;
+const checked = id => [...document.querySelectorAll(`#${id} input:checked`)].map(i=>i.value);
+function dropZone(label, multi){ return `<input type="file" id="f-file" accept="application/pdf" ${multi?"multiple":""} hidden>
+  <div class="drop" id="drop" tabindex="0" role="button"><strong>${label||"Drop the plan set PDF here"}</strong><span class="city">or tap to choose</span><div id="f-filename" class="progress" style="margin-top:6px"></div></div>`; }
+function bindDropMulti(onFiles){
+  const drop=$("#drop"), inp=$("#f-file");
+  const pick=list=>{ const fs=[...list].filter(f=>/pdf$/i.test(f.type||f.name)); if(!fs.length){ flash("Please choose PDF files."); return; } onFiles(fs); $("#f-filename").textContent=fs.map(f=>f.name).join("\n"); };
+  drop.onclick=()=>inp.click(); drop.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); inp.click(); } };
+  inp.onchange=()=>pick(inp.files);
+  drop.ondragover=e=>{ e.preventDefault(); drop.classList.add("over"); }; drop.ondragleave=()=>drop.classList.remove("over");
+  drop.ondrop=e=>{ e.preventDefault(); drop.classList.remove("over"); pick(e.dataTransfer.files); };
+}
+function bindDrop(onFile){
+  const drop=$("#drop"), inp=$("#f-file");
+  const pick=f=>{ if(f && /pdf$/i.test(f.type||f.name)){ onFile(f); $("#f-filename").textContent=f.name+" · "+(f.size/1048576).toFixed(1)+" MB"; } else if(f) flash("Please choose a PDF."); };
+  drop.onclick=()=>inp.click(); drop.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); inp.click(); } };
+  inp.onchange=()=>pick(inp.files[0]);
+  drop.ondragover=e=>{ e.preventDefault(); drop.classList.add("over"); }; drop.ondragleave=()=>drop.classList.remove("over");
+  drop.ondrop=e=>{ e.preventDefault(); drop.classList.remove("over"); pick(e.dataTransfer.files[0]); };
+}
+function storePick(){
+  return `<div class="src"><span class="small">Pick the PDF from</span><button type="button" class="btn sm" data-src="drive">Google Drive</button><button type="button" class="btn sm" data-src="dropbox">Dropbox</button><span class="small">or drop it below</span></div>`;
+}
+function bindStorePick(){
+  document.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>flash(`In the live portal this opens your ${STORES[b.dataset.src]} file picker and Redline reads the PDF straight from there. This preview can't reach ${STORES[b.dataset.src]}, so drop the PDF below.`));
+}
+function linkOk(v){ return !v || !!storeOf(v); }
+function appPicker(){
+  const sel=APPS.find(a=>a.id===S.app)||APPS[0];
+  const groups=[...new Set(APPS.filter(a=>!a.main).map(a=>a.dept))];
+  const main=APPS[0];
+  const mainCard = sel.main
+    ? `<button type="button" class="appmain on" data-app="plancheck"><span class="kicker">Building & Safety</span><b>${main.name}</b><span class="small">${main.desc}</span></button>`
+    : `<button type="button" class="appmain mini" data-app="plancheck"><b>${main.name}</b><span class="small">Switch back</span></button>`;
+  return `<div class="picker">${mainCard}
+    ${sel.main?"":`<div class="appsel"><span class="kicker">${esc(sel.dept)}</span><b>${esc(sel.name)}</b><span class="small">${esc(sel.desc)}</span></div>`}
+    <div class="bubbles">${groups.map(g=>`<div class="bgroup"><span class="small">${g}</span><div class="chks">${APPS.filter(a=>a.dept===g).map(a=>`<button type="button" class="bubble ${a.id===S.app?"on":""}" data-app="${a.id}">${esc(a.name)}</button>`).join("")}</div></div>`).join("")}</div></div>`;
+}
+function propertyBlock(full){
+  return `<div class="fs"><h3>Property</h3><div class="form">
+      <label class="f wide">${S.app==="event"||S.app==="film"?"Location in Monrovia":"Project address in Monrovia"}<input type="text" id="f-address" placeholder="e.g. 146 N Alta Vista Ave" autocomplete="street-address"></label>
+      <div class="wide parcel" id="parcel"><span class="small">APN, zoning and site conditions fill in from the address.</span></div>
+      <details class="wide" id="parcel-edit"><summary class="small" style="cursor:pointer">Edit parcel details</summary>
+        <div class="form" style="margin-top:10px">
+          <label class="f">APN<input type="text" id="f-apn" placeholder="e.g. 8507-012-034"></label>
+          <label class="f">Zone<select id="f-zone"><option value="">Not sure</option><option>RL</option><option>RE</option><option>RF</option><option>RM</option><option>RH</option></select></label>
+          <div class="f wide"><span class="small">Site conditions</span>${chk("f-flags",["Hillside","High fire zone","Historic","HOA","After-the-fact work"])}</div>
+        </div></details>
+    </div></div>`;
+}
+function newForm(){
+  if(S.app!=="plancheck") return `<form class="ws" id="newform" novalidate><div><h2>New application</h2></div>${appPicker()}${otherForm(APPS.find(a=>a.id===S.app))}</form>`;
+  return `<form class="ws" id="newform" novalidate>
+    <div><h2>New application</h2>
+    <p class="small" style="margin-top:6px">One form instead of the City's two. Contractor and workers' comp declarations are collected later, at permit issuance.</p></div>
+    ${appPicker()}
+    <div class="fs"><h3>Property</h3><div class="form">
+      <label class="f wide">Project address in Monrovia<input type="text" id="f-address" placeholder="e.g. 146 N Alta Vista Ave" autocomplete="street-address"></label>
+      <div class="wide parcel" id="parcel"><span class="small">APN, zoning and site conditions fill in from the address.</span></div>
+      <details class="wide" id="parcel-edit"><summary class="small" style="cursor:pointer">Edit parcel details</summary>
+        <div class="form" style="margin-top:10px">
+          <label class="f">APN<input type="text" id="f-apn" placeholder="e.g. 8507-012-034"></label>
+          <label class="f">Zone<select id="f-zone"><option value="">Not sure</option><option>RL</option><option>RE</option><option>RF</option><option>RM</option><option>RH</option></select></label>
+          <div class="f wide"><span class="small">Site conditions</span>${chk("f-flags",["Hillside","High fire zone","Historic","HOA","After-the-fact work"])}</div>
+        </div></details>
+    </div></div>
+    <div class="fs"><h3>Project</h3><div class="form">
+      <label class="f">Project type<select id="f-type"><option>Detached ADU</option><option>Attached ADU / JADU</option><option>Garage conversion ADU</option><option>SB 9 lot split + unit</option><option>New single-family dwelling</option><option>Addition</option><option>Alteration / remodel</option><option>Tenant improvement</option></select></label>
+      <label class="f">Valuation ($)<input type="number" id="f-val" min="0" placeholder="e.g. 250000"></label>
+      <label class="f wide">Scope of work<textarea id="f-scope" placeholder="e.g. New 750 sf detached ADU, 1 story, 2 bed / 1 bath, rear yard"></textarea></label>
+      <label class="f">Living area (sf)<input type="number" id="f-living" min="0"></label>
+      <label class="f">Garage area (sf)<input type="number" id="f-garage" min="0"></label>
+      <label class="f">Dwelling units<input type="number" id="f-units" min="0" value="1"></label>
+      <label class="f">Stories<input type="number" id="f-stories" min="0" value="1"></label>
+      <div class="f wide"><span class="small">Permits needed</span>${chk("f-permits",["Building","Electrical","Mechanical","Plumbing","Solar/PV","EV charger","Demolition","Grading","Pool/Spa"],["Building","Electrical","Mechanical","Plumbing"])}</div>
+      <div class="f wide"><span class="small">Included with the set</span>${chk("f-calcs",["Structural calcs","Truss calcs","Soils report","Title 24 energy"])}</div>
+    </div></div>
+    <div class="fs"><h3>People</h3><div class="form">
+      <label class="f">Property owner<input type="text" id="f-owner" placeholder="Full name"></label>
+      <label class="f">Owner email<input type="text" id="f-owner-email" placeholder="name@email.com"></label>
+      <label class="f">Owner phone<input type="tel" id="f-owner-phone" placeholder="626-555-0100"></label>
+      <label class="f">Designer or architect<input type="text" id="f-designer" placeholder="Name, firm"></label>
+      <label class="f">License # (if licensed)<input type="text" id="f-license" placeholder="e.g. C-12345"></label>
+      <label class="f">Designer email<input type="text" id="f-designer-email"></label>
+      <label class="f">Designer phone<input type="tel" id="f-designer-phone"></label>
+      <label class="f">Who is submitting?<select id="f-role"><option>Design professional in charge</option><option>Non-licensed designer</option><option>Owner</option><option>Authorized agent</option></select></label>
+    </div></div>
+    <div class="fs"><h3>Plans</h3>
+      ${storePick()}
+      ${dropZone()}
+      <label class="f">Link to the full set (optional)<input type="text" id="f-link" placeholder="Google Drive or Dropbox link — your files stay with you"></label>
+    </div>
+    <div class="fs"><h3>Note</h3>
+      <label class="f">Note to the City (optional)<textarea id="f-note" placeholder="Anything the reviewer should know, e.g. prior approvals, a pre-application meeting, deadlines"></textarea></label>
+    </div>
+    <div class="acts"><button class="btn primary" type="submit">Submit to the City</button><button class="btn" type="button" id="f-cancel">Cancel</button></div>
+  </form>`;
+}
+function otherForm(a){
+  return `${propertyBlock()}
+    <div class="fs"><h3>${esc(a.name)}</h3><div class="form">
+      ${a.chips?`<div class="f wide"><span class="small">What's involved</span>${chk("f-kind",a.chips)}</div>`:""}
+      <label class="f wide">Describe the request<textarea id="f-scope" placeholder="What, where and why, in a few sentences"></textarea></label>
+      ${["encroach","pw-construct","transport","event","film","hydrant"].includes(a.id)?`<label class="f">Start date<input type="text" id="f-start" placeholder="e.g. Nov 3, 2026"></label><label class="f">End date<input type="text" id="f-end" placeholder="e.g. Nov 7, 2026"></label>`:""}
+      <label class="f">Valuation or cost ($, if any)<input type="number" id="f-val" min="0"></label>
+    </div></div>
+    <div class="fs"><h3>Applicant</h3><div class="form">
+      <label class="f">Your name<input type="text" id="f-owner" placeholder="Full name"></label>
+      <label class="f">You are the<select id="f-role"><option>Owner</option><option>Contractor</option><option>Designer / engineer</option><option>Business owner</option><option>Authorized agent</option></select></label>
+      <label class="f">Email<input type="text" id="f-owner-email"></label>
+      <label class="f">License # (contractors)<input type="text" id="f-license"></label>
+    </div></div>
+    <div class="fs"><h3>Attachments</h3>${dropZone("Drop plans, a site sketch or traffic plan (PDF, optional)")}</div>
+    <div class="fs"><h3>Note</h3><label class="f">Note to the City (optional)<textarea id="f-note" placeholder="Anything the reviewer should know"></textarea></label></div>
+    <div class="acts"><button class="btn primary" type="submit">Submit to ${esc(a.dept==="City"?"the City":a.dept)}</button><button class="btn" type="button" id="f-cancel">Cancel</button></div>`;
+}
+function parcelCard(){
+  const apn=$("#f-apn").value.trim(), zone=$("#f-zone").value, flags=checked("f-flags"), addr=$("#f-address").value.trim();
+  const el=$("#parcel"); if(!el) return;
+  if(!addr){ el.innerHTML='<span class="small">APN, zoning and site conditions fill in from the address.</span>'; return; }
+  if(!apn && !zone){ el.innerHTML=`<div class="note"><b>Parcel lookup</b><br>In the live portal, the APN, zone and site conditions (hillside, fire zone, historic) fill in here from LA County parcel data and Monrovia's zoning map as soon as you type the address. This preview can't reach those servers, so open “Edit parcel details” if you know them, or leave them for the City.</div>`; return; }
+  el.innerHTML=`<div class="facts"><span>APN <b>${esc(apn||"—")}</b></span><span>Zone <b>${esc(zone||"—")}</b></span>${flags.map(f=>`<span class="pill p-warn">${esc(f)}</span>`).join("")}</div>`;
+}
+function bindNew(){
+  document.querySelectorAll("[data-app]").forEach(b=>b.onclick=()=>{ S.app=b.dataset.app; renderWorkspace(); });
+  if(S.app!=="plancheck") return bindOther();
+  let file=null; bindDrop(f=>file=f); bindStorePick();
+  ["f-address","f-apn","f-zone"].forEach(id=>$("#"+id).addEventListener("change",parcelCard));
+  $("#f-address").addEventListener("blur",parcelCard);
+  $("#f-flags").addEventListener("change",parcelCard);
+  $("#f-cancel").onclick=()=>{ S.mode=null; render(); };
+  $("#newform").onsubmit=e=>{ e.preventDefault();
+    const v=id=>$("#"+id).value.trim();
+    if(!v("f-address")){ flash("Add the project address."); return; }
+    if(!v("f-owner")){ flash("Add the property owner's name."); return; }
+    if(!file){ flash("Attach the plan set PDF."); return; }
+    if(!linkOk(v("f-link"))){ flash("Use a Google Drive or Dropbox link for the full set."); return; }
+    const p={id:uid(), address:v("f-address"), apn:v("f-apn"), zone:$("#f-zone").value||"Not sure", flags:checked("f-flags"), projectType:$("#f-type").value,
+      valuation:Number(v("f-val"))||0, scope:v("f-scope")||"(not described)", livingSf:Number(v("f-living"))||0, garageSf:Number(v("f-garage"))||0,
+      units:Number(v("f-units"))||0, stories:Number(v("f-stories"))||0, permits:checked("f-permits"), calcs:checked("f-calcs"),
+      owner:{name:v("f-owner"), email:v("f-owner-email"), phone:v("f-owner-phone")}, designer:{name:v("f-designer"), license:v("f-license"), email:v("f-designer-email"), phone:v("f-designer-phone")}, applicant:{name:`${ME.name}, ${ME.firm}`, email:ME.email, phone:ME.phone}, submitterRole:$("#f-role").value,
+      appType:"plancheck", dept:"Building", setLink:v("f-link"), applicantId:ME.id, applicantName:ME.firm, reviewerId:staffFor("Building").id, reviewerName:staffFor("Building").name, permitNo:"BLD-2026-"+String(Math.floor(500+Math.random()*400)), note:v("f-note"), status:"submitted", cycle:1, createdAt:now(), submittedAt:now(), sheets:[], completeness:[], corrections:[], changes:[], timeline:[], aiState:"pending"};
+    addLog(p,"applicant",`Submitted ${file.name} to the City`);
+    S.mode=null; S.sel=p.id; if(S.local||!S.db) S.projects.unshift(p);
+    save(p).then(()=>runFirstRead(p,file));
+  };
+}
+function bindOther(){
+  const a=APPS.find(x=>x.id===S.app); let file=null; bindDrop(f=>file=f);
+  ["f-address","f-apn","f-zone"].forEach(id=>$("#"+id).addEventListener("change",parcelCard));
+  $("#f-address").addEventListener("blur",parcelCard); $("#f-flags").addEventListener("change",parcelCard);
+  $("#f-cancel").onclick=()=>{ S.mode=null; S.app="plancheck"; render(); };
+  $("#newform").onsubmit=e=>{ e.preventDefault();
+    const v=id=>($("#"+id)?.value||"").trim();
+    if(!v("f-address")){ flash("Add the address or location."); return; }
+    if(!v("f-owner")){ flash("Add your name."); return; }
+    const kinds=a.chips?checked("f-kind"):[];
+    const p={id:uid(), appType:a.id, dept:a.dept, applicantId:ME.id, applicantName:ME.firm, reviewerId:staffFor(a.dept).id, reviewerName:staffFor(a.dept).name, address:v("f-address"), apn:v("f-apn"), zone:$("#f-zone").value||"Not sure", flags:checked("f-flags"),
+      projectType:kinds.join(", ")||a.name, scope:v("f-scope")||"(not described)", valuation:Number(v("f-val"))||0, dates:[v("f-start"),v("f-end")].filter(Boolean).join(" – "),
+      owner:{name:v("f-owner"), email:v("f-owner-email")}, designer:{license:v("f-license")}, applicant:{name:`${ME.name}, ${ME.firm}`, email:ME.email, phone:ME.phone}, submitterRole:$("#f-role").value, note:v("f-note"),
+      status:"submitted", cycle:1, createdAt:now(), submittedAt:now(), sheets:[], completeness:[], corrections:[], changes:[], timeline:[], aiState:file?"pending":"none"};
+    addLog(p,"applicant",`Submitted ${a.name} application${file?` with ${file.name}`:""}`);
+    S.mode=null; S.sel=p.id; S.app="plancheck"; if(S.local||!S.db) S.projects.unshift(p);
+    save(p).then(()=>{ if(file) runFirstRead(p,file); });
+  };
+}
+function bulkForm(){
+  return `<form class="ws" id="bulkform" novalidate>
+    <div><h2>Bring in old plan check files</h2><p class="small" style="margin-top:6px">Paste a batch of Google Drive or Dropbox folder links, drop the PDFs, or both. Redline reads only the PDFs, never the model files, and sorts each set's sheets by discipline. A plan set gets a first read; an old correction letter gets turned into trackable comments.</p></div>
+    <div class="fs"><h3>Links</h3><label class="f">One per line, optionally "address | link"<textarea id="b-links" style="min-height:110px" placeholder="146 N Alta Vista Ave | https://www.dropbox.com/scl/fo/…&#10;https://drive.google.com/drive/folders/…"></textarea></label>
+      <p class="small">In the live portal Redline opens each folder, finds the newest PDF set and correction letters, and files them by cycle. This preview can't reach Drive or Dropbox, so links are saved to the queue and you drop the PDFs below.</p></div>
+    <div class="fs"><h3>PDFs</h3>${dropZone("Drop old plan sets or correction letters (several at once)", true)}
+      <label class="f">Department<select id="b-dept">${[...new Set(APPS.map(a=>a.dept))].map(d=>`<option>${d}</option>`).join("")}</select></label>
+      <label class="f">Status<select id="b-status"><option value="submitted">In review</option><option value="corrections">Corrections issued</option><option value="resubmitted">Resubmitted</option></select></label></div>
+    <div class="acts"><button class="btn primary" type="submit">Add to tasks and read</button><button class="btn" type="button" id="b-cancel">Cancel</button></div>
+  </form>`;
+}
+function bindBulk(){
+  let files=[]; bindDropMulti(fs=>files=fs);
+  $("#b-cancel").onclick=()=>{ S.mode=null; render(); };
+  $("#bulkform").onsubmit=async e=>{ e.preventDefault();
+    const lines=$("#b-links").value.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    const bad=lines.filter(l=>!storeOf(l)); if(bad.length){ flash(`${bad.length} link${bad.length===1?" is":"s are"} not Google Drive or Dropbox. Redline only reads from those two.`); return; }
+    if(!lines.length && !files.length){ flash("Paste at least one link or drop a PDF."); return; }
+    const dept=$("#b-dept").value, status=$("#b-status").value;
+    const appType=(APPS.find(a=>a.dept===dept)||APPS[0]).id;
+    const base=()=>({id:uid(), imported:true, appType, dept, reviewerId:staffFor(dept).id, reviewerName:staffFor(dept).name, zone:"—", scope:"Imported from an earlier plan check.", status, cycle:1, createdAt:now(), submittedAt:now(), sheets:[], completeness:[], corrections:[], changes:[], timeline:[]});
+    const made=[];
+    for(const l of lines){ const [a,b]=l.includes("|")?l.split("|").map(x=>x.trim()):["",l];
+      const p={...base(), address:a||"Imported: "+(b.split("/").filter(Boolean).pop()||"link").slice(0,40), placeholder:!a, setLink:b, projectType:"Unknown", aiState:"none"};
+      addLog(p,"planner","Added from a shared link."); made.push(p); }
+    const withFiles=files.map(f=>{ const p={...base(), address:f.name.replace(/\.pdf$/i,"").slice(0,60), placeholder:true, projectType:"Unknown", aiState:"pending"}; addLog(p,"planner",`Added ${f.name}`); made.push(p); return [p,f]; });
+    S.mode=null; S.sel=made[0]?.id||null;
+    for(const p of made){ if(S.local||!S.db) S.projects.unshift(p); await save(p); }
+    for(const [p,f] of withFiles){ await runFirstRead(p,f); }
+  };
+}
+function importForm(){
+  return `<form class="ws" id="impform" novalidate>
+    <div><h2>Add an existing permit</h2><p class="small" style="margin-top:6px">Bring a permit that's already in review into Redline. The drawings stay in Google Drive or Dropbox; Redline keeps the link, your comments and small clips.</p></div>
+    <div class="form">
+      <label class="f">Permit / plan check #<input type="text" id="i-no" placeholder="e.g. BLD-2026-0412"></label>
+      <label class="f">Project address<input type="text" id="i-address"></label>
+      <label class="f">Project type<select id="i-type"><option>Detached ADU</option><option>Attached ADU / JADU</option><option>SB 9 lot split + unit</option><option>New single-family dwelling</option><option>Addition</option><option>Alteration / remodel</option><option>Multifamily</option><option>Commercial</option></select></label>
+      <label class="f">Current status<select id="i-status"><option value="submitted">In review</option><option value="corrections">Corrections issued</option><option value="resubmitted">Resubmitted</option></select></label>
+      <label class="f">Owner<input type="text" id="i-owner"></label>
+      <label class="f">Designer / architect email<input type="text" id="i-email"></label>
+      <label class="f wide">Google Drive or Dropbox link to the set<input type="text" id="i-link" placeholder="https://…"></label>
+      <div class="wide"><span class="small">Optional: attach the current PDF so Redline can do a first read</span>${dropZone()}</div>
+    </div>
+    <div class="acts"><button class="btn primary" type="submit">Add to queue</button><button class="btn" type="button" id="i-cancel">Cancel</button></div>
+  </form>`;
+}
+function bindImport(){
+  let file=null; bindDrop(f=>file=f);
+  $("#i-cancel").onclick=()=>{ S.mode=null; render(); };
+  $("#impform").onsubmit=e=>{ e.preventDefault();
+    const v=id=>$("#"+id).value.trim();
+    if(!v("i-address")){ flash("Add the project address."); return; }
+    if(!linkOk(v("i-link"))){ flash("Use a Google Drive or Dropbox link."); return; }
+    const p={id:uid(), imported:true, reviewerId:staffFor("Building").id, reviewerName:staffFor("Building").name, permitNo:v("i-no"), address:v("i-address"), projectType:$("#i-type").value, zone:"—", scope:"Imported permit.", status:$("#i-status").value,
+      owner:{name:v("i-owner")}, designer:{email:v("i-email")}, setLink:v("i-link"), cycle:1, createdAt:now(), sheets:[], completeness:[], corrections:[], changes:[], timeline:[], aiState:file?"pending":"none"};
+    addLog(p,"planner",`Added existing permit ${p.permitNo||""} to Redline`.trim());
+    S.mode=null; S.sel=p.id; if(S.local||!S.db) S.projects.unshift(p);
+    save(p).then(()=>{ if(file) runFirstRead(p,file); });
+  };
+}
+
+/* ---------- project view ---------- */
+function chip(conf){ return conf==="verified"?'<span class="dept conf-v">verified rule</span>':conf==="planner-judgment"?'<span class="dept conf-j">reviewer judgment</span>':'<span class="dept conf-n">verify rule</span>'; }
+function snipHtml(ref, cap){ const s=imgSrc(ref); return s?`<figure style="margin:0"><img class="snip" data-zoom="${esc(s)}" src="${esc(s)}" alt="${esc(cap)}" loading="lazy"><figcaption class="snip-cap">${esc(cap)}</figcaption></figure>`:""; }
+function ruleFor(c){ return CITY.rules.find(r=>r.id===c.ruleId); }
+function corrCard(p,c){
+  const P=isPlanner(); const text=c.plannerText||c.fix;
+  const cls=["corr", c.severity==="advisory"?"adv":"", c.state==="rejected"?"rejected":"", c.resolved?"resolved":""].join(" ");
+  let status="";
+  if(c.resolved) status='<span class="pill p-approved">Cleared</span>';
+  else if(c.state==="draft") status=`<span class="pill p-draft">${c.source==="notes"?"Checklist draft":"AI draft"}</span>`;
+  else if(c.state==="approved") status=`<span class="pill p-corrections">${!P?"To answer":c.source==="letter"?"From earlier letter":c.source==="reviewer"?"Reviewer comment":c.edited?"Approved · edited":"Approved"}</span>`;
+  else if(c.state==="rejected") status='<span class="pill p-draft">Rejected</span>';
+  const num=p.corrections.indexOf(c)+1;
+  const pr=c.priority&&!c.resolved&&c.state!=="rejected"?`<span class="prio prio-${c.priority}">${c.priority[0].toUpperCase()+c.priority.slice(1)}</span>`:"";
+  let b=`<div class="corr-h"><button type="button" class="num go" data-goto="${c.id}" title="Show #${num} on the sheet">${num}</button>${citeHtml(c.section)}<span class="dept">${esc(c.dept)}</span><span class="dept">Sheet ${esc(c.sheet||"—")}</span>${pr}${status}${P&&c.source==="ai"?chip(c.confidence):""}${P&&c.source==="notes"&&c.state==="draft"?'<span class="dept">standard note</span>':""}</div>`;
+  if(c.snip) b+=snipHtml(c.snip, `Clip from sheet ${c.sheet||c.page||""} · cycle ${c.cycle||1}`);
+  if(c.finding) b+=`<p>${esc(c.finding)}</p>`;
+  if(S.editing===c.id) b+=`<textarea id="edit-${c.id}">${esc(text)}</textarea><div class="acts"><button class="btn sm primary" data-a="saveedit" data-c="${c.id}">Save and approve</button><button class="btn sm" data-a="canceledit">Cancel</button></div>`;
+  else b+=`<p class="fix"><b>Required:</b> ${esc(text)}</p>`;
+  const r=ruleFor(c); if(c.why||r) b+=`<div class="edu"><b>Code note</b>${esc(c.why||"")}${r?` ${c.why?"":""}<span class="small">Rule: ${esc(r.req)}</span>`:""}</div>`;
+  if(c.response) b+=`<div class="sub"><span class="who">Applicant response · cycle ${c.respCycle||p.cycle}</span>${esc(c.response)}</div>`;
+  if(c.recheck && P){ b+=`<div class="sub"><span class="who">Redline recheck · cycle ${c.recheck.cycle}</span>${c.recheck.likelyResolved?"Looks resolved. ":"Still open. "}${esc(c.recheck.note)}</div>`;
+    if(c.recheck.snip) b+=snipHtml(c.recheck.snip, `Revised sheet · cycle ${c.recheck.cycle}`); }
+  if(P && (c.replies||[]).length) b+=`<div class="replies">${c.replies.map(r=>`<div class="reply"><span class="who">${esc(nameOf(r))} · ${esc(r.dept)}</span> — ${esc(r.text)} <span class="small">${fmtT(r.at)}</span></div>`).join("")}</div>`;
+  let acts="";
+  if(P && !c.resolved){
+    if(c.state==="draft") acts=`<button class="btn sm ok" data-a="approve" data-c="${c.id}">Approve</button><button class="btn sm" data-a="edit" data-c="${c.id}">Edit</button><button class="btn sm" data-a="reject" data-c="${c.id}">Reject</button>`;
+    else if(c.state==="approved" && p.status==="resubmitted") acts=`<button class="btn sm ok" data-a="clear" data-c="${c.id}">Clear</button><button class="btn sm" data-a="edit" data-c="${c.id}">Revise</button>`;
+    else if(c.state==="approved") acts=`<button class="btn sm" data-a="edit" data-c="${c.id}">Revise</button>`;
+    else if(c.state==="rejected") acts=`<button class="btn sm" data-a="restore" data-c="${c.id}">Restore</button>`;
+  }
+  if(P) acts+=`<div class="reply-form" style="width:100%"><select id="rd-${c.id}" aria-label="Department">${DEPTS.map(d=>`<option ${d===c.dept?"selected":""}>${d}</option>`).join("")}</select><textarea id="rt-${c.id}" placeholder="Add a note for the other reviewers"></textarea><button class="btn sm" data-a="reply" data-c="${c.id}">Add note</button></div>`;
+  if(!P && p.status==="corrections" && c.state==="approved" && !c.resolved)
+    acts=`<label class="f" style="width:100%">Your response<textarea data-resp="${c.id}" placeholder="What changed and where, e.g. Window W3 now 5.7 sf net, see A2.1">${esc(c.draftResponse||"")}</textarea></label>`;
+  if(acts) b+=`<div class="acts">${acts}</div>`;
+  return `<div class="${cls}" ${S.focusC===c.id?'style="box-shadow:0 0 0 2px var(--red)"':""}>${b}</div>`;
+}
+function changeCard(ch){
+  return `<div class="chg ${ch.state!=="open"?"done":""}"><div class="corr-h"><span class="dept">Sheet ${esc(ch.sheet||ch.page||"—")}</span><span class="pill p-submitted">Not requested · cycle ${ch.cycle}</span>${ch.state==="accepted"?'<span class="pill p-approved">Accepted</span>':ch.state==="added"?'<span class="pill p-corrections">Made a comment</span>':""}</div>
+    ${ch.snip?snipHtml(ch.snip,"Revised sheet"):""}
+    <p><b>${esc(ch.description)}</b></p>
+    ${(ch.previous||ch.now)?`<p class="fix">Was <b>${esc(ch.previous||"—")}</b> · now <b>${esc(ch.now||"—")}</b></p>`:""}
+    ${ch.mayAffect?`<div class="edu"><b>Check</b>${esc(ch.mayAffect)}</div>`:""}
+    ${ch.state==="open"?`<div class="acts"><button class="btn sm" data-a="chg-accept" data-c="${ch.id}">Fine as drawn</button><button class="btn sm primary" data-a="chg-add" data-c="${ch.id}">Make it a comment</button></div>`:""}</div>`;
+}
+function benchHtml(p){
+  const b=p.benchmark; if(!b||!isPlanner()) return "";
+  const n=k=>b.items.filter(i=>i.status===k).length, tot=b.items.length;
+  const pct=Math.round((n("caught")+n("partial"))/tot*100);
+  const lab={caught:["Caught","p-approved"],partial:["Partly","p-warn"],missed:["Missed","p-corrections"]};
+  return `<details class="bench"><summary><span class="kicker" style="display:inline">Test against the real plan check</span>
+    <span class="bench-sum"><b>${n("caught")}</b> caught · <b>${n("partial")}</b> partly · <b>${n("missed")}</b> missed of ${tot} agency comments (${pct}% caught or partly)</span></summary>
+    <p class="small" style="margin:8px 0">${esc(b.agency)}. Source: ${esc(b.source)}. Redline did a blind first read of the original first submittal, then its comments were compared with what the agency actually wrote.</p>
+    <div class="bar" style="height:8px"><span style="width:${Math.round(n("caught")/tot*100)}%;float:left"></span><span class="due" style="width:${Math.round(n("partial")/tot*100)}%;float:left"></span></div>
+    <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Agency comment</th><th>Dept</th><th>Redline</th><th>Comment #</th></tr></thead><tbody>
+    ${b.items.map(i=>`<tr><td>${esc(i.text)}</td><td>${esc(i.dept)}</td><td><span class="pill ${lab[i.status][1]}">${lab[i.status][0]}</span></td><td>${esc(i.ref||"—")}</td></tr>`).join("")}</tbody></table></div>
+    ${(b.extras||[]).length?`<div class="sec-h" style="margin:14px 0 6px">Found by Redline, not on the agency's written list</div><ul style="margin:0;padding-left:18px;display:grid;gap:4px">${b.extras.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p class="small">The agency also marked up the plan set itself, which this test did not compare, so some of these may have been raised there.</p>`:""}
+  </details>`;
+}
+function projectView(p){
+  const P=isPlanner(), busy=S.busy[p.id];
+  const sh=p.sheets||[]; const si=Math.min(S.sheetIdx, Math.max(sh.length-1,0));
+  let cs=p.corrections.slice();
+  if(!P) cs=cs.filter(c=>c.state==="approved" || c.resolved && c.state==="approved");
+  if(P && S.cDept!=="All") cs=cs.filter(c=>(c.dept||"Building")===S.cDept);
+  const order=c=>(c.resolved?40:0)+(c.state==="rejected"?30:0)+(c.state==="draft"?0:10)+(PRIO[c.priority]??1)*2+(c.severity==="advisory"?1:0)+(c.source==="notes"?.5:0);
+  cs.sort((a,b)=>order(a)-order(b));
+  const drafts=p.corrections.filter(c=>c.state==="draft").length;
+  const openApproved=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).length;
+  const openChanges=(p.changes||[]).filter(c=>c.state==="open").length;
+  let head="", primary="";
+  if(!P){
+    if(p.status==="submitted"||p.status==="resubmitted") head=`<div class="note">${p.status==="resubmitted"?"Revised set received":"Submitted"} ${fmtD(p.updatedAt||p.submittedAt)}. Monrovia reviewers are working on it. Their comments will appear here.</div>`;
+    if(p.status==="corrections"){ head=`<div class="note red"><b>${openApproved} comment${openApproved===1?"":"s"} from the City.</b> Each one shows the spot on your sheets. Respond to each, then upload the revised set. Only these items get rechecked.</div>`;
+      primary=`<input type="file" id="re-file" accept="application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="letter">Print the list</button>`; }
+    if(p.status==="approved") head=`<div class="note ok"><b>Plan check approved.</b> Waiting on the other agencies below. You'll get a pickup notice when they're all cleared.</div>${agencyHtml(p,false)}`;
+    if(p.status==="ready") head=`<div class="note ok"><b>Ready for permit pickup.</b> All clearances are in. Pay the permit fees online or at 415 S. Ivy Ave, then the permit is issued.</div>`;
+    if(p.status==="issued") head=`<div class="note ok"><b>Permit issued${p.issuedPermitAt?` ${fmtD(p.issuedPermitAt)}`:""}.</b> Schedule inspections from here.</div>`;
+  } else {
+    if(p.aiState==="pending"||p.aiState==="running") head=`<div class="note">Redline's first read is still running${busy?"":" in the submitter's browser"}. Draft comments will appear here.</div>`;
+    if(p.status==="submitted"||p.status==="resubmitted"){
+      if(!head) head=`<div class="note">${p.status==="resubmitted"?`Revised set in. Recheck notes sit under each open comment${openChanges?`, and <b>${openChanges} change${openChanges===1?"":"s"} nobody asked for</b> are listed below`:""}.`:`Redline drafted ${p.corrections.filter(c=>c.source==="ai").length} comments, each clipped from the sheet, plus ${p.corrections.filter(c=>c.source==="notes").length} missing standard notes. Approve, edit or reject each one; only approved comments reach the applicant.`}</div>`;
+      primary=`<button class="btn primary" data-a="issue" ${(drafts||!openApproved)?"disabled":""}>Send ${openApproved} comment${openApproved===1?"":"s"} to applicant</button>
+        <button class="btn ok" data-a="approveall" ${(drafts||openApproved||openChanges)?"disabled":""}>Approve plan check</button>
+        ${(drafts||openChanges)?`<span class="small">${drafts?`${drafts} draft${drafts===1?"":"s"}`:""}${drafts&&openChanges?" and ":""}${openChanges?`${openChanges} change${openChanges===1?"":"s"}`:""} still need a decision</span>`:""}`;
+    }
+    const noteDrafts=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft").length;
+    if(noteDrafts&&!busy) primary+=`<button class="btn" data-a="approvenotes">Approve ${noteDrafts} standard-note draft${noteDrafts===1?"":"s"}</button>`;
+    if(openApproved&&!busy) primary+=`<button class="btn" data-a="letter">Print correction letter</button>`;
+    if((p.aiState==="none"||p.aiState==="failed"||p.aiState==="unavailable") && !busy) primary+=`<input type="file" id="fr-file" accept="application/pdf" hidden><button class="btn" data-a="firstread">Attach PDF for AI first read</button>`;
+    if(p.status==="corrections") head=`<div class="note">Comments sent ${fmtT(p.issuedAt)}. Waiting on the applicant's responses and revised set.</div>`;
+    if(p.status==="approved"){ const ag=p.agencies||AGENCIES.map(n=>({name:n,done:false})); const left=ag.filter(a=>!a.done).length;
+      head=`<div class="note ok"><b>Plan check approved.</b> ${left?`${left} other-agency clearance${left===1?"":"s"} still open. Tick each one as it comes in.`:"All clearances are in."}</div>${agencyHtml(p,true)}`;
+      primary=`<button class="btn primary" data-a="ready" ${left?"disabled":""}>Ready for pickup</button>`; }
+    if(p.status==="ready"){ head=`<div class="note ok"><b>Ready for permit pickup.</b> Waiting on fees and pickup.</div>`; primary=`<button class="btn ok" data-a="issue-permit">Mark permit issued</button>`; }
+    if(p.status==="issued") head=`<div class="note ok"><b>Permit issued${p.issuedPermitAt?` ${fmtD(p.issuedPermitAt)}`:""}.</b></div>`;
+  }
+  const addComment = (P && !DONE(p.status)) ? `<details><summary class="btn sm" style="display:inline-block">+ Write your own comment</summary>
+      <div class="form" style="margin-top:10px"><label class="f">Code section<input type="text" id="nc-sec" placeholder="e.g. MMC 17.24.040"></label>
+      <label class="f">Sheet<input type="text" id="nc-sheet" placeholder="e.g. A1.0"></label>
+      <label class="f">Department<select id="nc-dept">${DEPTS.map(d=>`<option>${d}</option>`).join("")}</select></label>
+      <label class="f wide">Comment<textarea id="nc-text" placeholder="What must change"></textarea></label></div>
+      <div class="acts" style="margin-top:8px"><button class="btn sm primary" data-a="addcomment">Add comment</button></div></details>` : "";
+  const rv = STAFF.find(r=>r.id===p.reviewerId);
+  const ap = p.applicant || {name:p.applicantName||"", email:"", phone:""};
+  const person=(role,x,extra="")=>`<div class="person"><span class="role">${role}</span><b>${esc(x?.name||"—")}</b>${extra}${x?.email?`<a href="mailto:${esc(x.email)}">${esc(x.email)}</a>`:"<span>—</span>"}${x?.phone?`<a href="tel:${esc(x.phone.replace(/[^0-9+]/g,""))}">${esc(x.phone)}</a>`:"<span>—</span>"}</div>`;
+  const people = `<div class="people">${person("Owner",p.owner)}${person("Designer / Architect",p.designer,p.designer?.license?`<span>Lic. ${esc(p.designer.license)}</span>`:"")}${person("Applicant",ap)}
+    ${isAdmin()?`<div class="person"><span class="role">Reviewer</span><select id="assign" aria-label="Reviewer">${STAFF.map(r=>`<option value="${r.id}" ${r.id===p.reviewerId?"selected":""}>${esc(r.name)} · ${esc(r.dept)}</option>`).join("")}</select>${rv?`<a href="mailto:${esc(rv.email)}">${esc(rv.email)}</a><span>${esc(rv.phone)}</span>`:""}</div>`
+      : person(`Reviewer · ${esc(appOf(p).dept)}`, rv||{name:p.reviewerName})}</div>`;
+  return `<div class="ws">
+    ${isAdmin()?`<div><button class="btn sm" data-a="board">← City overview</button></div>`:""}
+    <div class="ws-h"><div style="flex:1;min-width:0"><h2>${esc(p.address)}</h2>
+      <div class="facts"><span class="pill p-${p.status}">${STATUS_LABEL[p.status]}</span><span><b>${esc(appOf(p).name)}</b></span><span>${esc(p.projectType||"")}</span>${p.dates?`<span>Dates <b>${esc(p.dates)}</b></span>`:""}${p.docType&&p.docType!=="plan set"?`<span class="pill p-submitted">${esc(p.docType)}</span>`:""}${p.permitNo?`<span>Permit <b>${esc(p.permitNo)}</b></span>`:""}<span>Zone <b>${esc(p.zone||"—")}</b></span><span>APN <b>${esc(p.apn||"—")}</b></span><span>Valuation <b>${money(p.valuation)}</b></span><span>Cycle <b>${p.cycle||1}</b></span>${P&&readiness(p)!==null?`<span>Set <b>${readiness(p)}%</b> ready</span>`:""}</div>
+      ${people}${(p.flags||[]).length?`<div class="facts">${p.flags.map(f=>`<span class="pill p-warn">${esc(f)}</span>`).join("")}</div>`:""}
+      <p style="margin:8px 0 0;font-size:14px">${esc(p.scope)}</p>
+      ${p.note?`<div class="edu" style="margin-top:8px"><b>Applicant note</b>${esc(p.note)}</div>`:""}
+      ${p.setLink?`<p class="small" style="margin-top:6px">Full set in ${STORES[storeOf(p.setLink)]||"shared storage"}: <a href="${esc(p.setLink)}" target="_blank" rel="noopener">${esc(p.setLink.slice(0,60))}</a></p>`:""}</div>
+      ${isAdmin()?`<button class="btn sm" data-a="delete">${S.confirmDel===p.id?"Tap again to delete":"Delete"}</button>`:""}</div>
+    ${benchHtml(p)}
+    ${briefHtml(p)}
+    ${busy?`<div class="note"><div class="progress">${esc(busy)}</div></div>`:head}
+    ${primary&&!busy?`<div class="acts">${primary}</div>`:""}
+    ${sh.length?`<div class="sheets"><div class="sec-h" style="margin:0">Sheets · numbers match the comments below${p.pageCount?` · ${sh.length} of ${p.pageCount} sheets shown`:""}</div>
+        <div class="sheet-main">${sheetMarked(p,sh[si],cs)}</div>
+        ${sh.length>1?sheetIndex(sh,si,cs,p):""}<p class="small" style="margin:0">Tap a red number to jump to its comment, or a comment's number to find it on the sheet.</p></div>`:""}
+    ${askHtml(p)}
+    <div class="clist"><div class="sec-h" style="margin:0">${P?"Comments":"City comments"} · ${cs.length}</div>
+      ${P&&new Set(p.corrections.map(c=>c.dept||"Building")).size>1?`<div class="chks">${["All",...new Set(p.corrections.map(c=>c.dept||"Building"))].map(d=>`<label><input type="radio" name="cdept" value="${esc(d)}" ${S.cDept===d?"checked":""}>${esc(d)}</label>`).join("")}</div>`:""}
+      ${cs.length?cs.map(c=>corrCard(p,c)).join(""):`<p class="note">${P?(p.aiState==="done"?"No draft comments.":"Nothing yet."):"No comments yet."}</p>`}
+      ${addComment}</div>
+    ${P&&(p.changes||[]).length?`<div class="clist"><div class="sec-h" style="margin:0">Changes nobody asked for · ${(p.changes||[]).length}</div>${p.changes.slice().reverse().map(changeCard).join("")}</div>`:""}
+    <div class="split" style="grid-template-columns:1fr">
+      <div class="sheets">${(P&&(p.completeness||[]).length)?`<div class="sec-h" style="margin:0">Completeness</div><div class="checklist">${p.completeness.map(c=>`<div><span class="${c.found?"mark-y":"mark-n"}">${c.found?"✓":"✕"}</span>${esc(c.item)}</div>`).join("")}</div>`:""}
+        <div class="sec-h" style="margin:8px 0 0">Activity</div><div class="timeline">${(p.timeline||[]).slice().reverse().map(t=>`<div class="${t.who}"><time>${fmtT(t.at)}</time><span class="who">${t.who==="ai"?"Redline":t.who==="planner"?"City":t.who}</span> · ${esc(t.text)}</div>`).join("")}</div></div>
+    </div>
+  </div>`;
+}
+/* Numbered circles on the sheet: one per comment on this page, numbered like the comment list. */
+function onSheet(cs,s){ return cs.filter(c=>c.state!=="rejected" && Number(c.page)===Number(s.page) && Array.isArray(c.box)); }
+function sheetMarked(p,s,cs){
+  const mk=onSheet(cs,s).map(c=>{ const n=p.corrections.indexOf(c)+1; let [x,y,w,h]=c.box.map(Number); const whole=w>=.9||h>=.9;
+    if(whole){ x=.02; y=.04; w=0; h=0; }
+    return `${whole?"":`<span class="mk" style="left:calc(${x*100}% - 6px);top:calc(${y*100}% - 6px);width:calc(${w*100}% + 12px);height:calc(${h*100}% + 12px)"></span>`}<button type="button" class="mkn ${S.focusC===c.id?"on":""}" data-jump="${c.id}" style="left:${(x+w)*100}%;top:${y*100}%" title="Comment ${n}">${n}</button>`; }).join("");
+  return `<div class="sheetwrap"><img alt="${esc(s.label)}" src="${esc(imgSrc(s))}" data-zoom="${esc(imgSrc(s))}">${mk}</div>`;
+}
+function agencyHtml(p, P){
+  const list=p.agencies||AGENCIES.map(n=>({name:n,done:false}));
+  return `<div class="agency">${list.map((a,i)=>`<label><input type="checkbox" data-ag="${i}" ${a.done?"checked":""} ${P&&p.status==="approved"?"":"disabled"}>${esc(a.name)}</label>`).join("")}</div>`;
+}
+function sheetIndex(sh,si,cs,p){
+  const btn=(s,i)=>{ const n=cs?onSheet(cs,s).length:0; return `<button data-sheet="${i}" aria-current="${i===si}" title="${esc(s.label)}"><img alt="" src="${esc(imgSrc(s))}"><span>${esc(s.label)}</span>${n?`<b class="tcount">${n}</b>`:""}</button>`; };
+  if(!sh.some(s=>s.disc)) return `<div class="thumbs">${sh.map(btn).join("")}</div>`;
+  const groups=Object.keys(DISC).filter(k=>sh.some(s=>(s.disc||"X")===k));
+  return `<p class="small" style="margin:6px 0 0">Sorted by discipline by Redline</p>`+groups.map(k=>`<div class="disc">${DISC[k]}</div><div class="thumbs">${sh.map((s,i)=>(s.disc||"X")===k?btn(s,i):"").join("")}</div>`).join("");
+}
+function bindProject(p){
+  const w=$("#workspace");
+  w.querySelectorAll("[data-sheet]").forEach(b=>b.onclick=()=>{ S.sheetIdx=+b.dataset.sheet; renderWorkspace(); });
+  w.querySelectorAll("[data-resp]").forEach(t=>t.oninput=()=>{ const c=p.corrections.find(x=>x.id===t.dataset.resp); if(c) c.draftResponse=t.value; });
+  w.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(p,b.dataset.a,b.dataset.c));
+  const jump=id=>{ const c=p.corrections.find(x=>x.id===id); if(!c) return; const i=(p.sheets||[]).findIndex(s=>Number(s.page)===Number(c.page)); S.focusC=id; if(i>=0) S.sheetIdx=i; renderWorkspace();
+    const el=document.querySelector(i>=0?".sheets":`[data-goto="${id}"]`); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); };
+  w.querySelectorAll("[data-ag]").forEach(cb=>cb.onchange=()=>{ const i=+cb.dataset.ag; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); p.agencies[i].done=cb.checked; addLog(p,"planner",`${cb.checked?"Cleared":"Reopened"}: ${p.agencies[i].name}`); save(p); });
+  w.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>jump(b.dataset.goto));
+  w.querySelectorAll("[data-jump]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); S.focusC=b.dataset.jump; renderWorkspace(); const el=document.querySelector(`[data-goto="${b.dataset.jump}"]`); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); });
+  const as=$("#assign"); if(as) as.onchange=()=>{ const r=STAFF.find(x=>x.id===as.value); p.reviewerId=r.id; p.reviewerName=r.name; addLog(p,"planner",`Reassigned to ${r.name} (${r.dept})`); save(p); };
+  w.querySelectorAll('input[name="cdept"]').forEach(r=>r.onchange=()=>{ S.cDept=r.value; renderWorkspace(); });
+  const aq=$("#ask-q"); if(aq) aq.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); act(p,"ask"); } };
+  const rf=$("#re-file"); if(rf) rf.onchange=()=>{ const f=rf.files[0]; if(!f) return;
+    p.corrections.forEach(c=>{ if(c.state==="approved"&&!c.resolved&&c.draftResponse){ c.response=c.draftResponse; c.respCycle=p.cycle; } });
+    runRecheck(p,f); };
+  const ff=$("#fr-file"); if(ff) ff.onchange=()=>{ const f=ff.files[0]; if(f) runFirstRead(p,f); };
+}
+function act(p,a,cid){
+  const c = cid && p.corrections.find(x=>x.id===cid);
+  const ch = cid && (p.changes||[]).find(x=>x.id===cid);
+  switch(a){
+    case "approve": c.state="approved"; addLog(p,"planner",`Approved: ${c.section}`); save(p); break;
+    case "reject": c.state="rejected"; addLog(p,"planner",`Rejected AI draft: ${c.section}`); save(p); break;
+    case "restore": c.state="draft"; save(p); break;
+    case "edit": S.editing=cid; renderWorkspace(); break;
+    case "canceledit": S.editing=null; renderWorkspace(); break;
+    case "saveedit": { const v=$("#edit-"+cid).value.trim(); if(v){ c.plannerText=v; c.edited=true; } c.state="approved"; S.editing=null; addLog(p,"planner",`Edited and approved: ${c.section}`); save(p); break; }
+    case "clear": c.resolved=true; addLog(p,"planner",`Cleared: ${c.section}`); save(p); break;
+    case "reply": { const t=$("#rt-"+cid).value.trim(); if(!t) return;
+      (c.replies ||= []).push({by:S.me?.id||null, name:S.me?.name||"", dept:$("#rd-"+cid).value, text:t, at:now()}); save(p); break; }
+    case "addcomment": { const t=$("#nc-text").value.trim(); if(!t){ flash("Write the comment first."); return; }
+      p.corrections.push({id:uid(), dept:$("#nc-dept").value, section:$("#nc-sec").value.trim()||"Reviewer comment", sheet:$("#nc-sheet").value.trim(), finding:"", fix:t, severity:"correction", source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[]});
+      addLog(p,"planner","Added a reviewer comment."); save(p); break; }
+    case "chg-accept": ch.state="accepted"; addLog(p,"planner",`Accepted unrequested change: ${ch.description}`); save(p); break;
+    case "chg-add": ch.state="added";
+      p.corrections.push({id:uid(), dept:"Planning", section:ch.mayAffect||"Unrequested change", sheet:ch.sheet, page:ch.page, finding:`Changed since the last set: ${ch.description} (was ${ch.previous||"—"}, now ${ch.now||"—"}).`, fix:"Explain this change and show it complies, or revert it.", severity:"correction", source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[], snip:ch.snip||null});
+      addLog(p,"planner",`Made a comment from an unrequested change: ${ch.description}`); save(p); break;
+    case "issue": { p.status="corrections"; p.issuedAt=now(); const n=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).length; addLog(p,"planner",`Sent ${n} comments to the applicant (cycle ${p.cycle}).`); save(p); break; }
+    case "approveall": p.status="approved"; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); addLog(p,"planner","Plan check approved. Waiting on other agencies."); save(p); break;
+    case "ready": p.status="ready"; addLog(p,"planner","All agency clearances in. Ready for permit pickup."); save(p); break;
+    case "issue-permit": p.status="issued"; p.issuedPermitAt=now(); addLog(p,"planner","Permit issued."); save(p); break;
+    case "resubmit": { const miss=p.corrections.filter(c=>c.state==="approved"&&!c.resolved&&!(c.draftResponse||"").trim()).length;
+      if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first.`); return; } $("#re-file").click(); break; }
+    case "firstread": $("#fr-file").click(); break;
+    case "board": S.sel=null; render(); break;
+    case "approvenotes": { const ns=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft"); ns.forEach(c=>c.state="approved"); addLog(p,"planner",`Approved ${ns.length} standard-note comments.`); save(p); break; }
+    case "letter": printLetter(p); break;
+    case "ask": { const q=($("#ask-q")?.value||"").trim(); if(!q) return; askSet(p,q); break; }
+    case "delete": if(S.confirmDel!==p.id){ S.confirmDel=p.id; renderWorkspace(); setTimeout(()=>{ if(S.confirmDel===p.id){ S.confirmDel=null; renderWorkspace(); } },4000); return; }
+      S.confirmDel=null; S.sel=null;
+      if(S.local||!S.db){ S.projects=S.projects.filter(x=>x.id!==p.id); render(); }
+      else S.db.collection(COL).doc(p.id).delete().catch(e=>flash("Could not delete: "+e.message));
+      break;
+  }
+}
+
+/* ---------- static views ---------- */
+function renderCity(){
+  const c=CITY;
+  $("#view-city").innerHTML=`<div class="panel ws" style="margin-top:18px">
+    <div><h2>${c.name}</h2><div class="facts"><span>${c.county}</span><span>Portal path <b>redlinepermit.com/${c.slug}</b></span></div>
+    <p class="small" style="margin-top:6px">Code cycle: ${esc(c.cycle)}</p>
+    <p class="note" style="margin-top:10px">${esc(c.intake)} Redline merges them into one form and moves contractor and workers' comp declarations to permit issuance. Rules marked “verify” came from secondary sources and need a City sign-off before go-live.</p></div>
+    <div><div class="sec-h" style="margin:0 0 8px">Codes in force</div>
+      <p class="small" style="margin:0 0 8px">Redline checks every set against these. Each code links to the official text. Local amendments to the state codes are in MMC Ch. 15.04; confirm the current ordinance with the Building Official before go-live.</p>
+      ${CODES.map(g=>`<div class="tbl-wrap" style="margin-bottom:12px"><table><thead><tr><th colspan="3">${esc(g.g)}</th></tr></thead><tbody>${g.rows.map(r=>`<tr><td style="white-space:nowrap"><a class="cite" href="${esc(r[3])}" target="_blank" rel="noopener">${esc(r[0])}</a></td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td></tr>`).join("")}</tbody></table></div>`).join("")}</div>
+    <div><div class="sec-h" style="margin:0 0 8px">Who reviews what</div><div class="tbl-wrap"><table><thead><tr><th>Department</th><th>Checks</th><th>Where the rules live</th><th>Contact</th></tr></thead><tbody>
+    ${c.depts.map(d=>`<tr><td><b>${d.d}</b></td><td>${d.checks}</td><td>${d.where}</td><td>${d.contact}</td></tr>`).join("")}</tbody></table></div></div>
+    <div><div class="sec-h" style="margin:0 0 8px">Rule pack · ${c.rules.length} rules</div>
+    <div class="legend"><span class="conf-v">● verified</span><span class="conf-n">● verify before go-live</span><span class="conf-j">● reviewer judgment, AI flags only</span></div>
+    <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>Rule</th><th>Dept</th><th>Section</th><th>Requirement</th><th>Look at</th></tr></thead><tbody>
+    ${c.rules.map(r=>`<tr><td class="${r.conf==="verified"?"conf-v":r.conf==="planner-judgment"?"conf-j":"conf-n"}" style="font-family:var(--f-mono);font-size:12px;white-space:nowrap">● ${r.id}</td><td>${r.dept}</td><td>${citeHtml(r.section)}</td><td>${esc(r.req)}</td><td>${esc(r.look)}</td></tr>`).join("")}</tbody></table></div></div>
+    <div><div class="sec-h" style="margin:0 0 8px">Standard notes checklist · ${STD_NOTES.length} notes</div>
+    <p class="small" style="margin:0 0 8px">Checked by text search on every sheet the moment a set arrives. Missing notes become draft comments the reviewer can approve in one click.</p>
+    <div class="tbl-wrap"><table><thead><tr><th>Note</th><th>Section</th><th>Required note</th></tr></thead><tbody>
+    ${STD_NOTES.map(n=>`<tr><td style="font-family:var(--f-mono);font-size:12px;white-space:nowrap">${n.id}</td><td>${citeHtml(n.section)}</td><td>${esc(n.note)}</td></tr>`).join("")}</tbody></table></div></div>
+    <div><div class="sec-h" style="margin:0 0 8px">Sources</div><ul style="margin:0;padding-left:18px">${c.sources.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join("")}</ul></div></div>`;
+}
+function renderHow(){
+  const steps=[
+    ["Owner / Designer","Submit","One short form plus the PDF. The applicant picks the PDF from Google Drive or Dropbox, or drops it in. The full set stays there; Redline keeps a link."],
+    ["Redline","AI first read","Redline reads each sheet, sorts the set by discipline, scores how ready it is, checks every standard note, and drafts comments against Monrovia's rule pack, most critical first. Each comment cites a code section and comes with a clip of the exact spot, circled in red. The applicant does not see drafts."],
+    ["Reviewers","City review","Planning, Building, Fire, Police and Public Works reviewers approve, edit or reject each draft without opening the set, and leave notes for each other under any comment. Reviewers can ask questions about the set and print the correction letter. Permits already in review can be added with their Google Drive or Dropbox link."],
+    ["Owner / Designer","Corrections","The applicant sees one list. Each comment shows the clip, the code note and what must change. They answer each one and upload the revised set."],
+    ["Redline + City","Resubmit & recheck","Redline compares old and new sheets. It notes which comments look resolved and lists every change nobody asked for, like a window that got bigger, so nothing slips through. Reviewers clear items or send them back."],
+    ["City","Approved","When every comment is cleared and every unrequested change is accepted, the reviewer approves plan check. Contractor and workers' comp declarations come next, at issuance."]];
+  $("#view-how").innerHTML=`<div class="panel ws" style="margin-top:18px">
+    <div><h2>How a comment moves</h2><p style="max-width:65ch;color:var(--ink2)">The AI never approves or denies anything. It does the first read, the clipping and the bookkeeping. Reviewers keep every decision. Use the switch at the top to play both sides with one PDF.</p></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Stage</th><th>Who</th><th>What happens</th></tr></thead><tbody>${steps.map(s=>`<tr><td><b>${s[1]}</b></td><td class="who">${s[0]}</td><td>${s[2]}</td></tr>`).join("")}</tbody></table></div>
+    <div><div class="sec-h" style="margin:0 0 8px">Keeping it light</div><p style="max-width:70ch;margin:0;color:var(--ink2)">Redline never stores the full drawing set. It keeps small sheet thumbnails, the clips behind each comment, the extracted text and the comment history, roughly 1–2 MB per project instead of 50–200 MB. Drawings live in only two places: Google Drive or Dropbox. In the live portal Redline files each cycle there for you, named and sorted by discipline, under Redline › Monrovia › address › Cycle.</p></div>
+    <div><div class="sec-h" style="margin:0 0 8px">Try it</div><ol style="margin:0;padding-left:20px;display:grid;gap:4px">
+      <li>As <b>Applicant</b>, start an application and attach a real plan set PDF. Keep this tab open while the first read runs.</li>
+      <li>Switch to <b>City reviewer</b>. Look at the clips, approve, edit or reject each draft, add a note, and send the comments.</li>
+      <li>Back as <b>Applicant</b>, answer each comment and upload a revised set. For a good test, change something on a sheet that no comment asked for.</li>
+      <li>As <b>City reviewer</b>, check the recheck notes and the "Changes nobody asked for" list, clear items, and approve.</li></ol></div></div>`;
+}
+
+
+/* ---------- accounts: email sign-in; applicant, plan reviewer or portal admin ----------
+   Applicants: anyone. Plan reviewers: a confirmed @monroviaca.gov email or the test emails below.
+   Admins: the emails below. The server re-checks every role against the confirmed sign-in email. */
+const ACCT = {
+  adminEmails:["yifuxpan@gmail.com","ypan@redlinepermit.com"],
+  reviewerEmails:["yifuxpan@gmail.com","ypan@redlinepermit.com"],
+  reviewerDomains:["monroviaca.gov"]
+};
+const MEM = `cities/${CITY.slug}/members`;
+const ROLE_NAME = {applicant:"Applicant", reviewer:"Plan reviewer", admin:"Portal admin"};
+const nEmail = e => String(e||"").trim().toLowerCase();
+const okEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nEmail(e));
+const onDomain = e => ACCT.reviewerDomains.some(d=>nEmail(e).endsWith("@"+d)||nEmail(e).endsWith("."+d));
+const mayReview = e => ACCT.reviewerEmails.includes(nEmail(e)) || onDomain(e);
+const mayAdmin = e => ACCT.adminEmails.includes(nEmail(e));
+const mayBe = (role,e) => role==="applicant" ? true : role==="reviewer" ? mayReview(e) : mayAdmin(e);
+Object.assign(S,{uid:null, verified:null, acct:null, acctRole:null, acctReady:false, members:[], acctForm:null, authMode:"signup", signedIn:false});
+
+function acctRole(){
+  const a=S.acct; if(!a) return null;
+  if(a.role==="applicant") return "applicant";
+  if(S.local) return mayBe(a.role,a.email) ? a.role : "applicant";
+  return mayBe(a.role, S.verified||a.email) ? a.role : "applicant";
+}
+function applyAcct(){
+  const r=acctRole(), a=S.acct; S.acctRole=r;
+  if(a){ ME.name=a.name||ME.name; ME.firm=a.firm||a.title||""; ME.email=a.email||ME.email; ME.phone=a.phone||""; if(S.uid) ME.id=S.uid; }
+  if(r==="reviewer") S.role=staffFor(a.dept||"Building").id;
+  else if(r!=="admin") S.role="applicant";
+  $("#who").innerHTML="";
+  $("#viewas").hidden = !(r==="admin" || S.local);
+  const chip=$("#whochip");
+  chip.hidden=false;
+  chip.textContent = a ? `${a.name} · ${ROLE_NAME[r]}` : S.signedIn ? "Finish sign-up" : "Sign in";
+  chip.classList.toggle("primary", !a);
+  render(); renderAcctBanner();
+}
+function renderAcctBanner(){
+  const b=$("#acctbar"); if(!b) return;
+  if(!S.acct && S.acctReady){
+    b.innerHTML=`<div class="note">${S.signedIn?"Finish setting up your account to submit or review plans.":"Sign in or create a free account to submit plans or review them."} <button class="btn sm primary" id="acct-open2">${S.signedIn?"Finish sign-up":"Sign in or sign up"}</button></div>`;
+    $("#acct-open2").onclick=()=>openAcct();
+  } else b.innerHTML="";
+}
+
+/* ---------- sign-in / sign-up dialog ---------- */
+function openAcct(mode){
+  const a=S.acct;
+  if(mode) S.authMode=mode;
+  const pend = window.RP?.pendingProfile || {};
+  S.acctForm={role:a?.role||pend.role||"applicant", name:a?.name||pend.name||"", email:a?.email||S.verified||"", phone:a?.phone||pend.phone||"", firm:a?.firm||pend.firm||"", firmRole:a?.firmRole||pend.firmRole||"Designer / architect", title:a?.title||pend.title||"", dept:a?.dept||pend.dept||"Building", license:a?.license||pend.license||"", password:""};
+  $("#acct").hidden=false; drawAcct(); setTimeout(()=>{ const f=$("#acct-body input:not([type=radio])"); if(f) f.focus(); },30);
+}
+function closeAcct(){ $("#acct").hidden=true; }
+function drawAcct(msg, ok){
+  const F=S.acctForm, signedIn=S.signedIn||S.local, edit=!!S.acct;
+  const mode = signedIn ? "profile" : S.authMode;
+  const card=(r,h,d)=>`<label class="rcard ${F.role===r?"on":""}"><input type="radio" name="ac-role" value="${r}" ${F.role===r?"checked":""}><b>${h}</b><span>${d}</span></label>`;
+  const em=S.verified||F.email, elig=okEmail(em)?mayBe(F.role,em):null;
+  let eligMsg="";
+  if(F.role==="reviewer") eligMsg = elig===false ? `<div class="note red">Plan reviewer accounts are for City of Monrovia staff. Use your <b>@monroviaca.gov</b> email.</div>` : `<div class="small">City staff only: a <b>@monroviaca.gov</b> email.</div>`;
+  if(F.role==="admin") eligMsg = elig===false ? `<div class="note red">Portal admin is by invitation. This email isn't on the admin list.</div>` : `<div class="small">By invitation only.</div>`;
+  const profileFields = `
+      <label class="f">Full name<input id="ac-name" type="text" autocomplete="name" value="${esc(F.name)}"></label>
+      <label class="f">Phone<input id="ac-phone" type="text" inputmode="tel" autocomplete="tel" value="${esc(F.phone)}"></label>
+      ${F.role==="applicant"
+        ? `<label class="f">Company or firm<input id="ac-firm" type="text" autocomplete="organization" value="${esc(F.firm)}" placeholder="Optional for owners"></label>
+           <label class="f">I'm usually the<select id="ac-firmrole">${["Owner","Designer / architect","Engineer","Contractor","Authorized agent"].map(o=>`<option ${o===F.firmRole?"selected":""}>${o}</option>`).join("")}</select></label>
+           <label class="f wide">License no.<input id="ac-license" type="text" value="${esc(F.license)}" placeholder="Architect, engineer or CSLB, if any"></label>`
+        : `<label class="f">Title<input id="ac-title" type="text" autocomplete="organization-title" value="${esc(F.title)}" placeholder="${F.role==="admin"?"Permit Center Manager":"Plan Check Engineer"}"></label>
+           ${F.role==="reviewer"?`<label class="f">Department<select id="ac-dept">${["Building","Planning","Public Works","Fire","City"].map(o=>`<option ${o===F.dept?"selected":""}>${o}</option>`).join("")}</select></label>`:""}`}`;
+  const tabs = signedIn ? "" : `<div class="seg" role="tablist" style="margin-bottom:14px"><button type="button" aria-pressed="${mode==="signup"}" data-mode="signup">Create account</button><button type="button" aria-pressed="${mode==="signin"}" data-mode="signin">Sign in</button></div>`;
+  let bodyHtml;
+  if(mode==="signin"){
+    bodyHtml = `<div class="form">
+      <label class="f wide">Email<input id="ac-email" type="text" inputmode="email" autocomplete="email" value="${esc(F.email)}"></label>
+      <label class="f wide">Password<input id="ac-pass" type="password" autocomplete="current-password"></label></div>
+      <div class="acts" style="margin-top:16px"><button class="btn primary" id="ac-signin">Sign in</button><button class="btn" id="ac-forgot" type="button">Forgot password?</button><button class="btn" id="ac-skip" type="button">Just browsing</button></div>`;
+  } else if(mode==="reset"){
+    bodyHtml = `<div class="form"><label class="f wide">New password<input id="ac-pass" type="password" autocomplete="new-password"></label></div>
+      <div class="acts" style="margin-top:16px"><button class="btn primary" id="ac-setpass">Save new password</button></div>`;
+  } else {
+    bodyHtml = `
+    <div class="rcards" role="radiogroup" aria-label="Account type">
+      ${card("applicant","Applicant","Owners, designers, architects and contractors. Anyone can sign up.")}
+      ${card("reviewer","Plan reviewer","City of Monrovia plan check and department staff.")}
+      ${card("admin","Portal admin","Assigns files and manages accounts.")}
+    </div>
+    ${eligMsg}
+    <div class="form" style="margin-top:12px">
+      ${S.local ? `<label class="f wide">Email<input id="ac-email" type="text" inputmode="email" value="${esc(F.email)}"></label>` : signedIn ? `<label class="f wide">Email<input type="text" value="${esc(S.verified||F.email)}" readonly></label>` :
+        `<label class="f">Email<input id="ac-email" type="text" inputmode="email" autocomplete="email" value="${esc(F.email)}"></label>
+         <label class="f">Password<input id="ac-pass" type="password" autocomplete="new-password" placeholder="8 characters or more"></label>`}
+      ${profileFields}
+    </div>
+    <div class="acts" style="margin-top:16px">
+      <button class="btn primary" id="ac-save">${edit?"Save changes":signedIn?"Finish sign-up":"Create account"}</button>
+      ${signedIn&&!S.local?`<button class="btn" id="ac-signout" type="button">Sign out</button>`:""}
+      ${edit?`<button class="btn" id="ac-cancel" type="button">Close</button>`:`<button class="btn" id="ac-skip" type="button">Just browsing</button>`}
+    </div>`;
+  }
+  $("#acct-body").innerHTML=`
+    <div class="kicker">City of Monrovia · plan check portal</div>
+    <h2 id="acct-h" style="margin:8px 0 4px;font-size:26px;letter-spacing:-.025em">${mode==="signin"?"Sign in":mode==="reset"?"Set a new password":edit?"Your account":signedIn?"Finish your account":"Create your account"}</h2>
+    <p class="small" style="margin:0 0 14px">${S.local?"Preview mode: this account is saved in this browser only.":signedIn?`Signed in as <b>${esc(S.verified||"")}</b>.`:mode==="signin"?"Welcome back.":"We'll email you a link to confirm your address."}</p>
+    ${tabs}${bodyHtml}
+    <p class="small" id="ac-msg" aria-live="polite" style="margin:12px 0 0;${ok?"color:var(--teal-deep)":msg?"color:var(--red)":""}">${msg?esc(msg):""}</p>`;
+  const v=id=>{const e=$("#"+id);return e?e.value.trim():undefined;};
+  const grab=()=>{ F.name=v("ac-name")??F.name; F.email=v("ac-email")??F.email; F.phone=v("ac-phone")??F.phone; F.password=$("#ac-pass")?$("#ac-pass").value:F.password;
+    if($("#ac-firm")){F.firm=v("ac-firm");F.firmRole=v("ac-firmrole");F.license=v("ac-license");}
+    if($("#ac-title")) F.title=v("ac-title"); if($("#ac-dept")) F.dept=v("ac-dept"); };
+  $("#acct-body").querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ grab(); S.authMode=b.dataset.mode; drawAcct(); });
+  $("#acct-body").querySelectorAll('input[name="ac-role"]').forEach(r=>r.onchange=()=>{ grab(); F.role=r.value; drawAcct(); });
+  if($("#ac-email") && mode==="signup") $("#ac-email").onchange=()=>{ grab(); if(F.role!=="applicant") drawAcct(); };
+  if($("#ac-cancel")) $("#ac-cancel").onclick=closeAcct;
+  if($("#ac-skip")) $("#ac-skip").onclick=()=>{ closeAcct(); renderAcctBanner(); };
+  if($("#ac-signout")) $("#ac-signout").onclick=async()=>{ await RP.sb.auth.signOut(); location.reload(); };
+  const busy=(id,on)=>{ const b=$("#"+id); if(b) b.disabled=on; };
+  if($("#ac-signin")) $("#ac-signin").onclick=async()=>{
+    grab(); if(!okEmail(F.email)||!F.password) return drawAcct("Enter your email and password.");
+    busy("ac-signin",true);
+    const {error}=await RP.sb.auth.signInWithPassword({email:nEmail(F.email), password:F.password});
+    if(error){ busy("ac-signin",false); return drawAcct(/confirm/i.test(error.message)?"Confirm your email first: open the link we sent you.":"Email or password didn't match."); }
+    location.reload();
+  };
+  if($("#ac-forgot")) $("#ac-forgot").onclick=async()=>{
+    grab(); if(!okEmail(F.email)) return drawAcct("Enter your email first.");
+    const {error}=await RP.sb.auth.resetPasswordForEmail(nEmail(F.email),{redirectTo:location.origin+location.pathname});
+    drawAcct(error?("Couldn't send: "+error.message):"Check your email for a link to set a new password.", !error);
+  };
+  if($("#ac-setpass")) $("#ac-setpass").onclick=async()=>{
+    grab(); if((F.password||"").length<8) return drawAcct("Use 8 characters or more.");
+    const {error}=await RP.sb.auth.updateUser({password:F.password});
+    if(error) return drawAcct("Couldn't save: "+error.message);
+    S.authMode="signup"; closeAcct(); flash("Password updated.");
+  };
+  if($("#ac-save")) $("#ac-save").onclick=async()=>{
+    grab(); const email=S.verified||F.email;
+    if(!F.name) return drawAcct("Add your name.");
+    if(!okEmail(email)) return drawAcct("Add a valid email.");
+    if(!mayBe(F.role,email)) return drawAcct(F.role==="reviewer"?"Use a @monroviaca.gov email for a plan reviewer account.":"This email can't be a portal admin.");
+    const doc={role:F.role, name:F.name, email:nEmail(email), phone:F.phone||"", createdAt:S.acct?.createdAt||now(), updatedAt:now()};
+    if(F.role==="applicant"){ doc.firm=F.firm||""; doc.firmRole=F.firmRole||""; doc.license=F.license||""; }
+    else { doc.title=F.title||""; if(F.role==="reviewer") doc.dept=F.dept||"Building"; }
+    busy("ac-save",true);
+    if(S.local){ try{localStorage.setItem("redline-acct",JSON.stringify(doc));}catch(e){} S.acct=doc; closeAcct(); applyAcct(); return; }
+    if(!signedIn){
+      if((F.password||"").length<8){ busy("ac-save",false); return drawAcct("Use a password of 8 characters or more."); }
+      const {data,error}=await RP.sb.auth.signUp({email:nEmail(email), password:F.password, options:{emailRedirectTo:location.origin+location.pathname, data:{profile:doc}}});
+      busy("ac-save",false);
+      if(error) return drawAcct(/registered/i.test(error.message)?"That email already has an account. Use Sign in.":"Couldn't create the account: "+error.message);
+      if(data.session){ location.reload(); return; }
+      return drawAcct(`Almost done. We sent a confirmation link to ${nEmail(email)}. Open it on this device to finish.`, true);
+    }
+    try{
+      await S.db.doc(`${MEM}/${S.uid}`).set(doc);
+      S.acct=doc; closeAcct(); applyAcct();
+      if(!S.projectsWatched) watchProjects();
+      if(S.acctRole==="admin") watchMembers();
+    }catch(e){ busy("ac-save",false); drawAcct("Couldn't save: "+(e.message||e.code)); }
+  };
+}
+
+/* ---------- admin: accounts tab ---------- */
+function watchMembers(){
+  if(!S.db || S.local || S.membersWatched) return; S.membersWatched=true;
+  S.db.collection(MEM).onSnapshot(s=>{ S.members=s.docs.map(d=>({...(d.data()||{}),uid:d.id})); if(S.tab==="accounts") renderAccounts(); }, ()=>{});
+}
+function renderAccounts(){
+  const el=$("#view-accounts"); if(!el) return;
+  if(S.acctRole!=="admin"){ el.innerHTML=""; return; }
+  const order={admin:0,reviewer:1,applicant:2};
+  const ms=S.members.slice().sort((a,b)=>(order[a.role]-order[b.role])||String(a.name).localeCompare(String(b.name)));
+  el.innerHTML=`<div class="panel ws" style="margin-top:18px">
+    <div class="ws-h"><div><h2>Accounts</h2><div class="facts"><span><b>${ms.length}</b> signed up</span><span><b>${ms.filter(m=>m.role==="applicant").length}</b> applicants</span><span><b>${ms.filter(m=>m.role!=="applicant").length}</b> staff</span></div></div></div>
+    <div class="note">Applicants can sign up with any email. Plan reviewers need a confirmed <b>@monroviaca.gov</b> email; admins are by invitation (${ACCT.adminEmails.map(esc).join(", ")}). The server checks every role against the confirmed email.</div>
+    ${ms.length?`<div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Email</th><th>Phone</th><th>Firm / dept</th><th>Joined</th><th></th></tr></thead><tbody>
+    ${ms.map(m=>`<tr><td><b>${esc(m.name)}</b>${m.uid===S.uid?' <span class="small">(you)</span>':""}</td><td>${esc(ROLE_NAME[m.role]||m.role)}</td><td>${esc(m.email)}</td><td>${esc(m.phone||"—")}</td>
+      <td>${esc(m.role==="applicant"?[m.firm,m.firmRole].filter(Boolean).join(" · ")||"—":[m.dept,m.title].filter(Boolean).join(" · ")||"—")}</td>
+      <td>${esc(fmtD(m.createdAt))}</td>
+      <td>${m.uid!==S.uid?`<button class="btn sm" data-remove="${esc(m.uid)}">Remove</button>`:""}</td></tr>`).join("")}
+    </tbody></table></div>`:`<p class="small">No one has signed up yet.</p>`}
+  </div>`;
+  el.querySelectorAll("[data-remove]").forEach(b=>b.onclick=async()=>{ if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="Click again to remove"; return; } try{ await S.db.doc(`${MEM}/${b.dataset.remove}`).delete(); }catch(e){ flash("Couldn't remove: "+(e.message||e.code)); } });
+}
+function watchProjects(){
+  if(!S.db || S.projectsWatched) return; S.projectsWatched=true;
+  S.db.collection(COL).onSnapshot(snap=>{
+    const keep={}; S.projects.forEach(p=>p.corrections.forEach(c=>{ if(c.draftResponse) keep[c.id]=c.draftResponse; }));
+    S.projects=snap.docs.map(d=>{ const x=d.data()||{}; x.id=d.id; x.corrections=x.corrections||[]; x.corrections.forEach(c=>{ if(keep[c.id]) c.draftResponse=keep[c.id]; }); return x; })
+      .sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)));
+    render();
+  }, e=>flash("Could not load projects: "+e.message));
+}
+
+/* ---------- wire up ---------- */
+const setRole=r=>{ S.role=r; try{localStorage.setItem("redline-who",r)}catch(e){} S.mode=null; S.editing=null; S.sel=null; S.q=""; S.deptFilter="All"; S.focusC=null; render(); };
+$(".brand").onclick=()=>{ S.tab="home"; S.mode=null; S.sel=null; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+$(".brand").setAttribute("role","link"); $(".brand").tabIndex=0; $(".brand").onkeydown=e=>{ if(e.key==="Enter") $(".brand").click(); };
+$("#who").onchange=()=>{ setRole($("#who").value); if(S.tab==="home" && isPlanner()) { S.tab="projects"; render(); } };
+["home","projects","city","how","accounts"].forEach(t=>$("#tab-"+t).onclick=()=>{ S.tab=t; render(); });
+$("#btn-new").onclick=()=>{ S.mode="new"; S.sel=null; S.tab="projects"; render(); };
+$("#btn-import").onclick=()=>{ S.mode="import"; S.sel=null; render(); };
+$("#btn-bulk").onclick=()=>{ S.mode="bulk"; S.sel=null; render(); };
+$("#queue").onclick=e=>{ const b=e.target.closest("[data-p]"); if(!b) return; S.sel=b.dataset.p; S.mode=null; S.sheetIdx=0; S.editing=null; S.cDept="All"; S.focusC=null; render(); };
+document.addEventListener("click",e=>{ const z=e.target.closest("[data-zoom]"); if(z){ $("#lightbox-img").src=z.dataset.zoom; $("#lightbox").hidden=false; } });
+$("#lightbox").onclick=()=>{ $("#lightbox").hidden=true; };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("#lightbox").hidden=true; if(!$("#acct").hidden && (S.acct||S.isOwner)) closeAcct(); } });
+$("#whochip").onclick=()=>openAcct();
+
+renderCity(); renderHow(); render();
+window.__redline={S,render};
+
+(async ()=>{
+  const use=n=>(window.claude&&window.claude.use)?window.claude.use(n).catch(()=>null):Promise.resolve(null);
+  if(!window.RP || !RP.sb){
+    S.local=true; flash("The portal's sign-in service isn't connected yet, so this is a preview: projects stay in this browser tab.");
+    try{ S.acct=JSON.parse(localStorage.getItem("redline-acct")||"null"); }catch(e){}
+    S.acctReady=true; applyAcct(); $("#viewas").hidden=false; if(!S.acct) openAcct(); return;
+  }
+  RP.sb.auth.onAuthStateChange(ev=>{ if(ev==="PASSWORD_RECOVERY"){ S.authMode="reset"; openAcct("reset"); } });
+  const [db,assets,sample,user]=await Promise.all([use("db"),use("assets"),use("sample"),use("user")]);
+  S.db=db; S.assets=assets; S.sample=sample; S.user=user;
+  if(user){ try{ S.me=await user.me(); }catch(e){} }
+  S.uid=S.me?.id||null; S.signedIn=!!S.uid; S.verified=S.me?.email?nEmail(S.me.email):null;
+  if(S.uid && db){
+    try{ const d=await db.doc(`${MEM}/${S.uid}`).get(); S.acct=d.exists?d.data():null; }catch(e){}
+    if(!S.acct){
+      const pend=(await RP.sb.auth.getUser()).data.user?.user_metadata?.profile||null; RP.pendingProfile=pend;
+      if(pend){ try{ await db.doc(`${MEM}/${S.uid}`).set(pend); S.acct={...pend, email:S.verified}; flash("Welcome. Your account is ready."); }catch(e){ flash("Your email is confirmed, but the account needs a fix: "+(e.message||e.code)); } }
+    }
+  }
+  S.acctReady=true; applyAcct();
+  if(RP.recovery){ S.authMode="reset"; openAcct("reset"); return; }
+  if(S.acct){ watchProjects(); if(S.acctRole==="admin") watchMembers(); }
+  else openAcct("signup");
+})();
+</script>
+
 </body>
 </html>
