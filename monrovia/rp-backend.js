@@ -136,7 +136,7 @@
   const user = {
     async me(){
       const u = (await sb.auth.getUser()).data.user;
-      return {id:u?.id||null, name:u?.user_metadata?.profile?.name||"", email:u?.email_confirmed_at?u.email:null, isOwner:false, canEdit:false, avatarUrl:"", color:"#C8322B"};
+      return {id:u?.id||null, name:u?.user_metadata?.profile?.name||u?.user_metadata?.full_name||u?.user_metadata?.name||"", email:u?.email_confirmed_at?u.email:null, isOwner:false, canEdit:false, avatarUrl:"", color:"#C8322B"};
     },
     async can(){ return !!(await uidNow()); },
     async isOwner(){ return false; },
