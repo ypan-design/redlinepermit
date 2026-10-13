@@ -926,7 +926,7 @@ const SIZE = {S:"Small",M:"Medium",L:"Large"};
 /* ---------- AI brief when a reviewer opens a project ---------- */
 function briefKey(p){ return `${p.status}-${p.cycle||1}-${p.corrections.length}-${(p.changes||[]).length}-${p.aiState||""}`; }
 async function ensureBrief(p){
-  if(!isPlanner()||!S.sample||S.busy[p.id]||p.aiState==="running") return;
+  if(!isPlanner()||!S.sample||S.busy[p.id]||["running","waiting","pending"].includes(p.aiState)||p.status==="fee_due"||p.status==="void") return;
   const key=briefKey(p); if(p.brief?.key===key||S.briefing.has(p.id+key)) return;
   S.briefing.add(p.id+key); renderWorkspace();
   const m=metrics(p);
