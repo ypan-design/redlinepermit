@@ -293,6 +293,22 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
 .rcard.on{border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
 .rcard:focus-within{outline:2px solid var(--red);outline-offset:2px}
 #whochip{cursor:pointer}
+.tgroup{margin:4px 0 8px;font-size:13px;font-weight:600;color:var(--ink2)}
+.mdept{display:none;font-family:var(--f-body);font-weight:600;color:var(--ink3)}
+@media (max-width:700px){
+  .tbl-wrap:has(table.stack){overflow:visible}
+  table.stack,table.stack tbody{display:block;width:100%}
+  table.stack thead{display:none}
+  table.stack tr{display:block;border:1px solid var(--hair);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--glass-solid)}
+  table.stack td{display:block;border:0;padding:3px 0;white-space:normal!important;background:none!important}
+  table.stack td[data-label]::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-top:4px}
+  table.stack .hide-m{display:none}
+  table.stack .mdept{display:inline}
+  #view-city .ws,#view-how .ws{padding:14px}
+  #view-city h2{font-size:22px}
+  header.top .path{display:none}
+  header.top .top-in{padding:8px 16px;gap:6px 12px}
+}
 #whochip.primary{background:var(--red);border-color:var(--red);color:#fff}
 .authbtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#242B31;border:1px solid var(--hair);padding:11px 16px;font-weight:600}
 .authbtn:hover{border-color:#242B31;background:#fff}
@@ -1472,17 +1488,17 @@ function renderCity(){
     <p class="note" style="margin-top:10px">${esc(c.intake)} Redline merges them into one form and moves contractor and workers' comp declarations to permit issuance. Rules marked “verify” came from secondary sources and need a City sign-off before go-live.</p></div>
     <div><div class="sec-h" style="margin:0 0 8px">Codes in force</div>
       <p class="small" style="margin:0 0 8px">Redline checks every set against these. Each code links to the official text. Local amendments to the state codes are in MMC Ch. 15.04; confirm the current ordinance with the Building Official before go-live.</p>
-      ${CODES.map(g=>`<div class="tbl-wrap" style="margin-bottom:12px"><table><thead><tr><th colspan="3">${esc(g.g)}</th></tr></thead><tbody>${g.rows.map(r=>`<tr><td style="white-space:nowrap"><a class="cite" href="${esc(r[3])}" target="_blank" rel="noopener">${esc(r[0])}</a></td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td></tr>`).join("")}</tbody></table></div>`).join("")}</div>
-    <div><div class="sec-h" style="margin:0 0 8px">Who reviews what</div><div class="tbl-wrap"><table><thead><tr><th>Department</th><th>Checks</th><th>Where the rules live</th><th>Contact</th></tr></thead><tbody>
-    ${c.depts.map(d=>`<tr><td><b>${d.d}</b></td><td>${d.checks}</td><td>${d.where}</td><td>${d.contact}</td></tr>`).join("")}</tbody></table></div></div>
+      ${CODES.map(g=>`<h4 class="tgroup">${esc(g.g)}</h4><div class="tbl-wrap" style="margin-bottom:12px"><table class="stack"><thead><tr><th>Code</th><th>Name</th><th>Covers</th></tr></thead><tbody>${g.rows.map(r=>`<tr><td style="white-space:nowrap"><a class="cite" href="${esc(r[3])}" target="_blank" rel="noopener">${esc(r[0])}</a></td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td></tr>`).join("")}</tbody></table></div>`).join("")}</div>
+    <div><div class="sec-h" style="margin:0 0 8px">Who reviews what</div><div class="tbl-wrap"><table class="stack"><thead><tr><th>Department</th><th>Checks</th><th>Where the rules live</th><th>Contact</th></tr></thead><tbody>
+    ${c.depts.map(d=>`<tr><td data-label="Department"><b>${d.d}</b></td><td data-label="Checks">${d.checks}</td><td data-label="Where the rules live">${d.where}</td><td data-label="Contact">${d.contact}</td></tr>`).join("")}</tbody></table></div></div>
     <div><div class="sec-h" style="margin:0 0 8px">Rule pack · ${c.rules.length} rules</div>
     <div class="legend"><span class="conf-v">● verified</span><span class="conf-n">● verify before go-live</span><span class="conf-j">● reviewer judgment, AI flags only</span></div>
-    <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>Rule</th><th>Dept</th><th>Section</th><th>Requirement</th><th>Look at</th></tr></thead><tbody>
-    ${c.rules.map(r=>`<tr><td class="${r.conf==="verified"?"conf-v":r.conf==="planner-judgment"?"conf-j":"conf-n"}" style="font-family:var(--f-mono);font-size:12px;white-space:nowrap">● ${r.id}</td><td>${r.dept}</td><td>${citeHtml(r.section)}</td><td>${esc(r.req)}</td><td>${esc(r.look)}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="tbl-wrap" style="margin-top:8px"><table class="stack"><thead><tr><th>Rule</th><th>Dept</th><th>Section</th><th>Requirement</th><th>Look at</th></tr></thead><tbody>
+    ${c.rules.map(r=>`<tr><td class="${r.conf==="verified"?"conf-v":r.conf==="planner-judgment"?"conf-j":"conf-n"}" style="font-family:var(--f-mono);font-size:12px;white-space:nowrap">● ${r.id} <span class="mdept">· ${r.dept}</span></td><td data-label="Dept" class="hide-m">${r.dept}</td><td data-label="Section">${citeHtml(r.section)}</td><td data-label="Requirement">${esc(r.req)}</td><td data-label="Look at">${esc(r.look)}</td></tr>`).join("")}</tbody></table></div></div>
     <div><div class="sec-h" style="margin:0 0 8px">Standard notes checklist · ${STD_NOTES.length} notes</div>
     <p class="small" style="margin:0 0 8px">Checked by text search on every sheet the moment a set arrives. Missing notes become draft comments the reviewer can approve in one click.</p>
-    <div class="tbl-wrap"><table><thead><tr><th>Note</th><th>Section</th><th>Required note</th></tr></thead><tbody>
-    ${STD_NOTES.map(n=>`<tr><td style="font-family:var(--f-mono);font-size:12px;white-space:nowrap">${n.id}</td><td>${citeHtml(n.section)}</td><td>${esc(n.note)}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="tbl-wrap"><table class="stack"><thead><tr><th>Note</th><th>Section</th><th>Required note</th></tr></thead><tbody>
+    ${STD_NOTES.map(n=>`<tr><td style="font-family:var(--f-mono);font-size:12px;white-space:nowrap">${n.id}</td><td data-label="Section">${citeHtml(n.section)}</td><td data-label="Required note">${esc(n.note)}</td></tr>`).join("")}</tbody></table></div></div>
     <div><div class="sec-h" style="margin:0 0 8px">Sources</div><ul style="margin:0;padding-left:18px">${c.sources.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join("")}</ul></div></div>`;
 }
 function renderHow(){
@@ -1494,14 +1510,10 @@ function renderHow(){
     ["Redline + City","Resubmit & recheck","Redline compares old and new sheets. It notes which comments look resolved and lists every change nobody asked for, like a window that got bigger, so nothing slips through. Reviewers clear items or send them back."],
     ["City","Approved","When every comment is cleared and every unrequested change is accepted, the reviewer approves plan check. Contractor and workers' comp declarations come next, at issuance."]];
   $("#view-how").innerHTML=`<div class="panel ws" style="margin-top:18px">
-    <div><h2>How a comment moves</h2><p style="max-width:65ch;color:var(--ink2)">The AI never approves or denies anything. It does the first read, the clipping and the bookkeeping. Reviewers keep every decision. Use the switch at the top to play both sides with one PDF.</p></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Stage</th><th>Who</th><th>What happens</th></tr></thead><tbody>${steps.map(s=>`<tr><td><b>${s[1]}</b></td><td class="who">${s[0]}</td><td>${s[2]}</td></tr>`).join("")}</tbody></table></div>
+    <div><h2>How a comment moves</h2><p style="max-width:65ch;color:var(--ink2)">The AI never approves or denies anything. It does the first read, the clipping and the bookkeeping. Reviewers keep every decision.</p></div>
+    <div class="tbl-wrap"><table class="stack"><thead><tr><th>Stage</th><th>Who</th><th>What happens</th></tr></thead><tbody>${steps.map(s=>`<tr><td><b>${s[1]}</b></td><td class="who" data-label="Who">${s[0]}</td><td>${s[2]}</td></tr>`).join("")}</tbody></table></div>
     <div><div class="sec-h" style="margin:0 0 8px">Keeping it light</div><p style="max-width:70ch;margin:0;color:var(--ink2)">Redline never stores the full drawing set. It keeps small sheet thumbnails, the clips behind each comment, the extracted text and the comment history, roughly 1–2 MB per project instead of 50–200 MB. Drawings live in only two places: Google Drive or Dropbox. In the live portal Redline files each cycle there for you, named and sorted by discipline, under Redline › Monrovia › address › Cycle.</p></div>
-    <div><div class="sec-h" style="margin:0 0 8px">Try it</div><ol style="margin:0;padding-left:20px;display:grid;gap:4px">
-      <li>As <b>Applicant</b>, start an application and attach a real plan set PDF. Keep this tab open while the first read runs.</li>
-      <li>Switch to <b>City reviewer</b>. Look at the clips, approve, edit or reject each draft, add a note, and send the comments.</li>
-      <li>Back as <b>Applicant</b>, answer each comment and upload a revised set. For a good test, change something on a sheet that no comment asked for.</li>
-      <li>As <b>City reviewer</b>, check the recheck notes and the "Changes nobody asked for" list, clear items, and approve.</li></ol></div></div>`;
+</div>`;
 }
 
 
@@ -1533,9 +1545,10 @@ function applyAcct(){
   const r=acctRole(), a=S.acct; S.acctRole=r;
   if(a){ ME.name=a.name||ME.name; ME.firm=a.firm||a.title||""; ME.email=a.email||ME.email; ME.phone=a.phone||""; if(S.uid) ME.id=S.uid; }
   if(r==="reviewer") S.role=staffFor(a.dept||"Building").id;
-  else if(r!=="admin") S.role="applicant";
+  else if(r==="admin") S.role="admin";
+  else S.role="applicant";
   $("#who").innerHTML="";
-  $("#viewas").hidden = !(r==="admin" || S.local);
+  $("#viewas").hidden = true;
   const chip=$("#whochip");
   chip.hidden=false;
   chip.textContent = a ? `${a.name} · ${ROLE_NAME[r]}` : S.signedIn ? "Finish sign-up" : "Sign in";
@@ -1718,7 +1731,7 @@ window.__redline={S,render};
   if(!window.RP || !RP.sb){
     S.local=true; flash("The portal's sign-in service isn't connected yet, so this is a preview: projects stay in this browser tab.");
     try{ S.acct=JSON.parse(localStorage.getItem("redline-acct")||"null"); }catch(e){}
-    S.acctReady=true; applyAcct(); $("#viewas").hidden=false; if(!S.acct) openAcct("profile"); return;
+    S.acctReady=true; applyAcct(); if(!S.acct) openAcct("profile"); return;
   }
   
   const [db,assets,sample,user]=await Promise.all([use("db"),use("assets"),use("sample"),use("user")]);
