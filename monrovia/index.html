@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monrovia · Redline Permit</title>
+<meta name="description" content="Redline Permit pilot portal for Monrovia plan check: applicant and plan reviewer sign-in, departments, and the codes applied.">
+<link rel="icon" type="image/svg+xml" href="../logo.svg">
+<meta property="og:title" content="Monrovia · Redline Permit">
+<meta property="og:image" content="https://redlinepermit.com/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/rp.css">
+</head>
+<body>
+<div class="pilotbar">Monrovia pilot run by Redline Permit, at no cost to the City for the first two months. This is not an official City of Monrovia website; official permit information is at <a href="https://www.monroviaca.gov" target="_blank" rel="noopener">monroviaca.gov</a>.</div>
+<div class="bg" aria-hidden="true"><span class="orb a"></span><span class="orb b"></span><span class="orb c"></span></div>
+<div class="topline" aria-hidden="true"></div>
+<header class="top"><div class="top-in">
+  <a class="brandwrap" href="../" aria-label="Redline Permit home"><img class="mark" src="../logo.svg" alt="" width="34" height="34"><span class="brand">Redline Permit</span></a>
+  <span class="city">redlinepermit.com/<b>monrovia</b></span>
+  <span class="spacer"></span>
+  <nav class="seg" aria-label="Sections"><a href="#start">Sign in</a><a href="#process">Process</a><a href="#departments">Departments</a><a href="#files">Files</a><a href="#codes">Codes</a></nav>
+  <a class="btn primary sm" href="https://claude.ai/artifact/77v1pAFrKurFUQpetxKeMk" target="_blank" rel="noopener">Open portal</a>
+</div></header>
+<div class="wrap"><main>
+  <div class="hero" style="grid-template-columns:minmax(0,1fr)">
+    <div>
+      <div class="kicker">Monrovia · plan check pilot</div>
+      <h1>Monrovia plan check, <em>circled</em> and numbered.</h1>
+      <p class="sub">Submit a plan set from Google Drive or Dropbox. Redline does a first read against Title 24 and the Monrovia Municipal Code, a City reviewer decides every comment, and you see each correction clipped from your sheets.</p>
+      <div class="facts"><span><b>Building</b>, Planning, Public Works and Fire</span><span><b>Title 24</b> 2025 edition</span><span><b>MMC</b> Titles 12, 15 and 17</span></div>
+    </div>
+  </div>
+
+  <section id="start">
+    <div class="kicker">Sign in or sign up</div>
+    <h2>Two doors into the same record.</h2>
+    <div class="doors">
+      <div class="panel door app"><span class="dept" style="color:var(--red)">Applicants</span><h3>Owners, designers and contractors</h3>
+        <ul><li>Anyone can sign up with an email</li><li>Start an application by department</li><li>Answer each numbered correction and resubmit</li><li>See which round you're on and what's left before pickup</li></ul>
+        <div class="acts"><a class="btn primary" href="https://claude.ai/artifact/77v1pAFrKurFUQpetxKeMk" target="_blank" rel="noopener">Sign up or sign in</a></div></div>
+      <div class="panel door rev"><span class="dept">City staff</span><h3>Plan reviewers and admins</h3>
+        <ul><li>Reviewer accounts need a @monroviaca.gov email</li><li>Each reviewer sees their own department queue</li><li>Approve, edit or reject every AI comment</li><li>Admins assign files and approve staff accounts</li></ul>
+        <div class="acts"><a class="btn" href="https://claude.ai/artifact/77v1pAFrKurFUQpetxKeMk" target="_blank" rel="noopener">Staff sign-in</a></div></div>
+    </div>
+    <p class="small" style="margin-top:12px">The portal opens on Claude, which hosts the pilot; you'll sign in to a free Claude account. During the pilot, new accounts are added by Redline Permit. Not set up yet? <a href="../#contact">Request access</a>.</p>
+  </section>
+
+  <section id="process">
+    <div class="kicker">How a plan set moves</div>
+    <h2>Eight stages, one shared record.</h2>
+      <div class="panel" style="margin-top:18px">
+        <div class="rail" role="list" aria-label="Example project at round 2">
+          <div class="stage done" role="listitem"><b>Submit</b><span class="who">Applicant</span></div>
+          <div class="stage done" role="listitem"><b>AI first read</b><span class="who">Redline</span></div>
+          <div class="stage done" role="listitem"><b>City review</b><span class="who">Reviewer</span></div>
+          <div class="stage now" role="listitem"><b>Corrections</b><span class="who">Applicant</span><span class="round">Round 2</span><span class="rounds"><i></i><i class="cur"></i></span></div>
+          <div class="stage" role="listitem"><b>Resubmit &amp; recheck</b><span class="who">Both</span><span class="loop">Loops until clean</span></div>
+          <div class="stage" role="listitem"><b>Plan check approved</b><span class="who">Reviewer</span></div>
+          <div class="stage" role="listitem"><b>Other agencies</b><span class="who">Applicant</span></div>
+          <div class="stage" role="listitem"><b>Permit pickup</b><span class="who">City</span></div>
+        </div>
+        <div class="people">
+          <div class="person"><span class="role">Owner</span><b>Property owner</b><span>Sees status and rounds</span></div>
+          <div class="person"><span class="role">Designer</span><b>Architect or designer</b><span>Gets every numbered comment</span></div>
+          <div class="person"><span class="role">Applicant</span><b>Who submits</b><span>Uploads and resubmits</span></div>
+          <div class="person"><span class="role">Reviewer</span><b>City plan checker</b><span>Approves every comment</span></div>
+        </div>
+      </div>
+
+  </section>
+    <section id="departments">
+      <div class="kicker">One portal, every department</div>
+      <h2>Each application goes to the right desk, with its own reviewer.</h2>
+      <div class="deptgrid">
+        <div class="dcard main"><span class="dept">Building &amp; Safety · most applications start here</span><b>Building plan check</b>
+          <span>New homes, ADUs, additions, remodels, multifamily and commercial. One short form, a PDF from Google Drive or Dropbox, and every comment comes back clipped from the sheets and numbered.</span>
+          <span class="go">AI first read in minutes, not weeks →</span></div>
+        <div class="dcard" tabindex="0"><span class="dept">Planning</span><b>Planning</b><span class="small">Zoning review before plan check: larger ADUs, design review, Planning Commission.</span><span class="hint">Hover: which ADU path?</span>
+          <span class="tip"><b>Which Planning path is an ADU?</b>
+            <span class="row"><span class="k">800 sf or less</span><span>Planning takes a quick look at setbacks, height and location, then it goes straight to Building plan check.</span>
+            <span class="k">Over 800 sf</span><span>Full Planning review first, under the state 60-day clock. Plan check starts after Planning signs off.</span></span></span></div>
+        <div class="dcard"><span class="dept">Public Works</span><b>Public Works</b><span class="small">Work in the street or parkway, utilities, grading and drainage.</span></div>
+        <div class="dcard"><span class="dept">Fire</span><b>Fire</b><span class="small">Sprinklers, alarms, access and operational permits.</span></div>
+        <div class="dcard"><span class="dept">City</span><b>City permits</b><span class="small">Special events, filming and other city-issued permits.</span></div>
+      </div>
+    </section>
+
+  <section id="files">
+    <div class="kicker">Files and records</div>
+    <h2>Your drawings stay in your Drive. Redline keeps the record.</h2>
+    <p class="sub">The portal reads the plan set where it already lives and keeps only what the review needs: clips, the sheet index, comments and the permit history.</p>
+    <div class="panel flow"><svg viewBox="0 0 900 230" role="img" aria-label="Plan set PDF stays in Google Drive or Dropbox; Redline reads it, keeps clips, sheet index, comments and the permit record, and sends corrections to the applicant and reviewer">
+  <g font-family="Inter, sans-serif">
+    <rect x="10" y="40" width="210" height="150" rx="16" fill="var(--glass-solid)" stroke="var(--hair)"/>
+    <text x="30" y="72" font-size="12" font-weight="700" letter-spacing="2" fill="var(--ink3)">YOUR STORAGE</text>
+    <text x="30" y="102" font-size="17" font-weight="600" fill="var(--ink)">Google Drive</text>
+    <text x="30" y="128" font-size="17" font-weight="600" fill="var(--ink)">or Dropbox</text>
+    <rect x="30" y="146" width="62" height="26" rx="5" fill="var(--red)"/><text x="61" y="164" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">PDF</text>
+    <text x="102" y="164" font-size="12" fill="var(--ink2)">stays here</text>
+    <path d="M226 115 H330" stroke="var(--teal)" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ar)"/>
+    <text x="278" y="104" font-size="11" fill="var(--ink2)" text-anchor="middle">read only</text>
+    <rect x="336" y="20" width="250" height="190" rx="16" fill="var(--glass-solid)" stroke="var(--red)" stroke-width="1.5"/>
+    <text x="356" y="52" font-size="12" font-weight="700" letter-spacing="2" fill="var(--red)">REDLINE KEEPS</text>
+    <g font-size="14" fill="var(--ink)"><text x="356" y="82">Sheet index and thumbnails</text><text x="356" y="108">A clip of each clouded spot</text><text x="356" y="134">Extracted text and notes</text><text x="356" y="160">Comments, rounds, approvals</text><text x="356" y="186">The permit record</text></g>
+    <path d="M592 80 H690" stroke="var(--ink2)" stroke-width="2" marker-end="url(#ar2)"/><path d="M592 150 H690" stroke="var(--ink2)" stroke-width="2" marker-end="url(#ar2)"/>
+    <rect x="696" y="34" width="194" height="76" rx="14" fill="var(--red-soft)"/><text x="714" y="64" font-size="15" font-weight="600" fill="var(--ink)">Applicant</text><text x="714" y="88" font-size="12.5" fill="var(--ink2)">numbered corrections</text>
+    <rect x="696" y="120" width="194" height="76" rx="14" fill="var(--teal-soft)"/><text x="714" y="150" font-size="15" font-weight="600" fill="var(--ink)">Plan reviewer</text><text x="714" y="174" font-size="12.5" fill="var(--ink2)">queue, clips, code cites</text>
+  </g>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--teal)"/></marker>
+  <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink2)"/></marker></defs>
+</svg>
+<div class="legend2"><span><i style="background:var(--red)"></i>The full PDF is never copied to Redline</span><span><i style="background:var(--teal)"></i>About 1–2 MB kept per project instead of 50–200 MB</span></div></div>
+  </section>
+
+  <section id="codes">
+    <div class="kicker">Monrovia code profile</div>
+    <h2>The codes every Monrovia comment cites.</h2>
+    <p class="sub">State codes are the 2025 California Building Standards Code, which Monrovia adopts with local amendments in MMC Chapter 15.04. Each row opens the source.</p>
+    <div class="codetable"><div class="codeg"><h3>California Building Standards Code (Title 24) · 2025 edition, effective Jan 1, 2026</h3><a class="coderow" href="https://www.dgs.ca.gov/BSC/Codes" target="_blank" rel="noopener"><span class="cite">Part 1</span><b>California Administrative Code</b><small>How the codes are adopted and enforced</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 2</span><b>California Building Code (CBC)</b><small>Commercial, multifamily over 2 units, mixed use; accessibility (Ch. 11A/11B)</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 2.5</span><b>California Residential Code (CRC)</b><small>Houses, duplexes, townhomes and ADUs up to 3 stories</small></a><a class="coderow" href="https://www.dgs.ca.gov/BSC/Codes" target="_blank" rel="noopener"><span class="cite">Part 3</span><b>California Electrical Code (CEC)</b><small>Wiring, panels, GFCI/AFCI, EV and battery-ready circuits</small></a><a class="coderow" href="https://epubs.iapmo.org/" target="_blank" rel="noopener"><span class="cite">Part 4</span><b>California Mechanical Code (CMC)</b><small>HVAC, ducts, exhaust, dryer vents</small></a><a class="coderow" href="https://epubs.iapmo.org/" target="_blank" rel="noopener"><span class="cite">Part 5</span><b>California Plumbing Code (CPC)</b><small>Water, waste, gas piping, water heaters, fixtures</small></a><a class="coderow" href="https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards" target="_blank" rel="noopener"><span class="cite">Part 6</span><b>California Energy Code</b><small>Title 24 energy compliance, insulation, electric-ready, solar</small></a><a class="coderow" href="https://www.dgs.ca.gov/BSC/Codes" target="_blank" rel="noopener"><span class="cite">Part 8</span><b>California Historical Building Code</b><small>Alternative rules for qualified historic buildings</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 9</span><b>California Fire Code (CFC)</b><small>Fire access, hydrants, sprinklers, alarms</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 10</span><b>California Existing Building Code</b><small>Alterations, additions and changes of use in existing buildings</small></a><a class="coderow" href="https://codes.iccsafe.org/codes/california" target="_blank" rel="noopener"><span class="cite">Part 11</span><b>CALGreen</b><small>Green building mandatory measures, EV charging, water use</small></a><a class="coderow" href="https://www.dgs.ca.gov/BSC/Codes" target="_blank" rel="noopener"><span class="cite">Part 12</span><b>California Referenced Standards Code</b><small>Standards the other parts point to</small></a></div><div class="codeg"><h3>State law the City must apply</h3><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=66314" target="_blank" rel="noopener"><span class="cite">Gov. Code 66310–66342</span><b>ADU and JADU law</b><small>Size, setbacks, height, parking; 60-day approval clock (66317)</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=65852.21" target="_blank" rel="noopener"><span class="cite">Gov. Code 65852.21 / 66411.7</span><b>SB 9</b><small>Two units per lot and urban lot splits in single-family zones</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=65589.5" target="_blank" rel="noopener"><span class="cite">Gov. Code 65589.5</span><b>Housing Accountability Act</b><small>Objective standards only for housing projects</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=65941.1" target="_blank" rel="noopener"><span class="cite">Gov. Code 65905.5 / 65941.1</span><b>SB 330 (Housing Crisis Act)</b><small>Preliminary applications, limit of 5 hearings, vested rules</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&amp;sectionNum=65920" target="_blank" rel="noopener"><span class="cite">Gov. Code 65920 et seq.</span><b>Permit Streamlining Act</b><small>Deadlines for completeness and decisions</small></a><a class="coderow" href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=HSC&amp;sectionNum=17958" target="_blank" rel="noopener"><span class="cite">Health &amp; Safety Code 17958</span><b>State Housing Law</b><small>Local amendments must be reasonably necessary and filed with the state</small></a></div><div class="codeg"><h3>Monrovia Municipal Code</h3><a class="coderow" href="https://codelibrary.amlegal.com/codes/monrovia" target="_blank" rel="noopener"><span class="cite">Title 15</span><b>Buildings and Construction</b><small>15.04 codes adopted and local amendments · 15.08 building security · 15.20 fire code · 15.28 grading</small></a><a class="coderow" href="https://codelibrary.amlegal.com/codes/monrovia" target="_blank" rel="noopener"><span class="cite">Title 17</span><b>Zoning</b><small>17.12 residential zones · 17.24 parking · 17.44 special uses incl. ADUs · 17.52 administration</small></a><a class="coderow" href="https://codelibrary.amlegal.com/codes/monrovia" target="_blank" rel="noopener"><span class="cite">Title 12</span><b>Streets, Sidewalks and Public Places</b><small>Encroachments, driveway approaches, work in the right-of-way</small></a></div></div>
+  </section>
+</main>
+<footer class="foot"><span>redlinepermit.com/monrovia · © 2026 Redline Permit</span><span>Pilot portal · not an official City of Monrovia website</span></footer>
+</div>
+</body>
+</html>
