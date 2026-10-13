@@ -97,6 +97,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .p-draft{background:var(--sand3);color:var(--ink2)}
 .p-submitted,.p-resubmitted{background:var(--ox-soft);color:var(--oxblood)}
 .p-corrections{background:var(--red-soft);color:var(--red)}
+.p-void{background:var(--sand2);color:var(--ink3)}
 .p-approved,.p-agencies,.p-issued{background:var(--ok-soft);color:var(--teal-deep)}
 .p-warn{background:var(--warn-soft);color:var(--warn)}
 .btn{border:1px solid var(--hair);background:var(--glass-solid);border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink)}
@@ -560,8 +561,8 @@ const STAGES = [
 ];
 /* Other agencies and permit pickup only apply to the Building plan check. */
 const stagesFor = app => (APPS.find(a=>a.id===app)||APPS[0]).main ? STAGES : STAGES.slice(0,5);
-const STATUS_LABEL = {submitted:"In review",corrections:"Corrections issued",resubmitted:"Resubmitted",approved:"Other agencies",ready:"Ready for pickup",issued:"Permit issued"};
-const STATUS_STAGE = {submitted:1,corrections:2,resubmitted:3,approved:5,ready:6,issued:7};
+const STATUS_LABEL = {void:"Voided",submitted:"In review",corrections:"Corrections issued",resubmitted:"Resubmitted",approved:"Other agencies",ready:"Ready for pickup",issued:"Permit issued"};
+const STATUS_STAGE = {void:-1,submitted:1,corrections:2,resubmitted:3,approved:5,ready:6,issued:7};
 const DONE = st => ["approved","ready","issued"].includes(st);
 /* Clearances that usually sit between plan check approval and permit issuance. Confirm the list with Monrovia before go-live. */
 const AGENCIES = ["School district fees paid (Monrovia USD)","Sanitation district connection fee","Fire Department sign-off","Contractor license & workers' comp on file"];
@@ -663,6 +664,30 @@ async function readPdf(file, onStep){
   for(let i=n+1;i<=Math.min(pdf.numPages,80);i++){ try{ fullText += " "+(await (await pdf.getPage(i)).getTextContent()).items.map(x=>x.str).join(" "); }catch(e){} }
   return {pages, text:text.slice(0,12000), fullText, total:pdf.numPages};
 }
+/* Sheets saved at submission (1600px) so the AI first read can run again without the PDF. */
+async function storeAiPages(pages){ const out=[]; for(const pg of pages.slice(0,12)){ const ref=await putImage(await toBlob(scaled(pg.canvas,1600),.82)); out.push({...ref, page:pg.page}); } return out; }
+async function pagesFromStore(p){
+  const src=(p.aiPages&&p.aiPages.length)?p.aiPages:(p.sheets||[]);
+  if(window.RP&&RP.sb){ try{ const ids=src.map(x=>x.assetId).filter(id=>id&&!RP.signed[id]); if(ids.length){ const {data}=await RP.sb.storage.from("clips").createSignedUrls(ids,3600); (data||[]).forEach(d=>{ if(d.signedUrl) RP.signed[d.path]=d.signedUrl; }); } }catch(e){} }
+  const out=[];
+  for(const x of src){ const u=imgSrc(x); if(!u) continue;
+    try{ const bm=await createImageBitmap(await (await fetch(u)).blob()); const c=document.createElement("canvas"); c.width=bm.width; c.height=bm.height; c.getContext("2d").drawImage(bm,0,0); out.push({page:x.page, canvas:c}); }catch(e){} }
+  return out;
+}
+const aiStale = p => p.aiState==="running" && Date.now()-new Date(p.aiAt||p.updatedAt||0).getTime() > 10*60*1000;
+/* Void: archived for 30 days, then deleted with its sheet images. */
+const purgeAt = p => new Date(new Date(p.voidedAt||p.updatedAt||0).getTime()+30*864e5);
+const assetIdsOf = obj => { const out=[]; JSON.stringify(obj,(k,v)=>{ if(k==="assetId"&&typeof v==="string") out.push(v); return v; }); return [...new Set(out)]; };
+async function hardDelete(p){
+  if(S.local||!S.db){ S.projects=S.projects.filter(x=>x.id!==p.id); render(); return; }
+  const ids=assetIdsOf(p);
+  if(window.RP&&RP.sb&&ids.length){ for(let i=0;i<ids.length;i+=100){ try{ await RP.sb.storage.from("clips").remove(ids.slice(i,i+100)); }catch(e){} } }
+  await S.db.collection(COL).doc(p.id).delete();
+}
+function purgeVoids(){
+  if(S.acctRole!=="admin") return; S.purged ||= new Set();
+  S.projects.filter(p=>p.status==="void" && Date.now()>purgeAt(p).getTime() && !S.purged.has(p.id)).forEach(p=>{ S.purged.add(p.id); hardDelete(p).catch(()=>{}); });
+}
 async function storeThumbs(pages){
   const out=[]; for(const pg of pages){ const ref = await putImage(await toBlob(scaled(pg.canvas,900),.7)); out.push({...ref, page:pg.page, label:"Sheet "+pg.page}); } return out;
 }
@@ -748,15 +773,27 @@ function readiness(p){
 async function runFirstRead(p, file){
   const pid = p.id; let fullText = "";
   try{
-    const rd = await readPdf(file, m=>setBusy(pid,m)); const {pages, text, total} = rd; fullText = rd.fullText;
-    setBusy(pid,"Saving sheet thumbnails…");
-    p.sheets = await storeThumbs(pages); p.pageCount = total; p.lastText = text.slice(0,8000);
+    let pages, text;
+    if(file){
+      const rd = await readPdf(file, m=>setBusy(pid,m)); pages = rd.pages; text = rd.text; fullText = rd.fullText;
+      setBusy(pid,"Saving the sheets…");
+      p.sheets = await storeThumbs(pages); p.aiPages = await storeAiPages(pages); p.pageCount = rd.total; p.lastText = text.slice(0,8000); p.fullText = String(fullText||"").slice(0,40000);
+    } else {
+      setBusy(pid,"Loading the sheets from the submission…");
+      pages = await pagesFromStore(p); text = p.lastText||""; fullText = p.fullText||p.lastText||"";
+      if(!pages.length){ const e=new Error("No sheets are saved for this file. Ask the applicant to upload the set again."); e.code="no_sheets"; throw e; }
+    }
     S.canv[pid] = pages;
     if(!S.sample){ p.aiState="unavailable"; addLog(p,"ai","AI first read is not available until you sign in."); if(appOf(p).main) checkNotes(p, fullText); setBusy(pid); await save(p); return; }
-    p.aiState="running"; await save(p);
+    p.aiState="running"; p.aiAt=now(); await save(p);
     setBusy(pid,"Redline is reading the set against Monrovia's codes… (about a minute)");
-    const r = await aiFirstRead(p, pages, text);
-    if(!r || Array.isArray(r) || (!r.sheets && !r.corrections && !r.completeness)){ const e=new Error("The AI answer came back incomplete. Try the first read again."); e.code="bad_output"; throw e; }
+    let r = null;
+    for(let t=1;t<=2;t++){
+      try{ r = await aiFirstRead(p, pages, text); }catch(e){ if(t===2 || e.code==="not_configured" || e.code==="not_granted") throw e; r = null; }
+      if(r && !Array.isArray(r) && (r.sheets || r.corrections || r.completeness)) break;
+      if(t===2){ const e=new Error("The AI answer came back incomplete. Run the first read again."); e.code="bad_output"; throw e; }
+      setBusy(pid,"Redline is taking a second pass…");
+    }
     (r.sheets||[]).forEach(s=>{ const sh=p.sheets.find(x=>x.page===s.page); if(sh){ if(s.label) sh.label=String(s.label).slice(0,40); if(DISC[s.discipline]) sh.disc=s.discipline; } });
     p.completeness = (r.completeness||[]).map(c=>({item:String(c.item), found:!!c.found}));
     p.docType = r.docType||"plan set";
@@ -900,7 +937,7 @@ function printLetter(p){
     ${Object.entries(by).map(([d,cs])=>`<h2>${esc(d)}</h2>${cs.map(c=>`<div class="it"><b>${++n}. ${esc(c.section)}</b> · Sheet ${esc(c.sheet||"—")}${c.priority==="critical"?" · Critical":""}
       ${c.snip&&imgSrc(c.snip)?`<img src="${esc(imgSrc(c.snip))}" alt="">`:""}
       ${c.finding?`<div>${esc(c.finding)}</div>`:""}<div><b>Required:</b> ${esc(c.plannerText||c.fix)}</div></div>`).join("")}`).join("")}
-    <p style="margin-top:16px;font-size:10pt">Prepared in Redline Permit. Every comment was reviewed and approved by City staff.</p>`;
+    <p style="margin-top:16px;font-size:10pt">Prepared in Redline Permit. Every comment was reviewed by City staff before it was sent.</p>`;
   setTimeout(()=>{ try{ window.print(); }catch(e){ flash("Printing is blocked in this view. Use your browser's Print menu."); } }, 300);
 }
 
@@ -925,7 +962,7 @@ function matchQ(p){
   const q=S.q.trim().toLowerCase(); if(!q) return true;
   return [p.address,p.permitNo,p.applicantName,p.designer?.name,p.owner?.name,p.reviewerName,p.projectType,p.dept,appOf(p).name,STATUS_LABEL[p.status]].join(" ").toLowerCase().includes(q);
 }
-function visible(){ return mine().filter(matchQ); }
+function visible(){ return mine().filter(p=>!isPlanner() || (S.archive ? p.status==="void" : p.status!=="void")).filter(matchQ); }
 function whoOptions(){
   return `<option value="applicant">Applicant · ${esc(ME.name)}, ${esc(ME.firm)}</option>
     <optgroup label="City of Monrovia">${STAFF.map(r=>`<option value="${r.id}">${esc(r.name)} · ${esc(r.dept)} reviewer</option>`).join("")}
@@ -933,6 +970,7 @@ function whoOptions(){
 }
 function render(){
   const w=$("#who"); if(!w.options.length) w.innerHTML=whoOptions(); w.value=S.role;
+  ["home","city","how"].forEach(t=>{ $("#tab-"+t).hidden=isAdmin(); }); if(isAdmin() && ["home","city","how"].includes(S.tab)) S.tab="projects";
   ["home","projects","city","how","accounts"].forEach(t=>{ $("#tab-"+t).setAttribute("aria-selected", S.tab===t); $("#view-"+t).hidden = S.tab!==t; });
   $("#hero").hidden = S.tab!=="home";
   const r=meRev();
@@ -958,7 +996,7 @@ function renderQueue(){
       <span class="m">Cycle ${p.cycle||1} · ${openCount(p)} open · reviewer ${esc(p.reviewerName||"unassigned")}</span></button>`).join("");
 }
 function statsHtml(){
-  const ps=mine(); if(!ps.length) return "";
+  const ps=mine().filter(p=>p.status!=="void"); if(!ps.length) return "";
   const live=ps.map(p=>({p,m:metrics(p)})).filter(x=>x.m.cityTurn);
   const avg=live.length?Math.round(live.reduce((a,x)=>a+x.m.days,0)/live.length):0;
   let ok=0, dec=0; const secs={};
@@ -972,16 +1010,17 @@ function renderTasks(){
   const depts=["All",...new Set(APPS.map(a=>a.dept))];
   let list=visible().map(p=>({p,m:metrics(p)})).filter(x=>!isAdmin()||S.deptFilter==="All"||x.m.app.dept===S.deptFilter).sort((a,b)=>b.m.score-a.m.score);
   const counts={overdue:0,due:0}; list.forEach(x=>{ if(counts[x.m.urg]!==undefined) counts[x.m.urg]++; });
-  $("#queue").innerHTML=(isAdmin()?`<input type="search" id="q" class="searchbox" placeholder="Search address, permit #, applicant, reviewer" value="${esc(S.q)}">
+  $("#queue").innerHTML=(isAdmin()?`<div class="acts" style="margin:0 0 8px"><button class="btn sm" id="arch">${S.archive?"← Active files":`Archive · ${S.projects.filter(p=>p.status==="void").length}`}</button></div><input type="search" id="q" class="searchbox" placeholder="Search address, permit #, applicant, reviewer" value="${esc(S.q)}">
     <div class="chks" style="margin-bottom:10px">${depts.map(d=>`<label><input type="radio" name="deptf" value="${d}" ${S.deptFilter===d?"checked":""}>${d}</label>`).join("")}</div>`:`<p class="small" style="margin:0 4px 8px">Only files assigned to you.</p>`)+`
     ${statsHtml()}
     <p class="small" style="margin:0 4px 8px">${list.length} file${list.length===1?"":"s"} · ${counts.overdue} overdue · ${counts.due} due soon · sorted by urgency, size and days waiting</p>
     ${list.length?list.map(({p,m})=>`<button class="qitem" data-p="${p.id}" aria-current="${p.id===S.sel}">
-      <span class="m"><span class="pill ${URG[m.urg][1]}">${URG[m.urg][0]}</span><span class="dept">${esc(m.app.dept)}</span></span>
+      <span class="m">${p.status==="void"?'<span class="pill p-void">Voided</span>':`<span class="pill ${URG[m.urg][1]}">${URG[m.urg][0]}</span>`}<span class="dept">${esc(m.app.dept)}</span></span>
       <span class="t">${esc(p.address)}</span>
       <span class="m">${esc(m.app.main?(p.projectType||m.app.name):m.app.name)}${isAdmin()?` · ${esc(p.reviewerName||"unassigned")}`:""}</span>
-      <span class="m">${m.cityTurn?`Day ${m.days} of ${m.target}`:STATUS_LABEL[p.status]} · ${SIZE[m.size]} · ${openCount(p)} open${readiness(p)!==null?` · <span class="ready">Set ${readiness(p)}% ready</span>`:""}${p.example?" · example":""}</span>
+      <span class="m">${p.status==="void"?`${esc(p.voidReason||"Voided")} · deleted ${fmtD(purgeAt(p))}`:`${m.cityTurn?`Day ${m.days} of ${m.target}`:STATUS_LABEL[p.status]} · ${SIZE[m.size]} · ${openCount(p)} open`}${readiness(p)!==null?` · <span class="ready">Set ${readiness(p)}% ready</span>`:""}${p.example?" · example":""}</span>
       ${m.cityTurn?`<span class="bar"><span style="width:${Math.min(100,Math.round(m.ratio*100))}%" class="${m.urg}"></span></span>`:""}</button>`).join(""):'<p class="note">No files for this department.</p>'}`;
+  const ab=$("#arch"); if(ab) ab.onclick=()=>{ S.archive=!S.archive; S.sel=null; render(); };
   $("#queue").querySelectorAll('input[name="deptf"]').forEach(r=>r.onchange=()=>{ S.deptFilter=r.value; renderQueue(); if(!cur()) renderWorkspace(); });
   const q=$("#q"); if(q) q.oninput=()=>{ S.q=q.value; const pos=q.selectionStart; renderQueue(); if(!cur()) renderWorkspace(); const n=$("#q"); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
 }
@@ -1005,7 +1044,7 @@ function renderWorkspace(){
   if(!p && isAdmin()){ w.innerHTML = adminBoard(); w.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ S.sel=b.dataset.p; S.sheetIdx=0; render(); }); return; }
   if(!p){
     w.innerHTML = `<div class="empty"><h2>${isPlanner()?"Pick a task, or bring in old files":"Submit an application"}</h2>
-      <p>${isPlanner()?"Every submission arrives with Redline's first read: draft comments, each clipped from the sheet where it applies. You approve, edit or reject each one. Permits already in review can be added with their Google Drive or Dropbox link.":"Fill in one short form and attach the PDF. It goes straight to the City. You'll see the City's comments here, each with a clip of the spot on your sheets."}</p>
+      <p>${isPlanner()?"Every submission arrives with Redline's first read: draft comments, each clipped from the sheet where it applies. You send, edit or reject each one. Permits already in review can be added with their Google Drive or Dropbox link.":"Fill in one short form and attach the PDF. It goes straight to the City. You'll see the City's comments here, each with a clip of the spot on your sheets."}</p>
       ${isPlanner()?'<div class="acts" style="justify-content:center"><button class="btn primary" id="btn-bulk2">Review old plan check PDFs</button><button class="btn" id="btn-imp2">Add one permit</button></div>':'<button class="btn primary" id="btn-new2">Start an application</button>'}</div>`;
     const b=$("#btn-new2"); if(b) b.onclick=()=>{ S.mode="new"; S.sel=null; render(); };
     const b2=$("#btn-imp2"); if(b2) b2.onclick=()=>{ S.mode="import"; S.sel=null; render(); };
@@ -1028,11 +1067,12 @@ function adminBoard(){
     <span class="t">${esc(p.address)}</span><span class="m">${esc(m.app.main?(p.projectType||m.app.name):m.app.name)} · ${SIZE[m.size]}</span>
     <span class="m">${m.cityTurn?`Day ${m.days} of ${m.target}`:STATUS_LABEL[p.status]} · ${openCount(p)} open</span>
     ${m.cityTurn?`<span class="bar"><span style="width:${Math.min(100,Math.round(m.ratio*100))}%" class="${m.urg}"></span></span>`:""}</button>`;
-  const lanes=STAFF.map(r=>{ const xs=all.filter(x=>x.p.reviewerId===r.id).sort((a,b)=>b.m.score-a.m.score);
+  const nOf=r=>all.filter(x=>x.p.reviewerId===r.id).length;
+  const lanes=STAFF.filter(r=>nOf(r)).sort((a,b)=>nOf(b)-nOf(a)).map(r=>{ const xs=all.filter(x=>x.p.reviewerId===r.id).sort((a,b)=>b.m.score-a.m.score);
     return `<div class="lane"><h4><span>${esc(r.dept)}</span><span class="small">${esc(r.name)} · ${xs.length}</span></h4>${xs.map(card).join("")||'<p class="small">Nothing here.</p>'}</div>`; }).join("");
   return `<div class="ws"><div><h2>City overview</h2><p class="small" style="margin-top:6px">${all.length} file${all.length===1?"":"s"}${S.q?` matching “${esc(S.q)}”`:""}. Each lane is one reviewer's queue, most urgent on top: city's turn first, then by share of the review target used, project size and resubmittals.</p></div>
-    <div class="tbl-wrap"><table class="wl"><thead><tr><th>Reviewer</th><th>Dept</th><th>With City</th><th>Overdue</th><th>Due soon</th><th>Avg days</th><th>AI drafts to decide</th><th>With applicant</th><th>Approved</th></tr></thead><tbody>
-      ${rows.map(x=>`<tr><td><b>${esc(x.r.name)}</b><br><span class="small">${esc(x.r.title)}</span></td><td>${esc(x.r.dept)}</td><td>${x.live}</td><td>${x.overdue?`<span class="pill p-corrections">${x.overdue}</span>`:"0"}</td><td>${x.due?`<span class="pill p-warn">${x.due}</span>`:"0"}</td><td>${x.avg}</td><td>${x.drafts}</td><td>${x.waiting}</td><td>${x.done}</td></tr>`).join("")}</tbody></table></div>
+    <div class="tbl-wrap"><table class="wl"><thead><tr><th>Reviewer</th><th>Dept</th><th>Assigned</th><th>With City</th><th>Overdue</th><th>Due soon</th><th>Avg days</th><th>AI drafts to decide</th><th>With applicant</th><th>Agency approved</th></tr></thead><tbody>
+      ${rows.filter(x=>x.total).sort((a,b)=>b.live-a.live||b.total-a.total).map(x=>`<tr><td><b>${esc(x.r.name)}</b><br><span class="small">${esc(x.r.title)}</span></td><td>${esc(x.r.dept)}</td><td><b>${x.total}</b></td><td>${x.live}</td><td>${x.overdue?`<span class="pill p-corrections">${x.overdue}</span>`:"0"}</td><td>${x.due?`<span class="pill p-warn">${x.due}</span>`:"0"}</td><td>${x.avg}</td><td>${x.drafts}</td><td>${x.waiting}</td><td>${x.done}</td></tr>`).join("")}</tbody></table></div>
     ${unassigned.length?`<div class="note red">${unassigned.length} file${unassigned.length===1?" has":"s have"} no reviewer. Open one to assign it.</div>`:""}
     <div class="lanes">${lanes}</div></div>`;
 }
@@ -1431,14 +1471,14 @@ function corrCard(p,c){
   let status="";
   if(c.resolved) status='<span class="pill p-approved">Cleared</span>';
   else if(c.state==="draft") status=`<span class="pill p-draft">${c.source==="notes"?"Checklist draft":"AI draft"}</span>`;
-  else if(c.state==="approved") status=`<span class="pill p-corrections">${!P?"To answer":c.source==="letter"?"From earlier letter":c.source==="reviewer"?"Reviewer comment":c.edited?"Approved · edited":"Approved"}</span>`;
+  else if(c.state==="approved") status=`<span class="pill p-corrections">${!P?"To answer":c.source==="letter"?"From earlier letter":c.source==="reviewer"?"Reviewer comment":((c.sentAt||(p.status!=="submitted"&&p.status!=="resubmitted"))?"Sent":"Ready to send")+(c.edited?" · edited":"")}</span>`;
   else if(c.state==="rejected") status='<span class="pill p-draft">Rejected</span>';
   const num=p.corrections.indexOf(c)+1;
   const pr=c.priority&&!c.resolved&&c.state!=="rejected"?`<span class="prio prio-${c.priority}">${c.priority[0].toUpperCase()+c.priority.slice(1)}</span>`:"";
   let b=`<div class="corr-h"><button type="button" class="num go" data-goto="${c.id}" title="Show #${num} on the sheet">${num}</button>${citeHtml(c.section)}<span class="dept">${esc(c.dept)}</span><span class="dept">Sheet ${esc(c.sheet||"—")}</span>${pr}${status}${P&&c.source==="ai"?chip(c.confidence):""}${P&&c.source==="notes"&&c.state==="draft"?'<span class="dept">standard note</span>':""}</div>`;
   if(c.snip) b+=snipHtml(c.snip, `Clip from sheet ${c.sheet||c.page||""} · cycle ${c.cycle||1}`);
   if(c.finding) b+=`<p>${esc(c.finding)}</p>`;
-  if(S.editing===c.id) b+=`<textarea id="edit-${c.id}">${esc(text)}</textarea><div class="acts"><button class="btn sm primary" data-a="saveedit" data-c="${c.id}">Save and approve</button><button class="btn sm" data-a="canceledit">Cancel</button></div>`;
+  if(S.editing===c.id) b+=`<textarea id="edit-${c.id}">${esc(text)}</textarea><div class="acts"><button class="btn sm primary" data-a="saveedit" data-c="${c.id}">Save</button><button class="btn sm" data-a="canceledit">Cancel</button></div>`;
   else b+=`<p class="fix"><b>Required:</b> ${esc(text)}</p>`;
   const r=ruleFor(c); if(c.why||r) b+=`<div class="edu"><b>Code note</b>${esc(c.why||"")}${r?` ${c.why?"":""}<span class="small">Rule: ${esc(r.req)}</span>`:""}</div>`;
   if(c.response) b+=`<div class="sub"><span class="who">Applicant response · cycle ${c.respCycle||p.cycle}</span>${esc(c.response)}</div>`;
@@ -1447,7 +1487,7 @@ function corrCard(p,c){
   if(P && (c.replies||[]).length) b+=`<div class="replies">${c.replies.map(r=>`<div class="reply"><span class="who">${esc(nameOf(r))} · ${esc(r.dept)}</span> — ${esc(r.text)} <span class="small">${fmtT(r.at)}</span></div>`).join("")}</div>`;
   let acts="";
   if(P && !c.resolved){
-    if(c.state==="draft") acts=`<button class="btn sm ok" data-a="approve" data-c="${c.id}">Approve</button><button class="btn sm" data-a="edit" data-c="${c.id}">Edit</button><button class="btn sm" data-a="reject" data-c="${c.id}">Reject</button>`;
+    if(c.state==="draft") acts=`<button class="btn sm ok" data-a="approve" data-c="${c.id}">Send</button><button class="btn sm" data-a="edit" data-c="${c.id}">Edit</button><button class="btn sm" data-a="reject" data-c="${c.id}">Reject</button>`;
     else if(c.state==="approved" && p.status==="resubmitted") acts=`<button class="btn sm ok" data-a="clear" data-c="${c.id}">Clear</button><button class="btn sm" data-a="edit" data-c="${c.id}">Revise</button>`;
     else if(c.state==="approved") acts=`<button class="btn sm" data-a="edit" data-c="${c.id}">Revise</button>`;
     else if(c.state==="rejected") acts=`<button class="btn sm" data-a="restore" data-c="${c.id}">Restore</button>`;
@@ -1496,27 +1536,36 @@ function projectView(p){
     if(p.status==="submitted"||p.status==="resubmitted") head=`<div class="note">${p.status==="resubmitted"?"Revised set received":"Submitted"} ${fmtD(p.updatedAt||p.submittedAt)}. Monrovia reviewers are working on it. Their comments will appear here.</div>`;
     if(p.status==="corrections"){ head=`<div class="note red"><b>${openApproved} comment${openApproved===1?"":"s"} from the City.</b> Each one shows the spot on your sheets. Respond to each, then upload the revised set. Only these items get rechecked.</div>`;
       primary=`<input type="file" id="re-file" accept="application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="letter">Print the list</button>`; }
-    if(p.status==="approved") head=`<div class="note ok"><b>Plan check approved.</b> Waiting on the other agencies below. You'll get a pickup notice when they're all cleared.</div>${agencyHtml(p,false)}`;
+    if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
+    else if(p.status==="approved") head=`<div class="note ok"><b>Plan check approved.</b> Waiting on the other agencies below. You'll get a pickup notice when they're all cleared.</div>${agencyHtml(p,false)}`;
     if(p.status==="ready") head=`<div class="note ok"><b>Ready for permit pickup.</b> All clearances are in. Pay the permit fees online or at 415 S. Ivy Ave, then the permit is issued.</div>`;
     if(p.status==="issued") head=`<div class="note ok"><b>Permit issued${p.issuedPermitAt?` ${fmtD(p.issuedPermitAt)}`:""}.</b> Schedule inspections from here.</div>`;
+    if(p.status==="void") head=`<div class="note"><b>The City voided this application</b>${p.voidReason?` (${esc(p.voidReason)})`:""}. If that's a mistake, contact the City. Otherwise start a new application.</div>`;
   } else {
-    if(p.aiState==="pending"||p.aiState==="running") head=`<div class="note">Redline's first read is still running${busy?"":" in the submitter's browser"}. Draft comments will appear here.</div>`;
+    const stale=aiStale(p), hasSheets=!!((p.aiPages||[]).length||(p.sheets||[]).length);
+    if((p.aiState==="pending"||p.aiState==="running") && !stale) head=`<div class="note">Redline's first read is still running${busy?"":" in the submitter's browser"}. Draft comments will appear here.</div>`;
+    if((p.aiState==="failed"||p.aiState==="unavailable"||stale) && !busy) head=`<div class="note red"><b>Redline's first read didn't finish.</b> ${hasSheets?"Press <b>Run AI first read</b> to run it again on the sheets already submitted.":"Attach the PDF to run it."}</div>`;
     if(p.status==="submitted"||p.status==="resubmitted"){
-      if(!head) head=`<div class="note">${p.status==="resubmitted"?`Revised set in. Recheck notes sit under each open comment${openChanges?`, and <b>${openChanges} change${openChanges===1?"":"s"} nobody asked for</b> are listed below`:""}.`:`Redline drafted ${p.corrections.filter(c=>c.source==="ai").length} comments, each clipped from the sheet, plus ${p.corrections.filter(c=>c.source==="notes").length} missing standard notes. Approve, edit or reject each one; only approved comments reach the applicant.`}</div>`;
+      if(!head && p.aiState==="done") head=`<div class="note">${p.status==="resubmitted"?`Revised set in. Recheck notes sit under each open comment${openChanges?`, and <b>${openChanges} change${openChanges===1?"":"s"} nobody asked for</b> are listed below`:""}.`:`Redline drafted ${p.corrections.filter(c=>c.source==="ai").length} comments, each clipped from the sheet, plus ${p.corrections.filter(c=>c.source==="notes").length} missing standard notes. Send, edit or reject each one; only comments marked to send reach the applicant.`}</div>`;
       primary=`<button class="btn primary" data-a="issue" ${(drafts||!openApproved)?"disabled":""}>Send ${openApproved} comment${openApproved===1?"":"s"} to applicant</button>
-        <button class="btn ok" data-a="approveall" ${(drafts||openApproved||openChanges)?"disabled":""}>Approve plan check</button>
+        <button class="btn ok" data-a="approveall" ${(drafts||openApproved||openChanges)?"disabled":""}>${appOf(p).main?"Approve plan check":"Approve application"}</button>
         ${(drafts||openChanges)?`<span class="small">${drafts?`${drafts} draft${drafts===1?"":"s"}`:""}${drafts&&openChanges?" and ":""}${openChanges?`${openChanges} change${openChanges===1?"":"s"}`:""} still need a decision</span>`:""}`;
     }
     const noteDrafts=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft").length;
-    if(noteDrafts&&!busy) primary+=`<button class="btn" data-a="approvenotes">Approve ${noteDrafts} standard-note draft${noteDrafts===1?"":"s"}</button>`;
+    if(noteDrafts&&!busy) primary+=`<button class="btn" data-a="approvenotes">Send ${noteDrafts} standard-note draft${noteDrafts===1?"":"s"}</button>`;
     if(openApproved&&!busy) primary+=`<button class="btn" data-a="letter">Print correction letter</button>`;
-    if((p.aiState==="none"||p.aiState==="failed"||p.aiState==="unavailable") && !busy) primary+=`<input type="file" id="fr-file" accept="application/pdf" hidden><button class="btn" data-a="firstread">Attach PDF for AI first read</button>`;
+    if((p.aiState==="none"||p.aiState==="failed"||p.aiState==="unavailable"||stale) && !busy) primary+= hasSheets ? `<button class="btn primary" data-a="airun">Run AI first read</button>` : `<input type="file" id="fr-file" accept="application/pdf" hidden><button class="btn" data-a="firstread">Attach PDF for AI first read</button>`;
     if(p.status==="corrections") head=`<div class="note">Comments sent ${fmtT(p.issuedAt)}. Waiting on the applicant's responses and revised set.</div>`;
-    if(p.status==="approved"){ const ag=p.agencies||AGENCIES.map(n=>({name:n,done:false})); const left=ag.filter(a=>!a.done).length;
+    if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
+    else if(p.status==="approved"){ const ag=p.agencies||AGENCIES.map(n=>({name:n,done:false})); const left=ag.filter(a=>!a.done).length;
       head=`<div class="note ok"><b>Plan check approved.</b> ${left?`${left} other-agency clearance${left===1?"":"s"} still open. Tick each one as it comes in.`:"All clearances are in."}</div>${agencyHtml(p,true)}`;
       primary=`<button class="btn primary" data-a="ready" ${left?"disabled":""}>Ready for pickup</button>`; }
     if(p.status==="ready"){ head=`<div class="note ok"><b>Ready for permit pickup.</b> Waiting on fees and pickup.</div>`; primary=`<button class="btn ok" data-a="issue-permit">Mark permit issued</button>`; }
     if(p.status==="issued") head=`<div class="note ok"><b>Permit issued${p.issuedPermitAt?` ${fmtD(p.issuedPermitAt)}`:""}.</b></div>`;
+    if(p.status==="void"){ head=`<div class="note"><b>Voided ${fmtD(p.voidedAt)}</b>${p.voidReason?`: ${esc(p.voidReason)}`:""}. It stays in the archive and is deleted for good on ${fmtD(purgeAt(p))}.</div>`; primary=""; }
+    if(isAdmin() && S.voiding===p.id) head=`<div class="note red"><b>Void this application?</b> It leaves every queue, moves to the archive, and is deleted with its sheets after 30 days. You can restore it until then.
+      <div class="form" style="margin-top:10px"><label class="f">Reason<select id="void-reason"><option>Duplicate application</option><option>Information entered incorrectly</option><option>Withdrawn by applicant</option><option>Submitted in error</option><option>Other</option></select></label></div>
+      <div class="acts" style="margin-top:8px"><button class="btn sm primary" data-a="void">Void application</button><button class="btn sm" data-a="voidcancel">Cancel</button></div></div>`;
   }
   const addComment = (P && !DONE(p.status)) ? `<details><summary class="btn sm" style="display:inline-block">+ Write your own comment</summary>
       <div class="form" style="margin-top:10px"><label class="f">Code section<input type="text" id="nc-sec" placeholder="e.g. MMC 17.24.040"></label>
@@ -1538,7 +1587,7 @@ function projectView(p){
       <p style="margin:8px 0 0;font-size:14px">${esc(p.scope)}</p>
       ${p.note?`<div class="edu" style="margin-top:8px"><b>Applicant note</b>${esc(p.note)}</div>`:""}
       ${p.setLink?`<p class="small" style="margin-top:6px">Full set in ${STORES[storeOf(p.setLink)]||"shared storage"}: <a href="${esc(p.setLink)}" target="_blank" rel="noopener">${esc(p.setLink.slice(0,60))}</a></p>`:""}</div>
-      ${isAdmin()?`<button class="btn sm" data-a="delete">${S.confirmDel===p.id?"Tap again to delete":"Delete"}</button>`:""}</div>
+      ${isAdmin()?(p.status==="void"?`<div class="acts"><button class="btn sm" data-a="restore">Restore</button><button class="btn sm" data-a="delete">${S.confirmDel===p.id?"Tap again to delete now":"Delete now"}</button></div>`:`<button class="btn sm" data-a="voidask">Void</button>`):""}</div>
     ${benchHtml(p)}
     ${briefHtml(p)}
     ${busy?`<div class="note"><div class="progress">${esc(busy)}</div></div>`:head}
@@ -1598,12 +1647,12 @@ function act(p,a,cid){
   const c = cid && p.corrections.find(x=>x.id===cid);
   const ch = cid && (p.changes||[]).find(x=>x.id===cid);
   switch(a){
-    case "approve": c.state="approved"; addLog(p,"planner",`Approved: ${c.section}`); save(p); break;
+    case "approve": c.state="approved"; addLog(p,"planner",`Marked to send: ${c.section}`); save(p); break;
     case "reject": c.state="rejected"; addLog(p,"planner",`Rejected AI draft: ${c.section}`); save(p); break;
     case "restore": c.state="draft"; save(p); break;
     case "edit": S.editing=cid; renderWorkspace(); break;
     case "canceledit": S.editing=null; renderWorkspace(); break;
-    case "saveedit": { const v=$("#edit-"+cid).value.trim(); if(v){ c.plannerText=v; c.edited=true; } c.state="approved"; S.editing=null; addLog(p,"planner",`Edited and approved: ${c.section}`); save(p); break; }
+    case "saveedit": { const v=$("#edit-"+cid).value.trim(); if(v){ c.plannerText=v; c.edited=true; } c.state="approved"; S.editing=null; addLog(p,"planner",`Edited and marked to send: ${c.section}`); save(p); break; }
     case "clear": c.resolved=true; addLog(p,"planner",`Cleared: ${c.section}`); save(p); break;
     case "reply": { const t=$("#rt-"+cid).value.trim(); if(!t) return;
       (c.replies ||= []).push({by:S.me?.id||null, name:S.me?.name||"", dept:$("#rd-"+cid).value, text:t, at:now()}); save(p); break; }
@@ -1614,21 +1663,25 @@ function act(p,a,cid){
     case "chg-add": ch.state="added";
       p.corrections.push({id:uid(), dept:"Planning", section:ch.mayAffect||"Unrequested change", sheet:ch.sheet, page:ch.page, finding:`Changed since the last set: ${ch.description} (was ${ch.previous||"—"}, now ${ch.now||"—"}).`, fix:"Explain this change and show it complies, or revert it.", severity:"correction", source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[], snip:ch.snip||null});
       addLog(p,"planner",`Made a comment from an unrequested change: ${ch.description}`); save(p); break;
-    case "issue": { p.status="corrections"; p.issuedAt=now(); const n=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).length; addLog(p,"planner",`Sent ${n} comments to the applicant (cycle ${p.cycle}).`); save(p); break; }
-    case "approveall": p.status="approved"; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); addLog(p,"planner","Plan check approved. Waiting on other agencies."); save(p); break;
+    case "issue": { p.status="corrections"; p.issuedAt=now(); p.corrections.forEach(c=>{ if(c.state==="approved"&&!c.resolved&&!c.sentAt) c.sentAt=p.issuedAt; }); const n=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).length; addLog(p,"planner",`Sent ${n} comments to the applicant (cycle ${p.cycle}).`); save(p); break; }
+    case "approveall": if(!appOf(p).main){ p.status="approved"; p.agencies=[]; addLog(p,"planner","Application approved."); save(p); break; } p.status="approved"; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); addLog(p,"planner","Plan check approved. Waiting on other agencies."); save(p); break;
     case "ready": p.status="ready"; addLog(p,"planner","All agency clearances in. Ready for permit pickup."); save(p); break;
     case "issue-permit": p.status="issued"; p.issuedPermitAt=now(); addLog(p,"planner","Permit issued."); save(p); break;
     case "resubmit": { const miss=p.corrections.filter(c=>c.state==="approved"&&!c.resolved&&!(c.draftResponse||"").trim()).length;
       if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first.`); return; } $("#re-file").click(); break; }
     case "firstread": $("#fr-file").click(); break;
+    case "airun": runFirstRead(p, null); break;
+    case "voidask": S.voiding=p.id; renderWorkspace(); break;
+    case "voidcancel": S.voiding=null; renderWorkspace(); break;
+    case "void": { const why=$("#void-reason")?.value||"Voided"; p.voidPrev=p.status; p.status="void"; p.voidedAt=now(); p.voidReason=why; addLog(p,"planner",`Voided: ${why}.`); S.voiding=null; S.sel=null; save(p); break; }
+    case "restore": p.status=p.voidPrev||"submitted"; delete p.voidedAt; delete p.voidReason; addLog(p,"planner","Restored from the archive."); S.archive=false; save(p); break;
     case "board": S.sel=null; render(); break;
-    case "approvenotes": { const ns=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft"); ns.forEach(c=>c.state="approved"); addLog(p,"planner",`Approved ${ns.length} standard-note comments.`); save(p); break; }
+    case "approvenotes": { const ns=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft"); ns.forEach(c=>c.state="approved"); addLog(p,"planner",`Marked ${ns.length} standard-note comments to send.`); save(p); break; }
     case "letter": printLetter(p); break;
     case "ask": { const q=($("#ask-q")?.value||"").trim(); if(!q) return; askSet(p,q); break; }
     case "delete": if(S.confirmDel!==p.id){ S.confirmDel=p.id; renderWorkspace(); setTimeout(()=>{ if(S.confirmDel===p.id){ S.confirmDel=null; renderWorkspace(); } },4000); return; }
       S.confirmDel=null; S.sel=null;
-      if(S.local||!S.db){ S.projects=S.projects.filter(x=>x.id!==p.id); render(); }
-      else S.db.collection(COL).doc(p.id).delete().catch(e=>flash("Could not delete: "+e.message));
+      hardDelete(p).catch(e=>flash("Could not delete: "+e.message));
       break;
   }
 }
@@ -1650,7 +1703,7 @@ function renderCity(){
     <div class="tbl-wrap" style="margin-top:8px"><table class="stack"><thead><tr><th>Rule</th><th>Dept</th><th>Section</th><th>Requirement</th><th>Look at</th></tr></thead><tbody>
     ${c.rules.map(r=>`<tr><td class="${r.conf==="verified"?"conf-v":r.conf==="planner-judgment"?"conf-j":"conf-n"}" style="font-family:var(--f-mono);font-size:12px;white-space:nowrap">● ${r.id} <span class="mdept">· ${r.dept}</span></td><td data-label="Dept" class="hide-m">${r.dept}</td><td data-label="Section">${citeHtml(r.section)}</td><td data-label="Requirement">${esc(r.req)}</td><td data-label="Look at">${esc(r.look)}</td></tr>`).join("")}</tbody></table></div></div>
     <div><div class="sec-h" style="margin:0 0 8px">Standard notes checklist · ${STD_NOTES.length} notes</div>
-    <p class="small" style="margin:0 0 8px">Checked by text search on every sheet the moment a set arrives. Missing notes become draft comments the reviewer can approve in one click.</p>
+    <p class="small" style="margin:0 0 8px">Checked by text search on every sheet the moment a set arrives. Missing notes become draft comments the reviewer can send in one click.</p>
     <div class="tbl-wrap"><table class="stack"><thead><tr><th>Note</th><th>Section</th><th>Required note</th></tr></thead><tbody>
     ${STD_NOTES.map(n=>`<tr><td style="font-family:var(--f-mono);font-size:12px;white-space:nowrap">${n.id}</td><td data-label="Section">${citeHtml(n.section)}</td><td data-label="Required note">${esc(n.note)}</td></tr>`).join("")}</tbody></table></div></div>
     <div><div class="sec-h" style="margin:0 0 8px">Sources</div><ul style="margin:0;padding-left:18px">${c.sources.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join("")}</ul></div></div>`;
@@ -1659,7 +1712,7 @@ function renderHow(){
   const steps=[
     ["Owner / Designer","Submit","One short form plus the PDF. The applicant picks the PDF from Google Drive or Dropbox, or drops it in. The full set stays there; Redline keeps a link."],
     ["Redline AI","City review: first pass","As soon as the set is submitted, Redline reads each sheet, sorts the set by discipline, scores how ready it is, checks every standard note, and drafts comments against Monrovia's rule pack, most critical first. Each comment cites a code section and comes with a clip of the exact spot, circled in red. The applicant does not see drafts. The file is assigned to a reviewer in the department right away."],
-    ["Reviewers","City review","Planning, Building, Fire, Police and Public Works reviewers approve, edit or reject each draft without opening the set, and leave notes for each other under any comment. Reviewers can ask questions about the set and print the correction letter. Permits already in review can be added with their Google Drive or Dropbox link."],
+    ["Reviewers","City review","Planning, Building, Fire, Police and Public Works reviewers send, edit or reject each draft without opening the set, and leave notes for each other under any comment. Reviewers can ask questions about the set and print the correction letter. Permits already in review can be added with their Google Drive or Dropbox link."],
     ["Owner / Designer","Corrections","The applicant sees one list. Each comment shows the clip, the code note and what must change. They answer each one and upload the revised set."],
     ["Redline + City","Resubmit & recheck","Redline compares old and new sheets. It notes which comments look resolved and lists every change nobody asked for, like a window that got bigger, so nothing slips through. Reviewers clear items or send them back."],
     ["City","Agency approval","When every comment is cleared and every unrequested change is accepted, the reviewer approves plan check. Contractor and workers' comp declarations come next, at issuance."]];
@@ -1858,7 +1911,7 @@ function watchProjects(){
     const keep={}; S.projects.forEach(p=>p.corrections.forEach(c=>{ if(c.draftResponse) keep[c.id]=c.draftResponse; }));
     S.projects=snap.docs.map(d=>{ const x=d.data()||{}; x.id=d.id; x.corrections=x.corrections||[]; x.corrections.forEach(c=>{ if(keep[c.id]) c.draftResponse=keep[c.id]; }); return x; })
       .sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)));
-    render();
+    render(); purgeVoids();
   }, e=>flash("Could not load projects: "+e.message));
 }
 
