@@ -99,6 +99,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .p-corrections{background:var(--red-soft);color:var(--red)}
 .p-void{background:var(--sand2);color:var(--ink3)}
 .p-fee_due{background:#fbecc8;color:#7a5200}
+.gsi{display:flex;justify-content:center;min-height:44px}
 .feebox{margin-top:10px;border:1px solid var(--hair);border-radius:12px;padding:10px 14px;background:var(--glass-solid)}
 .feebox summary{cursor:pointer;font-size:14px}
 .stage .loop.fee{color:#7a5200}
@@ -184,7 +185,7 @@ footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);di
 @media (prefers-reduced-motion:no-preference){.corr{transition:opacity .2s}}
 .path{font-family:var(--f-mono);font-size:12px;color:var(--ink3);background:rgba(251,249,245,.6);border:1px solid rgba(255,255,255,.85);border-radius:999px;padding:3px 10px}
 .path b{color:var(--red);font-weight:500}
-.snip{display:block;width:100%;max-height:280px;object-fit:contain;background:#fff;border:1px solid var(--hair);border-radius:10px;cursor:zoom-in}
+.snip{display:block;width:100%;max-height:440px;object-fit:contain;background:#fff;border:1px solid var(--hair);border-radius:10px;cursor:zoom-in}
 .snip-cap{font-size:11px;color:var(--ink3);margin-top:4px;letter-spacing:.04em}
 .edu{font-size:13px;background:var(--sand2);border-radius:10px;padding:8px 12px;color:var(--ink2)}
 .edu b{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--oxblood);margin-right:6px}
@@ -203,8 +204,12 @@ footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);di
 .chks label{display:inline-flex;gap:6px;align-items:center;font-size:13px;background:#fff;border:1px solid var(--hair);border-radius:999px;padding:5px 11px;cursor:pointer;letter-spacing:0;text-transform:none;font-weight:500;color:var(--ink)}
 .chks input{accent-color:var(--red);margin:0}
 .chks label:has(input:checked){border-color:var(--red);background:var(--red-soft)}
-.lightbox{position:fixed;inset:0;z-index:50;background:rgba(36,43,49,.78);display:grid;place-items:center;padding:24px;cursor:zoom-out}
-.lightbox img{max-width:100%;max-height:100%;background:#fff;border-radius:8px}
+.lightbox{position:fixed;inset:0;z-index:50;background:rgba(36,43,49,.85);display:grid;place-items:center;padding:24px;overflow:auto;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:100%;background:#fff;border-radius:8px;cursor:zoom-in}
+.lightbox.zoomed{display:block;padding:0}
+.lightbox.zoomed img{max-width:none;max-height:none;border-radius:0;cursor:zoom-out}
+.lb-x{position:fixed;top:12px;right:14px;z-index:51;width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:#222;font-size:18px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.lb-hint{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:51;background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:6px 12px;border-radius:999px;pointer-events:none}
 .small{font-size:12px;color:var(--ink3)}
 .picker{display:grid;gap:12px}
 .appmain{display:grid;gap:4px;text-align:left;border:1.5px solid var(--hair);background:#fff;border-radius:16px;padding:16px 18px;cursor:pointer;color:var(--ink);transition:padding .2s}
@@ -389,7 +394,7 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
   <footer class="foot"><span>redlinepermit.com/monrovia · Redline Permit pilot · not an official City of Monrovia website · <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a></span><span>v0.4 · drawings stay in your Google Drive or Dropbox; Redline keeps only clips</span></footer>
 </main>
 <div id="acct" class="acct-wrap" hidden><div class="panel acct" role="dialog" aria-modal="true" aria-labelledby="acct-h" id="acct-body"></div></div>
-<div id="lightbox" class="lightbox" hidden><img alt="Enlarged clip" id="lightbox-img"></div>
+<div id="lightbox" class="lightbox" hidden><button class="lb-x" id="lightbox-x" type="button" aria-label="Close">✕</button><img alt="Enlarged sheet" id="lightbox-img"><span class="lb-hint">Click the sheet to zoom to full size · Esc to close</span></div>
 <div id="print"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -671,34 +676,45 @@ async function putImage(blob){
   return {key, assetId};
 }
 function imgSrc(ref){ if(ref && ref.url) return ref.url; return ref ? (S.blobUrls[ref.key] || (ref.assetId ? ((window.RP&&RP.signed[ref.assetId]) || "") : "")) : ""; }
-async function clip(canvas, box, num){
-  if(!canvas) return null;
+async function clip(canvas, box, num, src){
+  if(!canvas && !(src && src.pdf)) return null;
   let [x,y,w,h] = Array.isArray(box)&&box.length===4 ? box.map(Number) : [0,0,1,1];
   if(![x,y,w,h].every(Number.isFinite)) [x,y,w,h]=[0,0,1,1];
-  const padX = Math.max(w*.25,.04), padY = Math.max(h*.25,.04);
+  // wider context around the flagged spot
+  const padX = Math.max(w*.6,.06), padY = Math.max(h*.6,.06);
   x-=padX; y-=padY; w+=padX*2; h+=padY*2;
-  if(w<.24){ x-=(.24-w)/2; w=.24; } if(h<.2){ y-=(.2-h)/2; h=.2; }
+  if(w<.34){ x-=(.34-w)/2; w=.34; } if(h<.28){ y-=(.28-h)/2; h=.28; }
   x=Math.max(0,Math.min(x,1-w)); y=Math.max(0,Math.min(y,1-h)); w=Math.min(w,1); h=Math.min(h,1);
-  const sx=x*canvas.width, sy=y*canvas.height, sw=w*canvas.width, sh=h*canvas.height;
-  const k = Math.min(1, 1100/Math.max(sw,sh));
-  const c = document.createElement("canvas"); c.width=Math.max(1,Math.round(sw*k)); c.height=Math.max(1,Math.round(sh*k));
-  const ctx = c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
-  ctx.drawImage(canvas,sx,sy,sw,sh,0,0,c.width,c.height);
+  let c=null;
+  // sharp clip: re-render just this part of the PDF page at high resolution
+  if(src && src.pdf){ try{
+    const page=await src.pdf.getPage(src.page); const v1=page.getViewport({scale:1});
+    const scale=Math.min(8, 1700/Math.max(w*v1.width, h*v1.height)); const vp=page.getViewport({scale});
+    c=document.createElement("canvas"); c.width=Math.max(1,Math.round(w*vp.width)); c.height=Math.max(1,Math.round(h*vp.height));
+    const cx=c.getContext("2d"); cx.fillStyle="#fff"; cx.fillRect(0,0,c.width,c.height);
+    await page.render({canvasContext:cx, viewport:vp, transform:[1,0,0,1,-x*vp.width,-y*vp.height]}).promise;
+  }catch(e){ c=null; } }
+  if(!c){ if(!canvas) return null;
+    const sx=x*canvas.width, sy=y*canvas.height, sw=w*canvas.width, sh=h*canvas.height;
+    const k=Math.min(1, 1700/Math.max(sw,sh));
+    c=document.createElement("canvas"); c.width=Math.max(1,Math.round(sw*k)); c.height=Math.max(1,Math.round(sh*k));
+    const cx=c.getContext("2d"); cx.fillStyle="#fff"; cx.fillRect(0,0,c.width,c.height); cx.drawImage(canvas,sx,sy,sw,sh,0,0,c.width,c.height); }
+  const ctx=c.getContext("2d");
   // red markup ring around the flagged area
   const bx=(box?.[0]??0), by=(box?.[1]??0), bw=(box?.[2]??0), bh=(box?.[3]??0);
   if(bw>0 && bh>0 && bw<.9){
-    ctx.strokeStyle="#C8322B"; ctx.lineWidth=Math.max(2,c.width/220);
-    const rx=(bx*canvas.width-sx)*k, ry=(by*canvas.height-sy)*k, rw=bw*canvas.width*k, rh=bh*canvas.height*k;
-    ctx.beginPath(); ctx.ellipse(rx+rw/2, ry+rh/2, rw/2+8, rh/2+8, 0, 0, Math.PI*2); ctx.stroke();
-    if(num) numBadge(ctx, c, rx+rw+8, ry-8, num);
+    ctx.strokeStyle="#C8322B"; ctx.lineWidth=Math.max(3,c.width/260);
+    const rx=(bx-x)/w*c.width, ry=(by-y)/h*c.height, rw=bw/w*c.width, rh=bh/h*c.height;
+    ctx.beginPath(); ctx.ellipse(rx+rw/2, ry+rh/2, rw/2+10, rh/2+10, 0, 0, Math.PI*2); ctx.stroke();
+    if(num) numBadge(ctx, c, rx+rw+10, ry-10, num);
   } else if(num) numBadge(ctx, c, 34, 34, num);
-  return putImage(await toBlob(c,.82));
+  return putImage(await toBlob(c,.85));
 }
 
 function numBadge(ctx, c, x, y, n){
-  const r=20; x=Math.min(Math.max(x,r+2),c.width-r-2); y=Math.min(Math.max(y,r+2),c.height-r-2);
+  const r=Math.max(20,Math.round(c.width/50)); x=Math.min(Math.max(x,r+2),c.width-r-2); y=Math.min(Math.max(y,r+2),c.height-r-2);
   ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle="#C8322B"; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle="#fff"; ctx.stroke();
-  ctx.fillStyle="#fff"; ctx.font="700 22px Inter,system-ui,sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(String(n),x,y+1);
+  ctx.fillStyle="#fff"; ctx.font=`700 ${Math.round(r*1.1)}px Inter,system-ui,sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(String(n),x,y+1);
 }
 /* ---------- PDF ---------- */
 async function readPdf(file, onStep){
@@ -719,10 +735,19 @@ async function readPdf(file, onStep){
   }
   // text only (no rendering) for the rest of the set, so the standard-notes check sees every sheet
   for(let i=n+1;i<=Math.min(pdf.numPages,80);i++){ try{ fullText += " "+(await (await pdf.getPage(i)).getTextContent()).items.map(x=>x.str).join(" "); }catch(e){} }
-  return {pages, text:text.slice(0,12000), fullText, total:pdf.numPages};
+  return {pages, text:text.slice(0,12000), fullText, total:pdf.numPages, pdf};
 }
-/* Sheets saved at submission (1600px) so the AI first read can run again without the PDF. */
-async function storeAiPages(pages){ const out=[]; for(const pg of pages.slice(0,12)){ const ref=await putImage(await toBlob(scaled(pg.canvas,1600),.82)); out.push({...ref, page:pg.page}); } return out; }
+/* Sheets saved at submission so reviewers can zoom in and the AI first read can run again without the PDF.
+   Each page is re-rendered from the PDF at about 3200 px on the long side. */
+async function storeViewPages(pages, pdf){ const out=[];
+  for(const pg of pages.slice(0,12)){ let blob=null;
+    if(pdf){ try{ const page=await pdf.getPage(pg.page); const v1=page.getViewport({scale:1}); const vp=page.getViewport({scale:Math.min(3200/Math.max(v1.width,v1.height),6)});
+      const c=document.createElement("canvas"); c.width=Math.round(vp.width); c.height=Math.round(vp.height); const cx=c.getContext("2d"); cx.fillStyle="#fff"; cx.fillRect(0,0,c.width,c.height);
+      await page.render({canvasContext:cx, viewport:vp}).promise; blob=await toBlob(c,.8); c.width=c.height=0; }catch(e){ blob=null; } }
+    if(!blob) blob=await toBlob(scaled(pg.canvas,1600),.82);
+    const ref=await putImage(blob); out.push({...ref, page:pg.page}); }
+  return out; }
+const storeAiPages = pages => storeViewPages(pages, null);
 async function pagesFromStore(p){
   const src=(p.aiPages&&p.aiPages.length)?p.aiPages:(p.sheets||[]);
   if(window.RP&&RP.sb){ try{ const ids=src.map(x=>x.assetId).filter(id=>id&&!RP.signed[id]); if(ids.length){ const {data}=await RP.sb.storage.from("clips").createSignedUrls(ids,3600); (data||[]).forEach(d=>{ if(d.signedUrl) RP.signed[d.path]=d.signedUrl; }); } }catch(e){} }
@@ -831,11 +856,11 @@ function readiness(p){
 async function runFirstRead(p, file, opt={}){
   const pid = p.id; let fullText = "";
   try{
-    let pages, text;
+    let pages, text, pdfDoc=null;
     if(file){
-      const rd = await readPdf(file, m=>setBusy(pid,m)); pages = rd.pages; text = rd.text; fullText = rd.fullText;
+      const rd = await readPdf(file, m=>setBusy(pid,m)); pages = rd.pages; text = rd.text; fullText = rd.fullText; pdfDoc = rd.pdf;
       setBusy(pid,"Saving the sheets…");
-      p.sheets = await storeThumbs(pages); p.aiPages = await storeAiPages(pages); p.pageCount = rd.total; p.lastText = text.slice(0,8000); p.fullText = String(fullText||"").slice(0,40000);
+      p.sheets = await storeThumbs(pages); p.aiPages = await storeViewPages(pages, pdfDoc); p.pageCount = rd.total; p.lastText = text.slice(0,8000); p.fullText = String(fullText||"").slice(0,40000);
     } else {
       setBusy(pid,"Loading the sheets from the submission…");
       pages = await pagesFromStore(p); text = p.lastText||""; fullText = p.fullText||p.lastText||"";
@@ -867,7 +892,7 @@ async function runFirstRead(p, file, opt={}){
       const pg = pages.find(x=>x.page===Number(c.page)); const num = p.corrections.length+1;
       p.corrections.push({id:uid(), ruleId:c.ruleId||"", dept:c.dept||"", section:c.section||"", sheet:c.sheet||"", page:Number(c.page)||null,
         finding:c.finding||"", fix:c.fix||"", why:c.why||"", severity:c.severity==="advisory"?"advisory":"correction", priority:PRIO[c.priority]!==undefined?c.priority:"major", confidence:c.confidence||"needs-verification",
-        source:c.fromLetter?"letter":"ai", state:c.fromLetter?"approved":"draft", cycle:p.cycle||1, response:"", resolved:false, replies:[], box:Array.isArray(c.box)?c.box.map(Number):null, snip: pg ? await clip(pg.canvas, c.box, num) : null});
+        source:c.fromLetter?"letter":"ai", state:c.fromLetter?"approved":"draft", cycle:p.cycle||1, response:"", resolved:false, replies:[], box:Array.isArray(c.box)?c.box.map(Number):null, snip: pg ? await clip(pg.canvas, c.box, num, pdfDoc?{pdf:pdfDoc,page:pg.page}:null) : null});
     }
     p.aiState="done";
     if(p.docType!=="correction letter" && appOf(p).main) checkNotes(p, fullText);
@@ -882,7 +907,7 @@ async function runFirstRead(p, file, opt={}){
 async function runRecheck(p, file){
   const pid = p.id;
   try{
-    const {pages, text, fullText} = await readPdf(file, m=>setBusy(pid,m));
+    const {pages, text, fullText, pdf:pdfDoc} = await readPdf(file, m=>setBusy(pid,m));
     const oldThumbs = p.sheets||[];
     const ft=String(fullText||"").toLowerCase().replace(/\s+/g," ");
     p.corrections.filter(c=>c.source==="notes"&&c.state==="approved"&&!c.resolved).forEach(c=>{ const n=STD_NOTES.find(x=>x.id===c.ruleId); if(!n||ft.length<600) return;
@@ -896,16 +921,16 @@ async function runRecheck(p, file){
       setBusy(pid,"Clipping the revised spots…");
       for(const x of (r.results||[])){ const c=p.corrections.find(c=>c.id===x.id); if(!c) continue;
         const pg=pages.find(q=>q.page===Number(x.page));
-        c.recheck={likelyResolved:!!x.likelyResolved, note:String(x.note||"").slice(0,400), cycle:p.cycle, snip: pg? await clip(pg.canvas,x.box):null}; }
+        c.recheck={likelyResolved:!!x.likelyResolved, note:String(x.note||"").slice(0,400), cycle:p.cycle, snip: pg? await clip(pg.canvas,x.box,null,{pdf:pdfDoc,page:pg.page}):null}; }
       const ch=[];
       for(const x of (r.changes||[]).slice(0,12)){ const pg=pages.find(q=>q.page===Number(x.page));
-        ch.push({id:uid(), sheet:x.sheet||"", page:Number(x.page)||null, description:x.description||"", previous:x.previous||"", now:x.now||"", mayAffect:x.mayAffect||"", cycle:p.cycle, state:"open", snip: pg? await clip(pg.canvas,x.box):null}); }
+        ch.push({id:uid(), sheet:x.sheet||"", page:Number(x.page)||null, description:x.description||"", previous:x.previous||"", now:x.now||"", mayAffect:x.mayAffect||"", cycle:p.cycle, state:"open", snip: pg? await clip(pg.canvas,x.box,null,{pdf:pdfDoc,page:pg.page}):null}); }
       p.changes = [...(p.changes||[]).filter(c=>c.state!=="open"), ...ch];
       const yes=(r.results||[]).filter(x=>x.likelyResolved).length;
       addLog(p,"ai",`Recheck: ${yes} of ${open.length} open comments look resolved; ${ch.length} change${ch.length===1?"":"s"} nobody asked for.`);
     }
     setBusy(pid,"Saving new thumbnails…");
-    p.sheets = await storeThumbs(pages); p.lastText = text.slice(0,8000); S.canv[pid]=pages; S.sheetIdx=0;
+    p.sheets = await storeThumbs(pages); p.aiPages = await storeViewPages(pages, pdfDoc); p.lastText = text.slice(0,8000); S.canv[pid]=pages; S.sheetIdx=0;
   }catch(e){ flash("Recheck did not finish: "+(e.message||e.code)); addLog(p,"ai","Recheck did not finish."); }
   setBusy(pid); await save(p);
 }
@@ -1466,6 +1491,7 @@ function bindOther(){
 function bulkForm(){
   return `<form class="ws" id="bulkform" novalidate>
     <div><h2>Bring in old plan check files</h2><p class="small" style="margin-top:6px">Paste a batch of Google Drive or Dropbox folder links, drop the PDFs, or both. Redline reads only the PDFs, never the model files, and sorts each set's sheets by discipline. A plan set gets a first read; an old correction letter gets turned into trackable comments.</p></div>
+    <div class="note"><b>This becomes the portal's drive.</b> If the City chooses to use bulk import, the Google Drive or Dropbox folders linked here serve as the portal's drive for these files. The full sets stay in the City's folders; Redline keeps only sheet images, clips and comments. Use a City-owned folder shared with view access, so nothing depends on a personal account.</div>
     <div class="fs"><h3>Links</h3><label class="f">One per line, optionally "address | link"<textarea id="b-links" style="min-height:110px" placeholder="146 N Alta Vista Ave | https://www.dropbox.com/scl/fo/…&#10;https://drive.google.com/drive/folders/…"></textarea></label>
       <p class="small">In the live portal Redline opens each folder, finds the newest PDF set and correction letters, and files them by cycle. This preview can't reach Drive or Dropbox, so links are saved to the queue and you drop the PDFs below.</p></div>
     <div class="fs"><h3>PDFs</h3>${dropZone("Drop old plan sets or correction letters (several at once)", true)}
@@ -1678,7 +1704,8 @@ function sheetMarked(p,s,cs){
   const mk=onSheet(cs,s).map(c=>{ const n=p.corrections.indexOf(c)+1; let [x,y,w,h]=c.box.map(Number); const whole=w>=.9||h>=.9;
     if(whole){ x=.02; y=.04; w=0; h=0; }
     return `${whole?"":`<span class="mk" style="left:calc(${x*100}% - 6px);top:calc(${y*100}% - 6px);width:calc(${w*100}% + 12px);height:calc(${h*100}% + 12px)"></span>`}<button type="button" class="mkn ${S.focusC===c.id?"on":""}" data-jump="${c.id}" style="left:${(x+w)*100}%;top:${y*100}%" title="Comment ${n}">${n}</button>`; }).join("");
-  return `<div class="sheetwrap"><img alt="${esc(s.label)}" src="${esc(imgSrc(s))}" data-zoom="${esc(imgSrc(s))}">${mk}</div>`;
+  const hi=(p.aiPages||[]).find(x=>Number(x.page)===Number(s.page)); const src=imgSrc(hi)||imgSrc(s);
+  return `<div class="sheetwrap"><img alt="${esc(s.label)}" src="${esc(src)}" data-zoom="${esc(src)}" title="Click to enlarge, click again to zoom in">${mk}</div>`;
 }
 function agencyHtml(p, P){
   const list=p.agencies||AGENCIES.map(n=>({name:n,done:false}));
@@ -1846,6 +1873,21 @@ function openAcct(mode){
 }
 function closeAcct(){ $("#acct").hidden=true; }
 const GOOGLE_SVG='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+/* Google sign-in through Google's own button, so the account chooser names redlinepermit.com, not the database address. */
+const GOOGLE_CLIENT_ID="364000763472-lnvfphpvnkae6hkrphdog8rqu9scn8i5.apps.googleusercontent.com";
+let GSI=null;
+function gsi(){ if(window.google?.accounts?.id) return Promise.resolve(); if(GSI) return GSI;
+  GSI=new Promise((res,rej)=>{ const s=document.createElement("script"); s.src="https://accounts.google.com/gsi/client"; s.async=true; s.onload=res; s.onerror=()=>{ GSI=null; rej(new Error("gsi")); }; document.head.appendChild(s); });
+  return GSI; }
+async function mountGoogle(){
+  const host=$("#ac-google-gsi"); if(!host || !window.RP || !RP.sb || location.protocol!=="https:") return;
+  try{ await gsi(); }catch(e){ return; }
+  if(!document.body.contains(host)) return;
+  google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID, ux_mode:"popup", auto_select:false, itp_support:true, context:"signin",
+    callback: async r=>{ const {error}=await RP.sb.auth.signInWithIdToken({provider:"google", token:r.credential}); if(error) drawAcct("Couldn't sign in with Google: "+error.message); else location.reload(); }});
+  host.innerHTML=""; google.accounts.id.renderButton(host,{type:"standard", theme:"outline", size:"large", text:"continue_with", shape:"pill", logo_alignment:"center", width:Math.max(240,Math.min(400,host.parentElement.clientWidth||320))});
+  host.hidden=false; const b=$("#ac-google"); if(b) b.hidden=true;
+}
 function drawAcct(msg, ok){
   const F=S.acctForm, mode=S.authMode, edit=!!S.acct;
   const say = msg ? `<p class="small" id="ac-msg" aria-live="polite" style="margin:12px 0 0;color:${ok?"var(--teal-deep)":"var(--red)"}">${esc(msg)}</p>` : `<p class="small" id="ac-msg" aria-live="polite" style="margin:12px 0 0"></p>`;
@@ -1855,7 +1897,7 @@ function drawAcct(msg, ok){
   let html="";
   if(mode==="start"){
     html = head("Sign in or create an account","One step. New here? Your account is created the first time you sign in.")+`
-      <button class="btn full authbtn" id="ac-google" type="button">${GOOGLE_SVG}<span>Continue with Google</span></button>
+      <button class="btn full authbtn" id="ac-google" type="button">${GOOGLE_SVG}<span>Continue with Google</span></button><div id="ac-google-gsi" class="gsi" hidden></div>
       <div class="or"><span>or use your email</span></div>
       <div class="form"><label class="f wide">Email<input id="ac-email" type="email" inputmode="email" autocomplete="email" value="${esc(F.email)}" placeholder="you@example.com"></label></div>
       <div class="acts" style="margin-top:12px"><button class="btn primary" id="ac-send">Email me a code</button><button class="btn" id="ac-skip" type="button">Just browsing</button></div>
@@ -1914,6 +1956,7 @@ function drawAcct(msg, ok){
     const {error}=await RP.sb.auth.signInWithOAuth({provider:"google", options:{redirectTo:location.origin+location.pathname, queryParams:{prompt:"select_account"}}});
     if(error){ busy("ac-google",false); drawAcct(/not enabled|provider/i.test(error.message)?"Google sign-in is being switched on. Use the email code for now.":"Couldn't open Google: "+error.message); }
   });
+  if($("#ac-google-gsi")) mountGoogle();
   const sendCode=async()=>{
     grab(); if(!okEmail(F.email)) return drawAcct("Enter a valid email.");
     busy("ac-send",true); busy("ac-resend",true);
@@ -1994,9 +2037,12 @@ $("#btn-new").onclick=()=>{ S.mode="new"; S.sel=null; S.tab="projects"; render()
 $("#btn-import").onclick=()=>{ S.mode="import"; S.sel=null; render(); };
 $("#btn-bulk").onclick=()=>{ S.mode="bulk"; S.sel=null; render(); };
 $("#queue").onclick=e=>{ const b=e.target.closest("[data-p]"); if(!b) return; S.sel=b.dataset.p; S.mode=null; S.sheetIdx=0; S.editing=null; S.cDept="All"; S.focusC=null; render(); };
-document.addEventListener("click",e=>{ const z=e.target.closest("[data-zoom]"); if(z){ $("#lightbox-img").src=z.dataset.zoom; $("#lightbox").hidden=false; } });
-$("#lightbox").onclick=()=>{ $("#lightbox").hidden=true; };
-document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("#lightbox").hidden=true; if(!$("#acct").hidden && (S.acct||S.isOwner)) closeAcct(); } });
+document.addEventListener("click",e=>{ const z=e.target.closest("[data-zoom]"); if(z){ const lb=$("#lightbox"); lb.classList.remove("zoomed"); $("#lightbox-img").src=z.dataset.zoom; lb.hidden=false; } });
+$("#lightbox").onclick=e=>{ const lb=$("#lightbox"), im=$("#lightbox-img");
+  if(e.target===im){ const r=im.getBoundingClientRect(), fx=(e.clientX-r.left)/r.width, fy=(e.clientY-r.top)/r.height; lb.classList.toggle("zoomed");
+    if(lb.classList.contains("zoomed")) requestAnimationFrame(()=>{ lb.scrollLeft=fx*im.scrollWidth-lb.clientWidth/2; lb.scrollTop=fy*im.scrollHeight-lb.clientHeight/2; }); return; }
+  lb.hidden=true; lb.classList.remove("zoomed"); };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("#lightbox").hidden=true; $("#lightbox").classList.remove("zoomed"); if(!$("#acct").hidden && (S.acct||S.isOwner)) closeAcct(); } });
 $("#whochip").onclick=()=>openAcct();
 
 renderCity(); renderHow(); render();
