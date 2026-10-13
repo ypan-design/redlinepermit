@@ -204,15 +204,7 @@ footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);di
 .chks input{accent-color:var(--red);margin:0}
 .chks label:has(input:checked){border-color:var(--red);background:var(--red-soft)}
 .lightbox{position:fixed;inset:0;z-index:50;background:rgba(36,43,49,.78);display:grid;place-items:center;padding:24px;cursor:zoom-out}
-.lightbox img{max-width:100%;max-height:100%;background:#fff;border-radius:8px;cursor:zoom-in}
-.lightbox.full{display:block;overflow:auto;padding:0}
-.lightbox.full img{max-width:none;max-height:none;border-radius:0;cursor:zoom-out}
-.lb-x{position:fixed;top:12px;right:14px;z-index:51;width:38px;height:38px;border-radius:50%;border:0;background:#fff;color:#1f1d1a;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-.lb-tip{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:4px 10px;border-radius:999px;pointer-events:none}
-.addc{border:1.5px solid var(--red);border-radius:14px;padding:12px 14px;background:var(--glass-solid)}
-.sheetwrap.drawing{cursor:crosshair;touch-action:none;outline:2px dashed var(--red);outline-offset:-2px}
-.sheetwrap.drawing img{cursor:crosshair}
-.mk.new{border-radius:4px;border-style:dashed;background:rgba(200,50,43,.08)}
+.lightbox img{max-width:100%;max-height:100%;background:#fff;border-radius:8px}
 .small{font-size:12px;color:var(--ink3)}
 .picker{display:grid;gap:12px}
 .appmain{display:grid;gap:4px;text-align:left;border:1.5px solid var(--hair);background:#fff;border-radius:16px;padding:16px 18px;cursor:pointer;color:var(--ink);transition:padding .2s}
@@ -397,13 +389,12 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
   <footer class="foot"><span>redlinepermit.com/monrovia · Redline Permit pilot · not an official City of Monrovia website · <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a></span><span>v0.4 · drawings stay in your Google Drive or Dropbox; Redline keeps only clips</span></footer>
 </main>
 <div id="acct" class="acct-wrap" hidden><div class="panel acct" role="dialog" aria-modal="true" aria-labelledby="acct-h" id="acct-body"></div></div>
-<div id="lightbox" class="lightbox" hidden><button type="button" class="lb-x" aria-label="Close">✕</button><img alt="Enlarged sheet" id="lightbox-img"><span class="lb-tip">Click the image for full size · Esc to close</span></div>
+<div id="lightbox" class="lightbox" hidden><img alt="Enlarged clip" id="lightbox-img"></div>
 <div id="print"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="config.js"></script>
 <script src="rp-backend.js"></script>
 <script>
@@ -679,7 +670,7 @@ async function putImage(blob){
   S.blobUrls[key] = URL.createObjectURL(blob);
   return {key, assetId};
 }
-function imgSrc(ref){ return ref ? (S.blobUrls[ref.key] || (ref.assetId ? ((window.RP&&RP.signed[ref.assetId]) || "") : "")) : ""; }
+function imgSrc(ref){ if(ref && ref.url) return ref.url; return ref ? (S.blobUrls[ref.key] || (ref.assetId ? ((window.RP&&RP.signed[ref.assetId]) || "") : "")) : ""; }
 async function clip(canvas, box, num){
   if(!canvas) return null;
   let [x,y,w,h] = Array.isArray(box)&&box.length===4 ? box.map(Number) : [0,0,1,1];
@@ -731,7 +722,7 @@ async function readPdf(file, onStep){
   return {pages, text:text.slice(0,12000), fullText, total:pdf.numPages};
 }
 /* Sheets saved at submission (1600px) so the AI first read can run again without the PDF. */
-async function storeAiPages(pages){ const out=[]; for(const pg of pages.slice(0,12)){ const ref=await putImage(await toBlob(scaled(pg.canvas,2200),.74)); out.push({...ref, page:pg.page}); } return out; }
+async function storeAiPages(pages){ const out=[]; for(const pg of pages.slice(0,12)){ const ref=await putImage(await toBlob(scaled(pg.canvas,1600),.82)); out.push({...ref, page:pg.page}); } return out; }
 async function pagesFromStore(p){
   const src=(p.aiPages&&p.aiPages.length)?p.aiPages:(p.sheets||[]);
   if(window.RP&&RP.sb){ try{ const ids=src.map(x=>x.assetId).filter(id=>id&&!RP.signed[id]); if(ids.length){ const {data}=await RP.sb.storage.from("clips").createSignedUrls(ids,3600); (data||[]).forEach(d=>{ if(d.signedUrl) RP.signed[d.path]=d.signedUrl; }); } }catch(e){} }
@@ -914,7 +905,7 @@ async function runRecheck(p, file){
       addLog(p,"ai",`Recheck: ${yes} of ${open.length} open comments look resolved; ${ch.length} change${ch.length===1?"":"s"} nobody asked for.`);
     }
     setBusy(pid,"Saving new thumbnails…");
-    p.sheets = await storeThumbs(pages); p.aiPages = await storeAiPages(pages); p.lastText = text.slice(0,8000); S.canv[pid]=pages; S.sheetIdx=0;
+    p.sheets = await storeThumbs(pages); p.lastText = text.slice(0,8000); S.canv[pid]=pages; S.sheetIdx=0;
   }catch(e){ flash("Recheck did not finish: "+(e.message||e.code)); addLog(p,"ai","Recheck did not finish."); }
   setBusy(pid); await save(p);
 }
@@ -994,113 +985,15 @@ function askHtml(p){
     <div class="row"><input type="text" id="ask-q" placeholder="e.g. What is the ADU's distance to the rear property line?" ${S.asking[p.id]?"disabled":""}><button class="btn sm" data-a="ask" ${S.asking[p.id]?"disabled":""}>${S.asking[p.id]?"Reading…":"Ask"}</button></div></div>`;
 }
 
-/* ---------- response letter: the applicant answers in their own PDF or Excel ---------- */
-const cnum = (p,c) => p.corrections.indexOf(c)+1;
-const openForReply = p => p.corrections.filter(c=>c.state==="approved"&&!c.resolved);
-function downloadRespSheet(p){
-  if(!window.XLSX){ flash("The Excel tool did not load. Refresh the page and try again."); return; }
-  const rows=[["No.","Comment ID","Department","Code section","Sheet","City comment","Your response","Revised sheet(s)"]];
-  openForReply(p).forEach(c=>rows.push([cnum(p,c), c.id, c.dept||"", c.section||"", c.sheet||"", [c.finding, "Required: "+(c.plannerText||c.fix)].filter(Boolean).join("\n"), c.draftResponse||"", ""]));
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws["!cols"]=[{wch:5},{wch:10},{wch:12},{wch:22},{wch:10},{wch:60},{wch:60},{wch:16}];
-  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Responses");
-  const meta=XLSX.utils.aoa_to_sheet([["Project",p.address],["Permit",p.permitNo||""],["Cycle",p.cycle||1],["How to use","Answer each comment in 'Your response' and list the revised sheet. Keep the No. and Comment ID columns. Upload this file back to the portal, or answer the same numbers in your own PDF letter."]]);
-  meta["!cols"]=[{wch:14},{wch:90}]; XLSX.utils.book_append_sheet(wb, meta, "Project");
-  XLSX.writeFile(wb, `Redline_Response_${String(p.address||"project").replace(/[^\w]+/g,"-").replace(/^-|-$/g,"")}_Cycle${p.cycle||1}.xlsx`);
-}
-async function readRespFile(file, p){
-  const name=file.name||"", isPdf=/\.pdf$/i.test(name)||file.type==="application/pdf";
-  if(isPdf){ const rd=await readPdf(file, m=>setBusy(p.id,m)); return {kind:"pdf", text:rd.fullText||rd.text, pages:rd.pages, total:rd.total}; }
-  if(!window.XLSX) throw new Error("The Excel tool did not load. Refresh and try again.");
-  const wb=XLSX.read(await file.arrayBuffer(), {type:"array"});
-  let rows=[];
-  for(const sn of wb.SheetNames){ const r=XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, defval:"", raw:false}); if(r.some(x=>x.some(v=>/response|answer|reply/i.test(String(v))))){ rows=r; break; } if(!rows.length) rows=r; }
-  return {kind:"sheet", rows, text:rows.map(r=>r.join(" | ")).join("\n")};
-}
-/* Excel: read the columns by their headers. */
-function matchSheet(p, rows){
-  const open=openForReply(p), out={};
-  const hi=rows.findIndex(r=>r.some(v=>/response|answer|reply/i.test(String(v))));
-  if(hi<0) return out;
-  const h=rows[hi].map(v=>String(v).toLowerCase());
-  const col=re=>h.findIndex(v=>re.test(v));
-  const cId=col(/comment id|^id$/), cNo=col(/^no\.?$|^#$|^item|^number|comment no|^no /), cResp=col(/your response|response|answer|reply/), cSh=col(/revised sheet|sheet ref|see sheet|revised/);
-  for(const r of rows.slice(hi+1)){
-    const resp=String(r[cResp]??"").trim(); if(!resp) continue;
-    let c=null;
-    if(cId>=0) c=open.find(x=>x.id===String(r[cId]).trim());
-    if(!c && cNo>=0){ const n=parseInt(String(r[cNo]).replace(/\D/g,""),10); c=open.find(x=>cnum(p,x)===n); }
-    if(!c) continue;
-    const sh=cSh>=0&&cSh!==cResp?String(r[cSh]??"").trim():"";
-    out[c.id]=resp+(sh&&!resp.includes(sh)?` (see ${sh})`:"");
-  }
-  return out;
-}
-/* PDF (or an Excel laid out some other way): numbered items, then the AI if numbers don't line up. */
-function matchByNumber(p, text){
-  const open=openForReply(p), out={}, t=" "+String(text||"").replace(/\s+/g," ")+" ";
-  const nums=open.map(c=>cnum(p,c));
-  const hits=[]; const re=/(?:^|\s)(?:comment|item|no\.?|#)?\s*(\d{1,3})[.):]\s+/gi; let m;
-  while((m=re.exec(t))){ const n=+m[1]; if(nums.includes(n)) hits.push({n, at:m.index, end:re.lastIndex}); }
-  const seen=new Set(); const first=hits.filter(h=>!seen.has(h.n)&&seen.add(h.n));
-  first.forEach((h,i)=>{ const next=hits.find(x=>x.at>h.at&&x.n!==h.n&&first.includes(x)); let body=t.slice(h.end, next?next.at:undefined).trim();
-    const c=open.find(x=>cnum(p,x)===h.n); const rq=body.search(/\b(response|answer|reply)\s*:/i); if(rq>=0) body=body.slice(rq).replace(/^\w+\s*:\s*/,"");
-    if(c&&body.length>3) out[c.id]=body.slice(0,1500); });
-  return out;
-}
-async function matchByAI(p, text){
-  const open=openForReply(p);
-  const items=open.map(c=>`${c.id} | #${cnum(p,c)} | ${c.dept} | ${c.section} | sheet ${c.sheet||"-"} | ${c.plannerText||c.fix}`).join("\n");
-  const r=await S.sample.json(`You are matching an applicant's plan check response letter to the City's open comments for ${p.address} (cycle ${p.cycle||1}).
-OPEN COMMENTS (id | number | dept | code | sheet | comment):
-${items}
-
-RESPONSE LETTER TEXT:
-${String(text).slice(0,24000)}
-
-For each open comment, find the applicant's answer in the letter. Match by the comment number first, then by the code section, sheet or subject. Copy the applicant's answer in their own words (trim headers and the restated City comment). Include any sheet references they give. If the letter does not answer a comment, leave it out. Never invent an answer.
-Return JSON only: {"answers":[{"id":"...","response":"...","sheets":"A2.0"}]}`, {modelTier:"default"});
-  const out={};
-  for(const a of (r.answers||[])){ const c=open.find(x=>x.id===a.id); const resp=String(a.response||"").trim(); if(c&&resp) out[c.id]=resp.slice(0,1500)+(a.sheets&&!resp.includes(a.sheets)?` (see ${a.sheets})`:""); }
-  return out;
-}
-async function loadRespLetter(p, file){
-  const pid=p.id, open=openForReply(p);
-  if(file.size>10*1024*1024){ flash("That file is over 10 MB. A response letter is usually much smaller; export it again or trim it."); return; }
-  try{
-    setBusy(pid,"Reading your response letter…");
-    const rd=await readRespFile(file, p);
-    let got = rd.kind==="sheet" ? matchSheet(p, rd.rows) : {}, how = Object.keys(got).length ? "columns" : "";
-    if(Object.keys(got).length<open.length){ const byNum=matchByNumber(p, rd.text); for(const k in byNum) if(!got[k]){ got[k]=byNum[k]; how=how||"numbers"; } }
-    if(Object.keys(got).length<open.length && S.sample){ setBusy(pid,"Matching your answers to the City's comments…");
-      try{ const ai=await matchByAI(p, rd.text); for(const k in ai) if(!got[k]){ got[k]=ai[k]; how=how?how+" + AI":"AI"; } }catch(e){} }
-    const ids=Object.keys(got);
-    if(!ids.length){ setBusy(pid); flash("Redline couldn't find answers in that file. Number each answer the same as the City's comments (1, 2, 3…) or use the Excel response sheet."); return; }
-    ids.forEach(id=>{ const c=p.corrections.find(x=>x.id===id); c.draftResponse=got[id]; c.respFrom=file.name; });
-    let pages=[]; if(rd.kind==="pdf"){ setBusy(pid,"Saving the letter pages…"); for(const pg of rd.pages.slice(0,6)){ const ref=await putImage(await toBlob(scaled(pg.canvas,1100),.72)); pages.push({...ref, page:pg.page}); } }
-    p.respLetter={name:file.name, kind:rd.kind, cycle:p.cycle||1, at:now(), matched:ids.length, of:open.length, missing:open.filter(c=>!got[c.id]).map(c=>cnum(p,c)), pages, total:rd.total||null, how};
-    addLog(p,"applicant",`Uploaded response letter ${file.name}: answers matched to ${ids.length} of ${open.length} comments.`);
-  }catch(e){ flash("Couldn't read that file: "+(e.message||e)); }
-  setBusy(pid); await save(p);
-}
-function letterBox(p, staff){
-  const L=staff?(p.letters||[]).slice(-1)[0]:p.respLetter; if(!L) return "";
-  const pages=(L.pages||[]).filter(x=>imgSrc(x));
-  return `<details class="feebox" ${staff?"":"open"}><summary><b>Response letter</b> · ${esc(L.name)} · cycle ${L.cycle} · ${L.matched} of ${L.of} comments answered</summary>
-    ${!staff&&L.missing&&L.missing.length?`<p class="small" style="color:var(--red)">No answer found for comment${L.missing.length===1?"":"s"} ${L.missing.map(n=>"#"+n).join(", ")}. Type ${L.missing.length===1?"it":"them"} below or upload a corrected letter.</p>`:""}
-    ${!staff?`<p class="small">Each answer is filled in under its comment. Check them, edit if needed, then upload the revised set.</p>`:""}
-    ${pages.length?`<div style="display:flex;gap:8px;overflow-x:auto;margin-top:8px">${pages.map(x=>`<a href="${esc(imgSrc(x))}" target="_blank" rel="noopener"><img src="${esc(imgSrc(x))}" alt="Letter page ${x.page}" style="height:160px;border:1px solid var(--hair);border-radius:6px;background:#fff"></a>`).join("")}</div>`:""}
-  </details>`;
-}
-
 /* ---------- printable correction letter ---------- */
 function printLetter(p){
   const list=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).sort((a,b)=>(PRIO[a.priority]??1)-(PRIO[b.priority]??1));
   const by={}; list.forEach(c=>{ (by[c.dept||"Building"] ||= []).push(c); });
+  let n=0;
   $("#print").innerHTML=`<h1>${esc(CITY.name)} · Plan check corrections</h1>
     <p>${esc(p.address)}${p.permitNo?` · Permit ${esc(p.permitNo)}`:""} · ${esc(appOf(p).name)} · Cycle ${p.cycle||1} · ${fmtD(p.issuedAt||now())}</p>
-    <p>Respond to each item, in the portal or in your own response letter (PDF or Excel) that answers each item by its number, then upload one revised set. Only these items are rechecked.</p>
-    ${Object.entries(by).map(([d,cs])=>`<h2>${esc(d)}</h2>${cs.map(c=>`<div class="it"><b>${cnum(p,c)}. ${esc(c.section)}</b> · Sheet ${esc(c.sheet||"—")}${c.priority==="critical"?" · Critical":""}
+    <p>Respond to each item in the portal and upload one revised set. Only these items are rechecked.</p>
+    ${Object.entries(by).map(([d,cs])=>`<h2>${esc(d)}</h2>${cs.map(c=>`<div class="it"><b>${++n}. ${esc(c.section)}</b> · Sheet ${esc(c.sheet||"—")}${c.priority==="critical"?" · Critical":""}
       ${c.snip&&imgSrc(c.snip)?`<img src="${esc(imgSrc(c.snip))}" alt="">`:""}
       ${c.finding?`<div>${esc(c.finding)}</div>`:""}<div><b>Required:</b> ${esc(c.plannerText||c.fix)}</div></div>`).join("")}`).join("")}
     <p style="margin-top:16px;font-size:10pt">Prepared in Redline Permit. Every comment was reviewed by City staff before it was sent.</p>`;
@@ -1652,7 +1545,7 @@ function corrCard(p,c){
   if(S.editing===c.id) b+=`<textarea id="edit-${c.id}">${esc(text)}</textarea><div class="acts"><button class="btn sm primary" data-a="saveedit" data-c="${c.id}">Save</button><button class="btn sm" data-a="canceledit">Cancel</button></div>`;
   else b+=`<p class="fix"><b>Required:</b> ${esc(text)}</p>`;
   const r=ruleFor(c); if(c.why||r) b+=`<div class="edu"><b>Code note</b>${esc(c.why||"")}${r?` ${c.why?"":""}<span class="small">Rule: ${esc(r.req)}</span>`:""}</div>`;
-  if(c.response) b+=`<div class="sub"><span class="who">Applicant response · cycle ${c.respCycle||p.cycle}${c.respLetter?` · from ${esc(c.respLetter)}`:""}</span>${esc(c.response)}</div>`;
+  if(c.response) b+=`<div class="sub"><span class="who">Applicant response · cycle ${c.respCycle||p.cycle}</span>${esc(c.response)}</div>`;
   if(c.recheck && P){ b+=`<div class="sub"><span class="who">Redline recheck · cycle ${c.recheck.cycle}</span>${c.recheck.likelyResolved?"Looks resolved. ":"Still open. "}${esc(c.recheck.note)}</div>`;
     if(c.recheck.snip) b+=snipHtml(c.recheck.snip, `Revised sheet · cycle ${c.recheck.cycle}`); }
   if(P && (c.replies||[]).length) b+=`<div class="replies">${c.replies.map(r=>`<div class="reply"><span class="who">${esc(nameOf(r))} · ${esc(r.dept)}</span> — ${esc(r.text)} <span class="small">${fmtT(r.at)}</span></div>`).join("")}</div>`;
@@ -1665,7 +1558,7 @@ function corrCard(p,c){
   }
   if(P) acts+=`<div class="reply-form" style="width:100%"><select id="rd-${c.id}" aria-label="Department">${DEPTS.map(d=>`<option ${d===c.dept?"selected":""}>${d}</option>`).join("")}</select><textarea id="rt-${c.id}" placeholder="Add a note for the other reviewers"></textarea><button class="btn sm" data-a="reply" data-c="${c.id}">Add note</button></div>`;
   if(!P && p.status==="corrections" && c.state==="approved" && !c.resolved)
-    acts=`<label class="f" style="width:100%">Your response${c.respFrom?` <span class="small">· from ${esc(c.respFrom)}</span>`:""}<textarea data-resp="${c.id}" placeholder="What changed and where, e.g. Window W3 now 5.7 sf net, see A2.1">${esc(c.draftResponse||"")}</textarea></label>`;
+    acts=`<label class="f" style="width:100%">Your response<textarea data-resp="${c.id}" placeholder="What changed and where, e.g. Window W3 now 5.7 sf net, see A2.1">${esc(c.draftResponse||"")}</textarea></label>`;
   if(acts) b+=`<div class="acts">${acts}</div>`;
   return `<div class="${cls}" ${S.focusC===c.id?'style="box-shadow:0 0 0 2px var(--red)"':""}>${b}</div>`;
 }
@@ -1706,8 +1599,7 @@ function projectView(p){
   if(!P){
     if(p.status==="submitted"||p.status==="resubmitted") head=`<div class="note">${p.status==="resubmitted"?"Revised set received":"Submitted"} ${fmtD(p.updatedAt||p.submittedAt)}. Monrovia reviewers are working on it. Their comments will appear here.</div>`;
     if(p.status==="corrections"){ head=`<div class="note red"><b>${openApproved} comment${openApproved===1?"":"s"} from the City.</b> Each one shows the spot on your sheets. Respond to each, then upload the revised set. Only these items get rechecked.</div>`;
-      head+=`<p class="small" style="margin:8px 0 0">Answer below, or upload your own response letter (PDF or Excel) that answers each comment by its number. Redline fills in the answers for you to check.</p>`+letterBox(p,false);
-      primary=`<input type="file" id="re-file" accept="application/pdf" hidden><input type="file" id="resp-file" accept=".pdf,.xlsx,.xls,.csv,application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="respletter">Upload response letter</button><button class="btn" data-a="respsheet">Excel response sheet</button><button class="btn" data-a="letter">Print the list</button>`; }
+      primary=`<input type="file" id="re-file" accept="application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="letter">Print the list</button>`; }
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
     else if(p.status==="approved") head=`<div class="note ok"><b>Plan check approved.</b> Waiting on the other agencies below. You'll get a pickup notice when they're all cleared.</div>${agencyHtml(p,false)}`;
     if(p.status==="ready") head=`<div class="note ok"><b>Ready for permit pickup.</b> All clearances are in. ${feeOpen(p)?`Pay the fees of ${money2(p.fee.dueNow)} to the City of Monrovia at City Hall, 415 S. Ivy Ave. The permit is issued once City staff record the payment.`:"Fees are paid. The City will issue the permit."}</div>`;
@@ -1728,7 +1620,6 @@ function projectView(p){
     if(noteDrafts&&!busy) primary+=`<button class="btn" data-a="approvenotes">Send ${noteDrafts} standard-note draft${noteDrafts===1?"":"s"}</button>`;
     if(openApproved&&!busy) primary+=`<button class="btn" data-a="letter">Print correction letter</button>`;
     if((p.aiState==="none"||p.aiState==="failed"||p.aiState==="unavailable"||stale) && !busy) primary+= hasSheets ? `<button class="btn primary" data-a="airun">Run AI first read</button>` : `<input type="file" id="fr-file" accept="application/pdf" hidden><button class="btn" data-a="firstread">Attach PDF for AI first read</button>`;
-    if((p.letters||[]).length && (p.status==="resubmitted"||p.status==="submitted")) head+=letterBox(p,true);
     if(p.status==="corrections") head=`<div class="note">Comments sent ${fmtT(p.issuedAt)}. Waiting on the applicant's responses and revised set.</div>`;
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
     else if(p.status==="approved"){ const ag=p.agencies||AGENCIES.map(n=>({name:n,done:false})); const left=ag.filter(a=>!a.done).length;
@@ -1742,17 +1633,12 @@ function projectView(p){
       <div class="form" style="margin-top:10px"><label class="f">Reason<select id="void-reason"><option>Duplicate application</option><option>Information entered incorrectly</option><option>Withdrawn by applicant</option><option>Submitted in error</option><option>Other</option></select></label></div>
       <div class="acts" style="margin-top:8px"><button class="btn sm primary" data-a="void">Void application</button><button class="btn sm" data-a="voidcancel">Cancel</button></div></div>`;
   }
-  const myDept = meRev()?.dept || (p.dept||"Building");
-  const curSheet = sh[si]; const nb = S.newBox&&S.newBox.pid===p.id ? S.newBox : null;
-  const addComment = (P && !DONE(p.status) && p.status!=="void") ? (S.adding===p.id ? `<div class="addc" id="addc">
-      <div class="corr-h" style="margin-bottom:8px"><b>New comment</b><span class="small">${sh.length?(nb?`Marked on ${esc((sh.find(x=>Number(x.page)===Number(nb.page))||{}).label||"sheet "+nb.page)}. Drag again to move it.`:"Drag a box on the sheet below to mark the spot (optional)."):"No sheets saved for this file."}</span></div>
-      <div class="form"><label class="f">Code section<input type="text" id="nc-sec" placeholder="e.g. MMC 17.24.040" value="${esc(S.ncDraft?.sec||"")}"></label>
-      <label class="f">Sheet<input type="text" id="nc-sheet" placeholder="e.g. A1.0" value="${esc(S.ncDraft?.sheet ?? (nb?((sh.find(x=>Number(x.page)===Number(nb.page))||{}).label||""):(curSheet?.label||"")).split(" ")[0])}"></label>
-      <label class="f">Department<select id="nc-dept">${DEPTS.map(d=>`<option ${d===(S.ncDraft?.dept||myDept)?"selected":""}>${d}</option>`).join("")}</select></label>
-      <label class="f">Priority<select id="nc-prio">${["major","critical","minor"].map(x=>`<option value="${x}" ${x===(S.ncDraft?.prio||"major")?"selected":""}>${x[0].toUpperCase()+x.slice(1)}</option>`).join("")}</select></label>
-      <label class="f wide">Comment<textarea id="nc-text" placeholder="What must change, e.g. Dimension the rear setback to the eave">${esc(S.ncDraft?.text||"")}</textarea></label></div>
-      <div class="acts" style="margin-top:8px"><button class="btn sm primary" data-a="addcomment">Add comment</button>${nb?`<button class="btn sm" data-a="clearbox">Remove mark</button>`:""}<button class="btn sm" data-a="canceladd">Cancel</button></div></div>`
-    : `<div class="acts"><button class="btn sm primary" data-a="startadd">+ Add a comment</button><span class="small">Mark the spot on the sheet and write it, right here.</span></div>`) : "";
+  const addComment = (P && !DONE(p.status)) ? `<details><summary class="btn sm" style="display:inline-block">+ Write your own comment</summary>
+      <div class="form" style="margin-top:10px"><label class="f">Code section<input type="text" id="nc-sec" placeholder="e.g. MMC 17.24.040"></label>
+      <label class="f">Sheet<input type="text" id="nc-sheet" placeholder="e.g. A1.0"></label>
+      <label class="f">Department<select id="nc-dept">${DEPTS.map(d=>`<option>${d}</option>`).join("")}</select></label>
+      <label class="f wide">Comment<textarea id="nc-text" placeholder="What must change"></textarea></label></div>
+      <div class="acts" style="margin-top:8px"><button class="btn sm primary" data-a="addcomment">Add comment</button></div></details>` : "";
   const rv = STAFF.find(r=>r.id===p.reviewerId);
   const ap = p.applicant || {name:p.applicantName||"", email:"", phone:""};
   const person=(role,x,extra="")=>`<div class="person"><span class="role">${role}</span><b>${esc(x?.name||"—")}</b>${extra}${x?.email?`<a href="mailto:${esc(x.email)}">${esc(x.email)}</a>`:"<span>—</span>"}${x?.phone?`<a href="tel:${esc(x.phone.replace(/[^0-9+]/g,""))}">${esc(x.phone)}</a>`:"<span>—</span>"}</div>`;
@@ -1771,7 +1657,6 @@ function projectView(p){
     ${briefHtml(p)}
     ${busy?`<div class="note"><div class="progress">${esc(busy)}</div></div>`:head}
     ${primary&&!busy?`<div class="acts">${primary}</div>`:""}
-    ${busy?"":addComment}
     ${sh.length?`<div class="sheets"><div class="sec-h" style="margin:0">Sheets · numbers match the comments below${p.pageCount?` · ${sh.length} of ${p.pageCount} sheets shown`:""}</div>
         <div class="sheet-main">${sheetMarked(p,sh[si],cs)}</div>
         ${sh.length>1?sheetIndex(sh,si,cs,p):""}<p class="small" style="margin:0">Tap a red number to jump to its comment, or a comment's number to find it on the sheet.</p></div>`:""}
@@ -1779,7 +1664,7 @@ function projectView(p){
     <div class="clist"><div class="sec-h" style="margin:0">${P?"Comments":"City comments"} · ${cs.length}</div>
       ${P&&new Set(p.corrections.map(c=>c.dept||"Building")).size>1?`<div class="chks">${["All",...new Set(p.corrections.map(c=>c.dept||"Building"))].map(d=>`<label><input type="radio" name="cdept" value="${esc(d)}" ${S.cDept===d?"checked":""}>${esc(d)}</label>`).join("")}</div>`:""}
       ${cs.length?cs.map(c=>corrCard(p,c)).join(""):`<p class="note">${P?(p.aiState==="done"?"No draft comments.":"Nothing yet."):"No comments yet."}</p>`}
-      </div>
+      ${addComment}</div>
     ${P&&(p.changes||[]).length?`<div class="clist"><div class="sec-h" style="margin:0">Changes nobody asked for · ${(p.changes||[]).length}</div>${p.changes.slice().reverse().map(changeCard).join("")}</div>`:""}
     <div class="split" style="grid-template-columns:1fr">
       <div class="sheets">${(P&&(p.completeness||[]).length)?`<div class="sec-h" style="margin:0">Completeness</div><div class="checklist">${p.completeness.map(c=>`<div><span class="${c.found?"mark-y":"mark-n"}">${c.found?"✓":"✕"}</span>${esc(c.item)}</div>`).join("")}</div>`:""}
@@ -1787,39 +1672,13 @@ function projectView(p){
     </div>
   </div>`;
 }
-async function clipFromStore(p, page, box, num){
-  const live=(S.canv[p.id]||[]).find(x=>Number(x.page)===Number(page)); if(live) return clip(live.canvas, box, num);
-  const s=(p.sheets||[]).find(x=>Number(x.page)===Number(page)); const ref=hiRes(p,{page})||s; const u=imgSrc(ref); if(!u) return null;
-  const bm=await createImageBitmap(await (await fetch(u)).blob()); const c=document.createElement("canvas"); c.width=bm.width; c.height=bm.height; c.getContext("2d").drawImage(bm,0,0);
-  return clip(c, box, num);
-}
-function keepDraft(){ const g=id=>{ const el=$("#"+id); return el?el.value:undefined; }; if($("#nc-text")) S.ncDraft={sec:g("nc-sec"), sheet:g("nc-sheet"), dept:g("nc-dept"), prio:g("nc-prio"), text:g("nc-text")}; }
-function bindDraw(p){
-  const wrap=document.querySelector(".sheetwrap.drawing"); if(!wrap) return;
-  let st=null, el=null;
-  const pt=e=>{ const r=wrap.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return [Math.min(1,Math.max(0,(t.clientX-r.left)/r.width)), Math.min(1,Math.max(0,(t.clientY-r.top)/r.height))]; };
-  const down=e=>{ if(e.target.closest(".mkn")) return; e.preventDefault(); st=pt(e); el=document.createElement("span"); el.className="mk new"; wrap.appendChild(el); wrap.querySelectorAll(".mk.new").forEach(x=>{ if(x!==el) x.remove(); }); };
-  const move=e=>{ if(!st) return; e.preventDefault(); const q=pt(e); const x=Math.min(st[0],q[0]), y=Math.min(st[1],q[1]), w=Math.abs(q[0]-st[0]), h=Math.abs(q[1]-st[1]); Object.assign(el.style,{left:x*100+"%",top:y*100+"%",width:w*100+"%",height:h*100+"%"}); el.dataset.b=[x,y,w,h].join(","); };
-  const up=()=>{ if(!st) return; st=null; const b=(el.dataset.b||"").split(",").map(Number);
-    if(b.length!==4||b[2]<.01||b[3]<.01){ el.remove(); return; }
-    keepDraft(); const page=wrap.dataset.page; const s=(p.sheets||[]).find(x=>String(x.page)===String(page));
-    if(S.ncDraft) S.ncDraft.sheet=(s?.label||"").split(" ")[0]||S.ncDraft.sheet;
-    S.newBox={pid:p.id, page:Number(page), box:b.map(v=>Math.round(v*1000)/1000)}; renderWorkspace(); };
-  if(window.__rlDraw){ window.removeEventListener("mousemove",window.__rlDraw[0]); window.removeEventListener("mouseup",window.__rlDraw[1]); }
-  window.__rlDraw=[move,up];
-  wrap.addEventListener("mousedown",down); window.addEventListener("mousemove",move); window.addEventListener("mouseup",up);
-  wrap.addEventListener("touchstart",down,{passive:false}); wrap.addEventListener("touchmove",move,{passive:false}); wrap.addEventListener("touchend",up);
-}
 /* Numbered circles on the sheet: one per comment on this page, numbered like the comment list. */
-const hiRes = (p,s) => (p.aiPages||[]).find(a=>Number(a.page)===Number(s.page)) || null;
 function onSheet(cs,s){ return cs.filter(c=>c.state!=="rejected" && Number(c.page)===Number(s.page) && Array.isArray(c.box)); }
 function sheetMarked(p,s,cs){
   const mk=onSheet(cs,s).map(c=>{ const n=p.corrections.indexOf(c)+1; let [x,y,w,h]=c.box.map(Number); const whole=w>=.9||h>=.9;
     if(whole){ x=.02; y=.04; w=0; h=0; }
     return `${whole?"":`<span class="mk" style="left:calc(${x*100}% - 6px);top:calc(${y*100}% - 6px);width:calc(${w*100}% + 12px);height:calc(${h*100}% + 12px)"></span>`}<button type="button" class="mkn ${S.focusC===c.id?"on":""}" data-jump="${c.id}" style="left:${(x+w)*100}%;top:${y*100}%" title="Comment ${n}">${n}</button>`; }).join("");
-  const big=imgSrc(hiRes(p,s))||imgSrc(s), nb=S.newBox&&S.newBox.pid===p.id&&Number(S.newBox.page)===Number(s.page)?S.newBox.box:null;
-  const draw=S.adding===p.id;
-  return `<div class="sheetwrap ${draw?"drawing":""}" data-page="${esc(s.page)}"><img alt="${esc(s.label)}" src="${esc(big)}" ${draw?"":`data-zoom="${esc(big)}"`} draggable="false">${mk}${nb?`<span class="mk new" style="left:${nb[0]*100}%;top:${nb[1]*100}%;width:${nb[2]*100}%;height:${nb[3]*100}%"></span>`:""}</div>`;
+  return `<div class="sheetwrap"><img alt="${esc(s.label)}" src="${esc(imgSrc(s))}" data-zoom="${esc(imgSrc(s))}">${mk}</div>`;
 }
 function agencyHtml(p, P){
   const list=p.agencies||AGENCIES.map(n=>({name:n,done:false}));
@@ -1833,8 +1692,7 @@ function sheetIndex(sh,si,cs,p){
 }
 function bindProject(p){
   const w=$("#workspace");
-  w.querySelectorAll("[data-sheet]").forEach(b=>b.onclick=()=>{ if(S.adding===p.id) keepDraft(); S.sheetIdx=+b.dataset.sheet; renderWorkspace(); });
-  bindDraw(p);
+  w.querySelectorAll("[data-sheet]").forEach(b=>b.onclick=()=>{ S.sheetIdx=+b.dataset.sheet; renderWorkspace(); });
   w.querySelectorAll("[data-resp]").forEach(t=>t.oninput=()=>{ const c=p.corrections.find(x=>x.id===t.dataset.resp); if(c) c.draftResponse=t.value; });
   w.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(p,b.dataset.a,b.dataset.c));
   const jump=id=>{ const c=p.corrections.find(x=>x.id===id); if(!c) return; const i=(p.sheets||[]).findIndex(s=>Number(s.page)===Number(c.page)); S.focusC=id; if(i>=0) S.sheetIdx=i; renderWorkspace();
@@ -1845,10 +1703,8 @@ function bindProject(p){
   document.querySelectorAll("[data-assign]").forEach(sel=>sel.onchange=()=>{ const i=+sel.dataset.assign, r=STAFF.find(x=>x.id===sel.value); p.reviews=reviewsOf(p).map(x=>({...x})); p.reviews[i].reviewerId=r.id; p.reviews[i].reviewerName=r.name; if(i===0){ p.reviewerId=r.id; p.reviewerName=r.name; } addLog(p,"planner",`Reassigned ${p.reviews[i].dept} review to ${r.name}`); save(p); });
   w.querySelectorAll('input[name="cdept"]').forEach(r=>r.onchange=()=>{ S.cDept=r.value; renderWorkspace(); });
   const aq=$("#ask-q"); if(aq) aq.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); act(p,"ask"); } };
-  const lf=$("#resp-file"); if(lf) lf.onchange=()=>{ const f=lf.files[0]; lf.value=""; if(f) loadRespLetter(p,f); };
   const rf=$("#re-file"); if(rf) rf.onchange=()=>{ const f=rf.files[0]; if(!f) return;
-    p.corrections.forEach(c=>{ if(c.state==="approved"&&!c.resolved&&c.draftResponse){ c.response=c.draftResponse; c.respCycle=p.cycle; c.respLetter=c.respFrom||""; } });
-    if(p.respLetter){ (p.letters ||= []).push(p.respLetter); delete p.respLetter; }
+    p.corrections.forEach(c=>{ if(c.state==="approved"&&!c.resolved&&c.draftResponse){ c.response=c.draftResponse; c.respCycle=p.cycle; } });
     runRecheck(p,f); };
   const ff=$("#fr-file"); if(ff) ff.onchange=()=>{ const f=ff.files[0]; if(f) runFirstRead(p,f); };
 }
@@ -1865,16 +1721,9 @@ function act(p,a,cid){
     case "clear": c.resolved=true; addLog(p,"planner",`Cleared: ${c.section}`); save(p); break;
     case "reply": { const t=$("#rt-"+cid).value.trim(); if(!t) return;
       (c.replies ||= []).push({by:S.me?.id||null, name:S.me?.name||"", dept:$("#rd-"+cid).value, text:t, at:now()}); save(p); break; }
-    case "startadd": S.adding=p.id; S.newBox=null; S.ncDraft=null; renderWorkspace(); { const el=$("#addc"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); } break;
-    case "canceladd": S.adding=null; S.newBox=null; S.ncDraft=null; renderWorkspace(); break;
-    case "clearbox": keepDraft(); S.newBox=null; renderWorkspace(); break;
     case "addcomment": { const t=$("#nc-text").value.trim(); if(!t){ flash("Write the comment first."); return; }
-      const nb=S.newBox&&S.newBox.pid===p.id?S.newBox:null;
-      const c={id:uid(), dept:$("#nc-dept").value, section:$("#nc-sec").value.trim()||"Reviewer comment", sheet:$("#nc-sheet").value.trim(), page:nb?Number(nb.page):null, box:nb?nb.box:undefined, finding:"", fix:t, severity:"correction", priority:$("#nc-prio").value, source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[], by:S.me?.id||null, name:S.me?.name||""};
-      p.corrections.push(c); S.adding=null; S.newBox=null; S.ncDraft=null;
-      addLog(p,"planner",`Added a reviewer comment${c.sheet?` on ${c.sheet}`:""}.`);
-      if(nb){ setBusy(p.id,"Clipping the marked spot…"); clipFromStore(p, nb.page, nb.box, cnum(p,c)).then(ref=>{ c.snip=ref; }).catch(()=>{}).finally(()=>{ setBusy(p.id); save(p); }); }
-      else save(p); break; }
+      p.corrections.push({id:uid(), dept:$("#nc-dept").value, section:$("#nc-sec").value.trim()||"Reviewer comment", sheet:$("#nc-sheet").value.trim(), finding:"", fix:t, severity:"correction", source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[]});
+      addLog(p,"planner","Added a reviewer comment."); save(p); break; }
     case "chg-accept": ch.state="accepted"; addLog(p,"planner",`Accepted unrequested change: ${ch.description}`); save(p); break;
     case "chg-add": ch.state="added";
       p.corrections.push({id:uid(), dept:"Planning", section:ch.mayAffect||"Unrequested change", sheet:ch.sheet, page:ch.page, finding:`Changed since the last set: ${ch.description} (was ${ch.previous||"—"}, now ${ch.now||"—"}).`, fix:"Explain this change and show it complies, or revert it.", severity:"correction", source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[], snip:ch.snip||null});
@@ -1884,10 +1733,8 @@ function act(p,a,cid){
     case "ready": p.status="ready"; addLog(p,"planner","All agency clearances in. Ready for permit pickup."); save(p); break;
     case "issue-permit": if(feeOpen(p)){ flash("Record the fees first. No fee, no permit."); break; } p.status="issued"; p.issuedPermitAt=now(); addLog(p,"planner","Permit issued."); save(p); break;
     case "resubmit": { const miss=p.corrections.filter(c=>c.state==="approved"&&!c.resolved&&!(c.draftResponse||"").trim()).length;
-      if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first, here or in a response letter.`); return; } $("#re-file").click(); break; }
+      if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first.`); return; } $("#re-file").click(); break; }
     case "firstread": $("#fr-file").click(); break;
-    case "respletter": $("#resp-file").click(); break;
-    case "respsheet": downloadRespSheet(p); break;
     case "airun": runFirstRead(p, null); break;
     case "payfee": { if(!p.fee || p.fee.paidAt || !isPlanner()) break; const rc=($("#fee-receipt")?.value||"").trim(); p.fee.paidAt=now(); p.fee.method=`Paid to the City${rc?`, receipt ${rc}`:""}`; p.fee.receipt=rc;
       addLog(p, "planner", `Fees ${money2(p.fee.dueNow)} recorded as paid${rc?` (receipt ${rc})`:""}.`); save(p); break; }
@@ -2147,10 +1994,8 @@ $("#btn-new").onclick=()=>{ S.mode="new"; S.sel=null; S.tab="projects"; render()
 $("#btn-import").onclick=()=>{ S.mode="import"; S.sel=null; render(); };
 $("#btn-bulk").onclick=()=>{ S.mode="bulk"; S.sel=null; render(); };
 $("#queue").onclick=e=>{ const b=e.target.closest("[data-p]"); if(!b) return; S.sel=b.dataset.p; S.mode=null; S.sheetIdx=0; S.editing=null; S.cDept="All"; S.focusC=null; render(); };
-document.addEventListener("click",e=>{ const z=e.target.closest("[data-zoom]"); if(z){ $("#lightbox").classList.remove("full"); $("#lightbox-img").src=z.dataset.zoom; $("#lightbox").hidden=false; } });
-$("#lightbox").onclick=e=>{ const lb=$("#lightbox"); if(e.target.id==="lightbox-img"){ const full=!lb.classList.contains("full"); const r=e.target.getBoundingClientRect(), fx=(e.clientX-r.left)/r.width, fy=(e.clientY-r.top)/r.height; lb.classList.toggle("full",full);
-    if(full){ const im=e.target; requestAnimationFrame(()=>{ lb.scrollLeft=fx*im.scrollWidth-lb.clientWidth/2; lb.scrollTop=fy*im.scrollHeight-lb.clientHeight/2; }); } return; }
-  lb.hidden=true; lb.classList.remove("full"); };
+document.addEventListener("click",e=>{ const z=e.target.closest("[data-zoom]"); if(z){ $("#lightbox-img").src=z.dataset.zoom; $("#lightbox").hidden=false; } });
+$("#lightbox").onclick=()=>{ $("#lightbox").hidden=true; };
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("#lightbox").hidden=true; if(!$("#acct").hidden && (S.acct||S.isOwner)) closeAcct(); } });
 $("#whochip").onclick=()=>openAcct();
 
