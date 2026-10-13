@@ -231,6 +231,9 @@ a.city-card:hover{border-color:var(--teal)}
 .city-card b{font-size:17px;letter-spacing:-.015em}
 .city-card .url{font:500 12px/1.3 var(--f-mono);color:var(--teal-deep)}
 .city-card.soon{opacity:.75}
+.city-card .go{font-size:13px;font-weight:600;color:var(--red)}
+.seg a.citylink{background:var(--red);color:#fff}
+.seg a.citylink:hover{background:#B42B25;color:#fff}
 .city-card.live{background:linear-gradient(120deg,var(--red-soft),var(--glass-solid) 60%);grid-column:span 2}
 @media (max-width:520px){.city-card.live{grid-column:auto}}
 
