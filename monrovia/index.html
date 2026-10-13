@@ -98,6 +98,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .p-submitted,.p-resubmitted{background:var(--ox-soft);color:var(--oxblood)}
 .p-corrections{background:var(--red-soft);color:var(--red)}
 .p-void{background:var(--sand2);color:var(--ink3)}
+.p-fee_due{background:#fbecc8;color:#7a5200}
 .p-approved,.p-agencies,.p-issued{background:var(--ok-soft);color:var(--teal-deep)}
 .p-warn{background:var(--warn-soft);color:var(--warn)}
 .btn{border:1px solid var(--hair);background:var(--glass-solid);border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink)}
@@ -545,13 +546,14 @@ const staffFor = dept => STAFF.find(r=>r.dept===dept) || STAFF[0];
 /* Auto-assign: the reviewer in that department with the fewest open files (ties broken at random). */
 function pickReviewer(dept){
   const pool = STAFF.filter(r=>r.dept===dept); if(!pool.length) return STAFF[0];
-  const load = r => S.projects.filter(p=>p.reviewerId===r.id && !DONE(p.status)).length;
+  const load = r => S.projects.filter(p=>assignedTo(p,r.id) && !DONE(p.status) && p.status!=="void").length;
   const min = Math.min(...pool.map(load)); const best = pool.filter(r=>load(r)===min);
   return best[Math.floor(Math.random()*best.length)];
 }
 const appOf = p => APPS.find(a=>a.id===(p?.appType||"plancheck")) || APPS[0];
 const STAGES = [
   {t:"Submit",who:"Owner / Designer"},
+  {t:"Plan check fee",who:"Applicant"},
   {t:"City review",who:"Redline AI + reviewers"},
   {t:"Corrections",who:"Owner / Designer"},
   {t:"Resubmit & recheck",who:"Redline + City"},
@@ -560,9 +562,9 @@ const STAGES = [
   {t:"Permit pickup",who:"Owner / Contractor"}
 ];
 /* Other agencies and permit pickup only apply to the Building plan check. */
-const stagesFor = app => (APPS.find(a=>a.id===app)||APPS[0]).main ? STAGES : STAGES.slice(0,5);
-const STATUS_LABEL = {void:"Voided",submitted:"In review",corrections:"Corrections issued",resubmitted:"Resubmitted",approved:"Other agencies",ready:"Ready for pickup",issued:"Permit issued"};
-const STATUS_STAGE = {void:-1,submitted:1,corrections:2,resubmitted:3,approved:5,ready:6,issued:7};
+const stagesFor = app => (APPS.find(a=>a.id===app)||APPS[0]).main ? STAGES : STAGES.slice(0,6);
+const STATUS_LABEL = {void:"Voided",fee_due:"Fee due",submitted:"In review",corrections:"Corrections issued",resubmitted:"Resubmitted",approved:"Other agencies",ready:"Ready for pickup",issued:"Permit issued"};
+const STATUS_STAGE = {void:-1,fee_due:1,submitted:2,corrections:3,resubmitted:4,approved:6,ready:7,issued:8};
 const DONE = st => ["approved","ready","issued"].includes(st);
 /* Clearances that usually sit between plan check approval and permit issuance. Confirm the list with Monrovia before go-live. */
 const AGENCIES = ["School district fees paid (Monrovia USD)","Sanitation district connection fee","Fire Department sign-off","Contractor license & workers' comp on file"];
@@ -583,6 +585,55 @@ const isPlanner = () => S.role!=="applicant";
 const isAdmin = () => S.role==="admin";
 const meRev = () => STAFF.find(r=>r.id===S.role) || null;
 const money = v => v ? "$"+Number(v).toLocaleString() : "—";
+
+/* ---------- routing and fees ----------
+   A Building plan check goes to Building, Planning, Fire and Public Works at the same time, one reviewer each.
+   Every other application goes to its own department only. The AI reads only for those departments. */
+const PLANCHECK_DEPTS = ["Building","Planning","Fire","Public Works"];
+function reviewsOf(p){ return (p.reviews&&p.reviews.length) ? p.reviews : [{dept:p.dept||appOf(p).dept, reviewerId:p.reviewerId, reviewerName:p.reviewerName}]; }
+const assignedTo = (p,id) => reviewsOf(p).some(v=>v.reviewerId===id);
+function reviewsHtml(p){
+  return reviewsOf(p).map((v,i)=>{ const rv=STAFF.find(r=>r.id===v.reviewerId);
+    return `<div class="person"><span class="role">${esc(v.dept)} reviewer</span>${isAdmin()?`<select data-assign="${i}" aria-label="${esc(v.dept)} reviewer">${STAFF.filter(r=>r.dept===v.dept).map(r=>`<option value="${r.id}" ${r.id===v.reviewerId?"selected":""}>${esc(r.name)}</option>`).join("")}</select>`:`<b>${esc(rv?.name||v.reviewerName||"—")}</b>`}${rv?`<a href="mailto:${esc(rv.email)}">${esc(rv.email)}</a><span>${esc(rv.phone)}</span>`:"<span>—</span><span>—</span>"}</div>`; }).join("");
+}
+/* Fees: City of Monrovia Schedule of Fees & Charges, FY 2025-26 (proposed). Estimates; the City confirms. */
+const r2 = x => Math.round(x*100)/100;
+const money2 = v => "$"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+function permitFee(v){
+  if(!v||v<=0) return 0;
+  const step=(base,from,per,unit)=>base+Math.ceil((v-from)/unit)*per;
+  if(v<=500) return 47.18;
+  if(v<=2000) return step(47.19,500,6.87,100);
+  if(v<=25000) return step(150.36,2000,22.92,1000);
+  if(v<=50000) return step(677.58,25000,17.86,1000);
+  if(v<=100000) return step(1124.23,50000,12.13,1000);
+  if(v<=500000) return step(1731.02,100000,9.43,1000);
+  if(v<=1000000) return step(5506.57,500000,9.10,1000);
+  return step(10057.44,1000000,7.75,1000);
+}
+function feeFor(p){
+  const app=appOf(p), v=+p.valuation||0, bp=r2(permitFee(v)), tech=["Technology fee",8,"Community Development, flat"];
+  if(app.main){ if(!v) return null;
+    const bpc=bp, ppc=r2(bp*.15), gp=r2(bpc*.15);
+    const lines=[["Building plan check",bpc,`100% of the building permit fee (${money2(bp)} at ${money(v)} valuation)`],["Planning plan check",ppc,"15% of the building permit fee"],["Public Works review",334,"Building departmental review"],["Fire review",null,"No charge at plan check. Sprinkler or alarm plans are $320 + $21.78 per device, billed with those plans"],["General Plan maintenance",gp,"15% of the building plan check fee"],tech];
+    return {lines, dueNow:r2(lines.reduce((a,l)=>a+(l[1]||0),0)), later:[["Building permit",bp],["General Plan maintenance",r2(bp*.15)]]};
+  }
+  if(app.id==="adu-app") return {lines:[["ADU review",1162,"Moderate permit, Tier 3"],tech], dueNow:1170};
+  if(app.id==="mep"){ if(!v) return null; const pr=r2(bp*.5); return {lines:[["Plan review",pr,"50% of the permit fee, for other permits"],tech], dueNow:r2(pr+8)}; }
+  return null;
+}
+function feeHtml(p){ const f=p.fee; if(!f) return "";
+  return `<div class="tbl-wrap" style="margin-top:8px"><table class="stack"><thead><tr><th>Fee</th><th>Amount</th><th>Basis</th></tr></thead><tbody>${f.lines.map(l=>`<tr><td><b>${esc(l[0])}</b></td><td data-label="Amount">${l[1]==null?"—":money2(l[1])}</td><td data-label="Basis">${esc(l[2])}</td></tr>`).join("")}<tr><td><b>${f.paidAt?"Paid":"Due now"}</b></td><td data-label="${f.paidAt?"Paid":"Due now"}"><b>${money2(f.dueNow)}</b></td><td data-label="Status">${f.paidAt?`${fmtD(f.paidAt)} · ${esc(f.method||"")}`:"Before review starts"}</td></tr></tbody></table></div>
+  ${f.later?`<p class="small" style="margin-top:6px">Due at permit pickup (estimate): ${f.later.map(l=>`${esc(l[0])} ${money2(l[1])}`).join(" · ")}.</p>`:""}
+  <p class="small" style="margin-top:4px">Estimate from the City of Monrovia Schedule of Fees &amp; Charges, FY 2025-26. The City confirms the final amount.</p>`;
+}
+function routeAndBill(p){
+  const app=appOf(p), depts=app.main?PLANCHECK_DEPTS:[app.dept];
+  p.reviews=depts.map(d=>{ const r=pickReviewer(d); return {dept:d, reviewerId:r.id, reviewerName:r.name}; });
+  p.reviewerId=p.reviews[0].reviewerId; p.reviewerName=p.reviews[0].reviewerName;
+  p.fee=feeFor(p);
+  if(p.fee && p.fee.dueNow>0) p.status="fee_due";
+}
 
 /* ---------- persistence ---------- */
 const saveChain = {};
@@ -693,20 +744,21 @@ async function storeThumbs(pages){
 }
 
 /* ---------- AI ---------- */
-const rulesText = () => CITY.rules.map(r=>`${r.id} | ${r.dept} | ${r.section} | ${r.req} | look at: ${r.look} | ${r.conf}`).join("\n");
+const rulesText = (depts) => CITY.rules.filter(r=>!depts||depts.includes(r.dept)).map(r=>`${r.id} | ${r.dept} | ${r.section} | ${r.req} | look at: ${r.look} | ${r.conf}`).join("\n");
 async function imgLimit(){ const l = await S.sample.limits().catch(()=>null); return l?.images?.maxCount || 0; }
 async function aiFirstRead(p, pages, text){
   const max = await imgLimit();
   const use = pages.slice(0,max);
   const imgs = await Promise.all(use.map(pg=>toBlob(scaled(pg.canvas,1600),.85)));
   const prompt = `You are Redline, doing the first read of a plan set for ${CITY.name} plan check. You draft comments for city reviewers; you never approve or deny.
+REVIEWING FOR: ${reviewsOf(p).map(v=>v.dept).join(", ")} only. Draft comments only for these departments.
 
 PROJECT: ${p.projectType} at ${p.address} (APN ${p.apn||"n/a"}), zone ${p.zone}. Flags: ${(p.flags||[]).join(", ")||"none"}. Scope: ${p.scope}. Floor area: ${p.livingSf||"?"} sf living, ${p.garageSf||"?"} sf garage. Units: ${p.units||"?"}. Stories: ${p.stories||"?"}.
 ${imgs.length?`Images: sheets 1..${imgs.length} of the set, in order (image k = sheet k).`:"No images attached; use the text."}
 SHEET TEXT:${text||" (none — scanned set)"}
 
 RULE PACK (id | dept | section | requirement | where to look | confidence):
-${rulesText()}
+${rulesText(reviewsOf(p).map(v=>v.dept))}
 COMPLETENESS ITEMS: ${COMPLETENESS.join("; ")}
 
 First decide what this PDF is: "plan set" (drawings), "correction letter" (a city or consultant plan check comment list), or "mixed".
@@ -770,7 +822,7 @@ function readiness(p){
 }
 
 /* ---------- workflows ---------- */
-async function runFirstRead(p, file){
+async function runFirstRead(p, file, opt={}){
   const pid = p.id; let fullText = "";
   try{
     let pages, text;
@@ -784,6 +836,7 @@ async function runFirstRead(p, file){
       if(!pages.length){ const e=new Error("No sheets are saved for this file. Ask the applicant to upload the set again."); e.code="no_sheets"; throw e; }
     }
     S.canv[pid] = pages;
+    if(opt.prepOnly){ p.aiState="waiting"; setBusy(pid); await save(p); return; }
     if(!S.sample){ p.aiState="unavailable"; addLog(p,"ai","AI first read is not available until you sign in."); if(appOf(p).main) checkNotes(p, fullText); setBusy(pid); await save(p); return; }
     p.aiState="running"; p.aiAt=now(); await save(p);
     setBusy(pid,"Redline is reading the set against Monrovia's codes… (about a minute)");
@@ -955,8 +1008,8 @@ async function resolveNames(){
 function mine(){
   if(!isPlanner()) return S.projects.filter(p=>p.applicantId===ME.id);
   if(isAdmin()) return S.projects;
-  if(S.acctRole==="reviewer"){ const d=meRev()?.dept; return S.projects.filter(p=>(p.dept||appOf(p).dept)===d); }
-  return S.projects.filter(p=>p.reviewerId===S.role);
+  if(S.acctRole==="reviewer"){ const d=meRev()?.dept; return S.projects.filter(p=>reviewsOf(p).some(v=>v.dept===d)); }
+  return S.projects.filter(p=>assignedTo(p,S.role));
 }
 function matchQ(p){
   const q=S.q.trim().toLowerCase(); if(!q) return true;
@@ -1017,7 +1070,7 @@ function renderTasks(){
     ${list.length?list.map(({p,m})=>`<button class="qitem" data-p="${p.id}" aria-current="${p.id===S.sel}">
       <span class="m">${p.status==="void"?'<span class="pill p-void">Voided</span>':`<span class="pill ${URG[m.urg][1]}">${URG[m.urg][0]}</span>`}<span class="dept">${esc(m.app.dept)}</span></span>
       <span class="t">${esc(p.address)}</span>
-      <span class="m">${esc(m.app.main?(p.projectType||m.app.name):m.app.name)}${isAdmin()?` · ${esc(p.reviewerName||"unassigned")}`:""}</span>
+      <span class="m">${esc(m.app.main?(p.projectType||m.app.name):m.app.name)}${isAdmin()?` · ${esc(reviewsOf(p).map(v=>(v.reviewerName||"unassigned").replace(" (test)","")).join(", "))}`:""}</span>
       <span class="m">${p.status==="void"?`${esc(p.voidReason||"Voided")} · deleted ${fmtD(purgeAt(p))}`:`${m.cityTurn?`Day ${m.days} of ${m.target}`:STATUS_LABEL[p.status]} · ${SIZE[m.size]} · ${openCount(p)} open`}${readiness(p)!==null?` · <span class="ready">Set ${readiness(p)}% ready</span>`:""}${p.example?" · example":""}</span>
       ${m.cityTurn?`<span class="bar"><span style="width:${Math.min(100,Math.round(m.ratio*100))}%" class="${m.urg}"></span></span>`:""}</button>`).join(""):'<p class="note">No files for this department.</p>'}`;
   const ab=$("#arch"); if(ab) ab.onclick=()=>{ S.archive=!S.archive; S.sel=null; render(); };
@@ -1030,9 +1083,10 @@ function renderRail(){
   $("#rail").innerHTML = stagesFor(p ? (p.appType||"plancheck") : S.app).map((s,i)=>{
     let extra="";
     const rounds = p ? (p.status==="corrections" ? cyc : Math.max(cyc-1,0)) : 0;
-    if(i===2 && p && rounds) extra=`<span class="round">${p.status==="corrections"?`Round ${rounds}`:`${rounds} round${rounds===1?"":"s"} so far`}</span><span class="rounds">${Array.from({length:rounds},(_,k)=>`<i class="${p.status==="corrections"&&k===rounds-1?"cur":""}"></i>`).join("")}</span>`;
-    if(i===3) extra=`<span class="loop">↺ back to Corrections if anything is still open</span>`;
-    if(i===5 && p && (p.agencies||[]).length) extra=`<span class="loop">${p.agencies.filter(a=>a.done).length} of ${p.agencies.length} cleared</span>`;
+    if(i===3 && p && rounds) extra=`<span class="round">${p.status==="corrections"?`Round ${rounds}`:`${rounds} round${rounds===1?"":"s"} so far`}</span><span class="rounds">${Array.from({length:rounds},(_,k)=>`<i class="${p.status==="corrections"&&k===rounds-1?"cur":""}"></i>`).join("")}</span>`;
+    if(i===4) extra=`<span class="loop">↺ back to Corrections if anything is still open</span>`;
+    if(i===1) extra=p?(p.fee?`<span class="loop">${money2(p.fee.dueNow)} ${p.fee.paidAt?"paid":"due"}</span>`:`<span class="loop">No fee to pay online</span>`):`<span class="loop">Shown after you submit</span>`;
+    if(i===6 && p && (p.agencies||[]).length) extra=`<span class="loop">${p.agencies.filter(a=>a.done).length} of ${p.agencies.length} cleared</span>`;
     return `<div class="stage ${i<at?"done":""} ${i===at?"now":""}"><b>${s.t}</b><span class="who">${s.who}</span>${extra}</div>`; }).join("");
 }
 function renderWorkspace(){
@@ -1058,7 +1112,7 @@ function renderWorkspace(){
 /* ---------- admin: workload and department lanes ---------- */
 function adminBoard(){
   const all=visible().map(p=>({p,m:metrics(p)})).filter(x=>S.deptFilter==="All"||x.m.app.dept===S.deptFilter);
-  const rows=STAFF.map(r=>{ const xs=all.filter(x=>x.p.reviewerId===r.id); const live=xs.filter(x=>x.m.cityTurn);
+  const rows=STAFF.map(r=>{ const xs=all.filter(x=>assignedTo(x.p,r.id)); const live=xs.filter(x=>x.m.cityTurn);
     return {r, total:xs.length, live:live.length, overdue:live.filter(x=>x.m.urg==="overdue").length, due:live.filter(x=>x.m.urg==="due").length,
       waiting:xs.filter(x=>x.p.status==="corrections").length, done:xs.filter(x=>DONE(x.p.status)).length,
       avg:live.length?Math.round(live.reduce((a,x)=>a+x.m.days,0)/live.length):0, drafts:xs.reduce((a,x)=>a+x.p.corrections.filter(c=>c.state==="draft").length,0)}; });
@@ -1067,8 +1121,8 @@ function adminBoard(){
     <span class="t">${esc(p.address)}</span><span class="m">${esc(m.app.main?(p.projectType||m.app.name):m.app.name)} · ${SIZE[m.size]}</span>
     <span class="m">${m.cityTurn?`Day ${m.days} of ${m.target}`:STATUS_LABEL[p.status]} · ${openCount(p)} open</span>
     ${m.cityTurn?`<span class="bar"><span style="width:${Math.min(100,Math.round(m.ratio*100))}%" class="${m.urg}"></span></span>`:""}</button>`;
-  const nOf=r=>all.filter(x=>x.p.reviewerId===r.id).length;
-  const lanes=STAFF.filter(r=>nOf(r)).sort((a,b)=>nOf(b)-nOf(a)).map(r=>{ const xs=all.filter(x=>x.p.reviewerId===r.id).sort((a,b)=>b.m.score-a.m.score);
+  const nOf=r=>all.filter(x=>assignedTo(x.p,r.id)).length;
+  const lanes=STAFF.filter(r=>nOf(r)).sort((a,b)=>nOf(b)-nOf(a)).map(r=>{ const xs=all.filter(x=>assignedTo(x.p,r.id)).sort((a,b)=>b.m.score-a.m.score);
     return `<div class="lane"><h4><span>${esc(r.dept)}</span><span class="small">${esc(r.name)} · ${xs.length}</span></h4>${xs.map(card).join("")||'<p class="small">Nothing here.</p>'}</div>`; }).join("");
   return `<div class="ws"><div><h2>City overview</h2><p class="small" style="margin-top:6px">${all.length} file${all.length===1?"":"s"}${S.q?` matching “${esc(S.q)}”`:""}. Each lane is one reviewer's queue, most urgent on top: city's turn first, then by share of the review target used, project size and resubmittals.</p></div>
     <div class="tbl-wrap"><table class="wl"><thead><tr><th>Reviewer</th><th>Dept</th><th>Assigned</th><th>With City</th><th>Overdue</th><th>Due soon</th><th>Avg days</th><th>AI drafts to decide</th><th>With applicant</th><th>Agency approved</th></tr></thead><tbody>
@@ -1369,6 +1423,7 @@ function bindNew(){
     const v=id=>$("#"+id).value.trim();
     if(!v("f-address")){ flash("Add the project address."); return; }
     if(!v("f-owner")){ flash("Add the property owner's name."); return; }
+    if(!(Number(v("f-val"))>0)){ flash("Add the area or valuation so the plan check fee can be set."); return; }
     if(!file){ flash("Attach the plan set PDF."); return; }
     if(!linkOk(v("f-link"))){ flash("Use a Google Drive or Dropbox link for the full set."); return; }
     const p={id:uid(), address:v("f-address"), apn:v("f-apn"), zone:$("#f-zone").value||"Not sure", flags:checked("f-flags"), projectType:$("#f-type").value,
@@ -1376,9 +1431,10 @@ function bindNew(){
       units:Number(v("f-units"))||0, stories:Number(v("f-stories"))||0, permits:checked("f-permits"), calcs:checked("f-calcs"),
       owner:{name:v("f-owner"), email:v("f-owner-email"), phone:v("f-owner-phone")}, designer:{name:v("f-designer"), license:v("f-license"), email:v("f-designer-email"), phone:v("f-designer-phone")}, contractor:{name:v("f-contractor"), license:v("f-cslb"), pullBy:$("#f-pull").value}, applicant:{name:`${ME.name}, ${ME.firm}`, email:ME.email, phone:ME.phone}, submitterRole:$("#f-role").value,
       appType:"plancheck", dept:"Building", setLink:v("f-link"), applicantId:ME.id, applicantName:ME.firm, reviewerId:(S.rv=pickReviewer("Building")).id, reviewerName:S.rv.name, permitNo:"BLD-2026-"+String(Math.floor(500+Math.random()*400)), note:v("f-note"), status:"submitted", cycle:1, createdAt:now(), submittedAt:now(), sheets:[], completeness:[], corrections:[], changes:[], timeline:[], aiState:"pending"};
+    routeAndBill(p);
     addLog(p,"applicant",`Submitted ${file.name} to the City`);
     S.mode=null; S.sel=p.id; if(S.local||!S.db) S.projects.unshift(p);
-    save(p).then(()=>runFirstRead(p,file));
+    save(p).then(()=>runFirstRead(p,file,{prepOnly:p.status==="fee_due"}));
   };
 }
 function bindOther(){
@@ -1394,9 +1450,10 @@ function bindOther(){
       projectType:kinds.join(", ")||a.name, scope:v("f-scope")||"(not described)", valuation:Number(v("f-val"))||0, dates:[v("f-start"),v("f-end")].filter(Boolean).join(" – "),
       owner:{name:v("f-owner"), email:v("f-owner-email")}, designer:{license:v("f-license")}, applicant:{name:`${ME.name}, ${ME.firm}`, email:ME.email, phone:ME.phone}, submitterRole:$("#f-role").value, note:v("f-note"),
       status:"submitted", cycle:1, createdAt:now(), submittedAt:now(), sheets:[], completeness:[], corrections:[], changes:[], timeline:[], aiState:file?"pending":"none"};
+    routeAndBill(p);
     addLog(p,"applicant",`Submitted ${a.name} application${file?` with ${file.name}`:""}`);
     S.mode=null; S.sel=p.id; S.app="plancheck"; if(S.local||!S.db) S.projects.unshift(p);
-    save(p).then(()=>{ if(file) runFirstRead(p,file); });
+    save(p).then(()=>{ if(file) runFirstRead(p,file,{prepOnly:p.status==="fee_due"}); });
   };
 }
 function bulkForm(){
@@ -1534,6 +1591,8 @@ function projectView(p){
   let head="", primary="";
   if(!P){
     if(p.status==="submitted"||p.status==="resubmitted") head=`<div class="note">${p.status==="resubmitted"?"Revised set received":"Submitted"} ${fmtD(p.updatedAt||p.submittedAt)}. Monrovia reviewers are working on it. Their comments will appear here.</div>`;
+    if(p.status==="fee_due"){ head=`<div class="note red"><b>Plan check fee due: ${money2(p.fee?.dueNow)}.</b> Review starts, and Redline's AI first read runs, as soon as it's paid.</div>${feeHtml(p)}`;
+      primary=`<button class="btn primary" data-a="payfee" ${busy?"disabled":""}>Pay ${money2(p.fee?.dueNow)}</button><span class="small">Pilot: no card is charged yet.</span>`; }
     if(p.status==="corrections"){ head=`<div class="note red"><b>${openApproved} comment${openApproved===1?"":"s"} from the City.</b> Each one shows the spot on your sheets. Respond to each, then upload the revised set. Only these items get rechecked.</div>`;
       primary=`<input type="file" id="re-file" accept="application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="letter">Print the list</button>`; }
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
@@ -1562,6 +1621,7 @@ function projectView(p){
       primary=`<button class="btn primary" data-a="ready" ${left?"disabled":""}>Ready for pickup</button>`; }
     if(p.status==="ready"){ head=`<div class="note ok"><b>Ready for permit pickup.</b> Waiting on fees and pickup.</div>`; primary=`<button class="btn ok" data-a="issue-permit">Mark permit issued</button>`; }
     if(p.status==="issued") head=`<div class="note ok"><b>Permit issued${p.issuedPermitAt?` ${fmtD(p.issuedPermitAt)}`:""}.</b></div>`;
+    if(p.status==="fee_due"){ head=`<div class="note">Waiting on the applicant's plan check fee (${money2(p.fee?.dueNow)}). Review and the AI first read start once it's paid.</div>${feeHtml(p)}`; primary=isAdmin()?`<button class="btn" data-a="payfee" ${busy?"disabled":""}>Record fee as paid</button>`:""; }
     if(p.status==="void"){ head=`<div class="note"><b>Voided ${fmtD(p.voidedAt)}</b>${p.voidReason?`: ${esc(p.voidReason)}`:""}. It stays in the archive and is deleted for good on ${fmtD(purgeAt(p))}.</div>`; primary=""; }
     if(isAdmin() && S.voiding===p.id) head=`<div class="note red"><b>Void this application?</b> It leaves every queue, moves to the archive, and is deleted with its sheets after 30 days. You can restore it until then.
       <div class="form" style="margin-top:10px"><label class="f">Reason<select id="void-reason"><option>Duplicate application</option><option>Information entered incorrectly</option><option>Withdrawn by applicant</option><option>Submitted in error</option><option>Other</option></select></label></div>
@@ -1577,12 +1637,11 @@ function projectView(p){
   const ap = p.applicant || {name:p.applicantName||"", email:"", phone:""};
   const person=(role,x,extra="")=>`<div class="person"><span class="role">${role}</span><b>${esc(x?.name||"—")}</b>${extra}${x?.email?`<a href="mailto:${esc(x.email)}">${esc(x.email)}</a>`:"<span>—</span>"}${x?.phone?`<a href="tel:${esc(x.phone.replace(/[^0-9+]/g,""))}">${esc(x.phone)}</a>`:"<span>—</span>"}</div>`;
   const people = `<div class="people">${person("Owner",p.owner)}${person("Designer / Architect",p.designer,p.designer?.license?`<span>Lic. ${esc(p.designer.license)}</span>`:"")}${p.contractor&&(p.contractor.name||p.contractor.license||p.contractor.pullBy)?person(p.contractor.pullBy==="Owner-builder"?"Owner-builder":"Contractor",{name:p.contractor.name||(p.contractor.pullBy==="Owner-builder"?p.owner?.name:"")},p.contractor.license?`<span>CSLB ${esc(p.contractor.license)}</span>`:""):""}${person("Applicant",ap)}
-    ${isAdmin()?`<div class="person"><span class="role">Reviewer</span><select id="assign" aria-label="Reviewer">${STAFF.map(r=>`<option value="${r.id}" ${r.id===p.reviewerId?"selected":""}>${esc(r.name)} · ${esc(r.dept)}</option>`).join("")}</select>${rv?`<a href="mailto:${esc(rv.email)}">${esc(rv.email)}</a><span>${esc(rv.phone)}</span>`:""}</div>`
-      : person(`Reviewer · ${esc(appOf(p).dept)}`, rv||{name:p.reviewerName})}</div>`;
+    ${reviewsHtml(p)}</div>`;
   return `<div class="ws">
     ${isAdmin()?`<div><button class="btn sm" data-a="board">← City overview</button></div>`:""}
     <div class="ws-h"><div style="flex:1;min-width:0"><h2>${esc(p.address)}</h2>
-      <div class="facts"><span class="pill p-${p.status}">${STATUS_LABEL[p.status]}</span><span><b>${esc(appOf(p).name)}</b></span><span>${esc(p.projectType||"")}</span>${p.dates?`<span>Dates <b>${esc(p.dates)}</b></span>`:""}${p.docType&&p.docType!=="plan set"?`<span class="pill p-submitted">${esc(p.docType)}</span>`:""}${p.permitNo?`<span>Permit <b>${esc(p.permitNo)}</b></span>`:""}<span>Zone <b>${esc(p.zone||"—")}</b></span><span>APN <b>${esc(p.apn||"—")}</b></span><span>Valuation <b>${money(p.valuation)}</b></span><span>Cycle <b>${p.cycle||1}</b></span>${P&&readiness(p)!==null?`<span>Set <b>${readiness(p)}%</b> ready</span>`:""}</div>
+      <div class="facts"><span class="pill p-${p.status}">${STATUS_LABEL[p.status]}</span><span><b>${esc(appOf(p).name)}</b></span><span>${esc(p.projectType||"")}</span>${p.dates?`<span>Dates <b>${esc(p.dates)}</b></span>`:""}${p.docType&&p.docType!=="plan set"?`<span class="pill p-submitted">${esc(p.docType)}</span>`:""}${p.permitNo?`<span>Permit <b>${esc(p.permitNo)}</b></span>`:""}<span>Zone <b>${esc(p.zone||"—")}</b></span><span>APN <b>${esc(p.apn||"—")}</b></span><span>Valuation <b>${money(p.valuation)}</b></span>${p.fee?`<span>Fee <b>${money2(p.fee.dueNow)}</b> ${p.fee.paidAt?"paid":"due"}</span>`:""}<span>Cycle <b>${p.cycle||1}</b></span>${P&&readiness(p)!==null?`<span>Set <b>${readiness(p)}%</b> ready</span>`:""}</div>
       ${people}${(p.flags||[]).length?`<div class="facts">${p.flags.map(f=>`<span class="pill p-warn">${esc(f)}</span>`).join("")}</div>`:""}
       <p style="margin:8px 0 0;font-size:14px">${esc(p.scope)}</p>
       ${p.note?`<div class="edu" style="margin-top:8px"><b>Applicant note</b>${esc(p.note)}</div>`:""}
@@ -1635,7 +1694,7 @@ function bindProject(p){
   w.querySelectorAll("[data-ag]").forEach(cb=>cb.onchange=()=>{ const i=+cb.dataset.ag; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); p.agencies[i].done=cb.checked; addLog(p,"planner",`${cb.checked?"Cleared":"Reopened"}: ${p.agencies[i].name}`); save(p); });
   w.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>jump(b.dataset.goto));
   w.querySelectorAll("[data-jump]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); S.focusC=b.dataset.jump; renderWorkspace(); const el=document.querySelector(`[data-goto="${b.dataset.jump}"]`); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); });
-  const as=$("#assign"); if(as) as.onchange=()=>{ const r=STAFF.find(x=>x.id===as.value); p.reviewerId=r.id; p.reviewerName=r.name; addLog(p,"planner",`Reassigned to ${r.name} (${r.dept})`); save(p); };
+  document.querySelectorAll("[data-assign]").forEach(sel=>sel.onchange=()=>{ const i=+sel.dataset.assign, r=STAFF.find(x=>x.id===sel.value); p.reviews=reviewsOf(p).map(x=>({...x})); p.reviews[i].reviewerId=r.id; p.reviews[i].reviewerName=r.name; if(i===0){ p.reviewerId=r.id; p.reviewerName=r.name; } addLog(p,"planner",`Reassigned ${p.reviews[i].dept} review to ${r.name}`); save(p); });
   w.querySelectorAll('input[name="cdept"]').forEach(r=>r.onchange=()=>{ S.cDept=r.value; renderWorkspace(); });
   const aq=$("#ask-q"); if(aq) aq.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); act(p,"ask"); } };
   const rf=$("#re-file"); if(rf) rf.onchange=()=>{ const f=rf.files[0]; if(!f) return;
@@ -1671,6 +1730,9 @@ function act(p,a,cid){
       if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first.`); return; } $("#re-file").click(); break; }
     case "firstread": $("#fr-file").click(); break;
     case "airun": runFirstRead(p, null); break;
+    case "payfee": { if(!p.fee || p.fee.paidAt) break; const staff=isPlanner(); p.fee.paidAt=now(); p.fee.method=staff?"Recorded by City staff":"Pilot, no charge"; p.status="submitted"; p.submittedAt=now();
+      addLog(p, staff?"planner":"applicant", `Plan check fee ${money2(p.fee.dueNow)} ${staff?"recorded as paid":"paid"}. Sent to ${reviewsOf(p).map(v=>v.dept).join(", ")} review.`);
+      save(p).then(()=>{ if(p.aiState!=="none") runFirstRead(p, null); }); break; }
     case "voidask": S.voiding=p.id; renderWorkspace(); break;
     case "voidcancel": S.voiding=null; renderWorkspace(); break;
     case "void": { const why=$("#void-reason")?.value||"Voided"; p.voidPrev=p.status; p.status="void"; p.voidedAt=now(); p.voidReason=why; addLog(p,"planner",`Voided: ${why}.`); S.voiding=null; S.sel=null; save(p); break; }
