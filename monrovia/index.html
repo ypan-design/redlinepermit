@@ -637,6 +637,7 @@ function routeAndBill(p){
 
 /* ---------- persistence ---------- */
 const saveChain = {};
+try{ S.deepLink=new URLSearchParams(location.search).get("p"); }catch(e){}
 function save(p){
   p.updatedAt = now();
   const data = JSON.parse(JSON.stringify(p)); delete data.id;
@@ -1066,7 +1067,7 @@ function renderTasks(){
   $("#queue").innerHTML=(isAdmin()?`<div class="acts" style="margin:0 0 8px"><button class="btn sm" id="arch">${S.archive?"← Active files":`Archive · ${S.projects.filter(p=>p.status==="void").length}`}</button></div><input type="search" id="q" class="searchbox" placeholder="Search address, permit #, applicant, reviewer" value="${esc(S.q)}">
     <div class="chks" style="margin-bottom:10px">${depts.map(d=>`<label><input type="radio" name="deptf" value="${d}" ${S.deptFilter===d?"checked":""}>${d}</label>`).join("")}</div>`:`<p class="small" style="margin:0 4px 8px">Only files assigned to you.</p>`)+`
     ${statsHtml()}
-    <p class="small" style="margin:0 4px 8px">${list.length} file${list.length===1?"":"s"} · ${counts.overdue} overdue · ${counts.due} due soon · sorted by urgency, size and days waiting</p>
+    <p class="small" style="margin:0 4px 8px">${list.length} file${list.length===1?"":"s"} · ${counts.overdue} overdue · ${counts.due} due soon${list.some(x=>x.p.status==="fee_due")?` · <b>${list.filter(x=>x.p.status==="fee_due").length} waiting on a fee</b>`:""} · sorted by urgency, size and days waiting</p>
     ${list.length?list.map(({p,m})=>`<button class="qitem" data-p="${p.id}" aria-current="${p.id===S.sel}">
       <span class="m">${p.status==="void"?'<span class="pill p-void">Voided</span>':`<span class="pill ${URG[m.urg][1]}">${URG[m.urg][0]}</span>`}<span class="dept">${esc(m.app.dept)}</span></span>
       <span class="t">${esc(p.address)}</span>
@@ -1591,8 +1592,7 @@ function projectView(p){
   let head="", primary="";
   if(!P){
     if(p.status==="submitted"||p.status==="resubmitted") head=`<div class="note">${p.status==="resubmitted"?"Revised set received":"Submitted"} ${fmtD(p.updatedAt||p.submittedAt)}. Monrovia reviewers are working on it. Their comments will appear here.</div>`;
-    if(p.status==="fee_due"){ head=`<div class="note red"><b>Plan check fee due: ${money2(p.fee?.dueNow)}.</b> Review starts, and Redline's AI first read runs, as soon as it's paid.</div>${feeHtml(p)}`;
-      primary=`<button class="btn primary" data-a="payfee" ${busy?"disabled":""}>Pay ${money2(p.fee?.dueNow)}</button><span class="small">Pilot: no card is charged yet.</span>`; }
+    if(p.status==="fee_due"){ head=`<div class="note red"><b>Plan check fee due: ${money2(p.fee?.dueNow)}.</b> Pay it to the City of Monrovia at City Hall, 415 S. Ivy Ave. Review starts, and Redline's AI first read runs, as soon as City staff record the payment. We'll email you when it's recorded.</div>${feeHtml(p)}`; }
     if(p.status==="corrections"){ head=`<div class="note red"><b>${openApproved} comment${openApproved===1?"":"s"} from the City.</b> Each one shows the spot on your sheets. Respond to each, then upload the revised set. Only these items get rechecked.</div>`;
       primary=`<input type="file" id="re-file" accept="application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="letter">Print the list</button>`; }
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
@@ -1621,7 +1621,7 @@ function projectView(p){
       primary=`<button class="btn primary" data-a="ready" ${left?"disabled":""}>Ready for pickup</button>`; }
     if(p.status==="ready"){ head=`<div class="note ok"><b>Ready for permit pickup.</b> Waiting on fees and pickup.</div>`; primary=`<button class="btn ok" data-a="issue-permit">Mark permit issued</button>`; }
     if(p.status==="issued") head=`<div class="note ok"><b>Permit issued${p.issuedPermitAt?` ${fmtD(p.issuedPermitAt)}`:""}.</b></div>`;
-    if(p.status==="fee_due"){ head=`<div class="note">Waiting on the applicant's plan check fee (${money2(p.fee?.dueNow)}). Review and the AI first read start once it's paid.</div>${feeHtml(p)}`; primary=isAdmin()?`<button class="btn" data-a="payfee" ${busy?"disabled":""}>Record fee as paid</button>`:""; }
+    if(p.status==="fee_due"){ head=`<div class="note">Waiting on the applicant's plan check fee (${money2(p.fee?.dueNow)}). Review and the AI first read start once it's paid.</div>${feeHtml(p)}`; primary=`<label class="f" style="max-width:220px">City receipt # (optional)<input type="text" id="fee-receipt"></label><button class="btn primary" data-a="payfee" ${busy?"disabled":""}>Record fee as paid</button>`; }
     if(p.status==="void"){ head=`<div class="note"><b>Voided ${fmtD(p.voidedAt)}</b>${p.voidReason?`: ${esc(p.voidReason)}`:""}. It stays in the archive and is deleted for good on ${fmtD(purgeAt(p))}.</div>`; primary=""; }
     if(isAdmin() && S.voiding===p.id) head=`<div class="note red"><b>Void this application?</b> It leaves every queue, moves to the archive, and is deleted with its sheets after 30 days. You can restore it until then.
       <div class="form" style="margin-top:10px"><label class="f">Reason<select id="void-reason"><option>Duplicate application</option><option>Information entered incorrectly</option><option>Withdrawn by applicant</option><option>Submitted in error</option><option>Other</option></select></label></div>
@@ -1730,8 +1730,8 @@ function act(p,a,cid){
       if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first.`); return; } $("#re-file").click(); break; }
     case "firstread": $("#fr-file").click(); break;
     case "airun": runFirstRead(p, null); break;
-    case "payfee": { if(!p.fee || p.fee.paidAt) break; const staff=isPlanner(); p.fee.paidAt=now(); p.fee.method=staff?"Recorded by City staff":"Pilot, no charge"; p.status="submitted"; p.submittedAt=now();
-      addLog(p, staff?"planner":"applicant", `Plan check fee ${money2(p.fee.dueNow)} ${staff?"recorded as paid":"paid"}. Sent to ${reviewsOf(p).map(v=>v.dept).join(", ")} review.`);
+    case "payfee": { if(!p.fee || p.fee.paidAt || !isPlanner()) break; const rc=($("#fee-receipt")?.value||"").trim(); p.fee.paidAt=now(); p.fee.method=`Paid to the City${rc?`, receipt ${rc}`:""}`; p.fee.receipt=rc; p.status="submitted"; p.submittedAt=now();
+      addLog(p, "planner", `Plan check fee ${money2(p.fee.dueNow)} recorded as paid${rc?` (receipt ${rc})`:""}. Sent to ${reviewsOf(p).map(v=>v.dept).join(", ")} review.`);
       save(p).then(()=>{ if(p.aiState!=="none") runFirstRead(p, null); }); break; }
     case "voidask": S.voiding=p.id; renderWorkspace(); break;
     case "voidcancel": S.voiding=null; renderWorkspace(); break;
@@ -1876,6 +1876,7 @@ function drawAcct(msg, ok){
         ${S.local?`<label class="f wide">Email<input id="ac-email" type="email" value="${esc(F.email)}"></label>`:""}
         <label class="f">Mobile phone<input id="ac-phone" type="tel" inputmode="tel" autocomplete="tel" value="${esc(F.phone)}" placeholder="(626) 555-0100"></label>
         <label class="f">Full name<input id="ac-name" type="text" autocomplete="name" value="${esc(F.name)}"></label>
+        <label class="wide" style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink2)"><input id="ac-sms" type="checkbox" ${F.sms?"checked":""} style="margin-top:3px">Text me portal updates (${F.role==="applicant"?"City comments on my applications":"new submissions assigned to me"}). Msg and data rates may apply. Reply STOP to opt out.</label>
         ${F.role==="applicant"
           ? `<label class="f">Company or firm<input id="ac-firm" type="text" autocomplete="organization" value="${esc(F.firm)}" placeholder="Optional for owners"></label>
              <label class="f">I'm usually the<select id="ac-firmrole">${["Owner","Designer / architect","Engineer","Contractor","Authorized agent"].map(o=>`<option ${o===F.firmRole?"selected":""}>${o}</option>`).join("")}</select></label>
@@ -1891,7 +1892,7 @@ function drawAcct(msg, ok){
   }
   $("#acct-body").innerHTML=html;
   const v=id=>{const e=$("#"+id);return e?e.value.trim():undefined;};
-  const grab=()=>{ F.email=v("ac-email")??F.email; F.code=(v("ac-code")??F.code).replace(/\D/g,""); F.name=v("ac-name")??F.name; F.phone=v("ac-phone")??F.phone;
+  const grab=()=>{ F.email=v("ac-email")??F.email; F.code=(v("ac-code")??F.code).replace(/\D/g,""); F.name=v("ac-name")??F.name; F.phone=v("ac-phone")??F.phone; if($("#ac-sms")) F.sms=$("#ac-sms").checked;
     if($("#ac-firm")){F.firm=v("ac-firm");F.firmRole=v("ac-firmrole");F.license=v("ac-license");}
     if($("#ac-title")) F.title=v("ac-title"); if($("#ac-dept")) F.dept=v("ac-dept"); };
   const busy=(id,on)=>{ const b=$("#"+id); if(b) b.disabled=on; };
@@ -1931,7 +1932,7 @@ function drawAcct(msg, ok){
     if(!/\d{7,}/.test(F.phone.replace(/\D/g,""))) return drawAcct("Add a mobile phone number.");
     if(S.local && !okEmail(email)) return drawAcct("Add a valid email.");
     if(!mayBe(F.role,email)) return drawAcct(F.role==="reviewer"?"Plan reviewer needs a @monroviaca.gov sign-in.":"This sign-in can't be a portal admin.");
-    const doc={role:F.role, name:F.name, email:nEmail(email), phone:F.phone, createdAt:S.acct?.createdAt||now(), updatedAt:now()};
+    const doc={role:F.role, name:F.name, email:nEmail(email), phone:F.phone, sms:!!F.sms, createdAt:S.acct?.createdAt||now(), updatedAt:now()};
     if(F.role==="applicant"){ doc.firm=F.firm||""; doc.firmRole=F.firmRole||""; doc.license=F.license||""; }
     else { doc.title=F.title||""; if(F.role==="reviewer") doc.dept=F.dept||"Building"; }
     busy("ac-save",true);
@@ -1973,6 +1974,7 @@ function watchProjects(){
     const keep={}; S.projects.forEach(p=>p.corrections.forEach(c=>{ if(c.draftResponse) keep[c.id]=c.draftResponse; }));
     S.projects=snap.docs.map(d=>{ const x=d.data()||{}; x.id=d.id; x.corrections=x.corrections||[]; x.corrections.forEach(c=>{ if(keep[c.id]) c.draftResponse=keep[c.id]; }); return x; })
       .sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)));
+    if(S.deepLink && S.projects.some(p=>p.id===S.deepLink)){ S.sel=S.deepLink; S.tab="projects"; S.mode=null; S.deepLink=null; }
     render(); purgeVoids();
   }, e=>flash("Could not load projects: "+e.message));
 }

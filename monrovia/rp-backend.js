@@ -21,7 +21,7 @@
   const assetIdsIn = obj => { const out=[]; JSON.stringify(obj, (k,v)=>{ if(k==="assetId" && typeof v==="string") out.push(v); return v; }); return out; };
 
   /* ---------- db ---------- */
-  const MEMBER_FIELDS = r => ({role:r.role, name:r.name, email:r.email, phone:r.phone, firm:r.firm, firmRole:r.firm_role, license:r.license, title:r.title, dept:r.dept, createdAt:r.created_at, emailConfirmed:true});
+  const MEMBER_FIELDS = r => ({role:r.role, name:r.name, email:r.email, phone:r.phone, firm:r.firm, firmRole:r.firm_role, license:r.license, title:r.title, dept:r.dept, sms:!!r.sms, createdAt:r.created_at, emailConfirmed:true});
   const kind = path => /\/projects$/.test(path) ? "projects" : /\/members$/.test(path) ? "members" : /\/approvals$/.test(path) ? "approvals" : null;
   const snap = rows => ({docs: rows.map(r => ({id:r.__id, exists:true, data:()=>r.__data}))});
   async function load(k){
@@ -79,7 +79,7 @@
           return;
         }
         if(k==="members"){
-          const row = {id, city:CITY_SLUG, role:d.role, name:d.name, phone:d.phone||"", firm:d.firm||"", firm_role:d.firmRole||"", license:d.license||"", title:d.title||"", dept:d.dept||""};
+          const row = {id, city:CITY_SLUG, role:d.role, name:d.name, phone:d.phone||"", firm:d.firm||"", firm_role:d.firmRole||"", license:d.license||"", title:d.title||"", dept:d.dept||"", sms:!!d.sms};
           const {error} = await sb.from("members").upsert(row, {onConflict:"id,city"});
           if(error) throw err(error, "invalid_argument");
           return;
