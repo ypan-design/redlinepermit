@@ -293,6 +293,22 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
 .rcard.on{border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
 .rcard:focus-within{outline:2px solid var(--red);outline-offset:2px}
 #whochip{cursor:pointer}
+/* parcel map */
+.pmap-wrap{position:relative}
+.pmap{height:320px;border-radius:12px;border:1px solid var(--hair);overflow:hidden;background:var(--sand2);z-index:0}
+.pmap-hint{margin-top:6px}
+.psugg{display:grid;gap:6px}
+.psugg .bubble .mono{font-family:var(--f-mono);font-size:11px;color:var(--ink3);margin-left:4px}
+.pfacts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.pfacts div{border:1px solid var(--hair);border-radius:10px;padding:8px 10px;background:var(--glass-solid)}
+.pfacts span{display:block;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.pfacts b{font-size:14px}
+.pullnote .ob{margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
+.pullnote:not(.owner) .ob{display:none}
+.pullnote a{color:inherit;text-decoration:underline}
+#f-val-hint{display:block;margin-top:4px;font-weight:400;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--ink3)}
+.leaflet-container{font:inherit}
+@media (max-width:700px){ .pmap{height:250px} }
 .tgroup{margin:4px 0 8px;font-size:13px;font-weight:600;color:var(--ink2)}
 .mdept{display:none;font-family:var(--f-body);font-weight:600;color:var(--ink3)}
 @media (max-width:700px){
@@ -1080,11 +1096,12 @@ function appPicker(){
 function propertyBlock(full){
   return `<div class="fs"><h3>Property</h3><div class="form">
       <label class="f wide">${S.app==="event"||S.app==="film"?"Location in Monrovia":"Project address in Monrovia"}<input type="text" id="f-address" placeholder="e.g. 146 N Alta Vista Ave" autocomplete="street-address"></label>
-      <div class="wide parcel" id="parcel"><span class="small">APN, zoning and site conditions fill in from the address.</span></div>
-      <details class="wide" id="parcel-edit"><summary class="small" style="cursor:pointer">Edit parcel details</summary>
+      <div class="wide psugg" id="psugg" hidden></div>
+      <div class="wide parcel" id="parcel"><div class="pmap-wrap"><div id="pmap" class="pmap" aria-label="Parcel and zoning map of Monrovia"></div><div class="pmap-hint small">Type the address, or tap your lot on the map.</div></div><div id="pcard"></div></div>
+      <details class="wide" id="parcel-edit"><summary class="small" style="cursor:pointer">Not right? Edit the APN, zone or site conditions</summary>
         <div class="form" style="margin-top:10px">
-          <label class="f">APN<input type="text" id="f-apn" placeholder="e.g. 8507-012-034"></label>
-          <label class="f">Zone<select id="f-zone"><option value="">Not sure</option><option>RL</option><option>RE</option><option>RF</option><option>RM</option><option>RH</option></select></label>
+          <label class="f">APN<input type="text" id="f-apn" placeholder="e.g. 8504-004-007"></label>
+          <label class="f">Zone<input type="text" id="f-zone" list="zone-list" placeholder="e.g. RL"><datalist id="zone-list">${ZONE_CODES.map(z=>`<option value="${z}">`).join("")}</datalist></label>
           <div class="f wide"><span class="small">Site conditions</span>${chk("f-flags",["Hillside","High fire zone","Historic","HOA","After-the-fact work"])}</div>
         </div></details>
     </div></div>`;
@@ -1093,24 +1110,26 @@ function newForm(){
   if(S.app!=="plancheck") return `<form class="ws" id="newform" novalidate><div><h2>New application</h2></div>${appPicker()}${otherForm(APPS.find(a=>a.id===S.app))}</form>`;
   return `<form class="ws" id="newform" novalidate>
     <div><h2>New application</h2>
-    <p class="small" style="margin-top:6px">One form instead of the City's two. Contractor and workers' comp declarations are collected later, at permit issuance.</p></div>
+    <p class="small" style="margin-top:6px">One form instead of the City's two. Type the address and the APN and zone fill in. Contractor and workers' comp declarations are finished at permit issuance.</p></div>
     ${appPicker()}
     <div class="fs"><h3>Property</h3><div class="form">
       <label class="f wide">Project address in Monrovia<input type="text" id="f-address" placeholder="e.g. 146 N Alta Vista Ave" autocomplete="street-address"></label>
-      <div class="wide parcel" id="parcel"><span class="small">APN, zoning and site conditions fill in from the address.</span></div>
-      <details class="wide" id="parcel-edit"><summary class="small" style="cursor:pointer">Edit parcel details</summary>
+      <div class="wide psugg" id="psugg" hidden></div>
+      <div class="wide parcel" id="parcel"><div class="pmap-wrap"><div id="pmap" class="pmap" aria-label="Parcel and zoning map of Monrovia"></div><div class="pmap-hint small">Type the address, or tap your lot on the map.</div></div><div id="pcard"></div></div>
+      <details class="wide" id="parcel-edit"><summary class="small" style="cursor:pointer">Not right? Edit the APN, zone or site conditions</summary>
         <div class="form" style="margin-top:10px">
-          <label class="f">APN<input type="text" id="f-apn" placeholder="e.g. 8507-012-034"></label>
-          <label class="f">Zone<select id="f-zone"><option value="">Not sure</option><option>RL</option><option>RE</option><option>RF</option><option>RM</option><option>RH</option></select></label>
+          <label class="f">APN<input type="text" id="f-apn" placeholder="e.g. 8504-004-007"></label>
+          <label class="f">Zone<input type="text" id="f-zone" list="zone-list" placeholder="e.g. RL"><datalist id="zone-list">${ZONE_CODES.map(z=>`<option value="${z}">`).join("")}</datalist></label>
           <div class="f wide"><span class="small">Site conditions</span>${chk("f-flags",["Hillside","High fire zone","Historic","HOA","After-the-fact work"])}</div>
         </div></details>
     </div></div>
     <div class="fs"><h3>Project</h3><div class="form">
       <label class="f">Project type<select id="f-type"><option>Detached ADU</option><option>Attached ADU / JADU</option><option>Garage conversion ADU</option><option>SB 9 lot split + unit</option><option>New single-family dwelling</option><option>Addition</option><option>Alteration / remodel</option><option>Tenant improvement</option></select></label>
-      <label class="f">Valuation ($)<input type="number" id="f-val" min="0" placeholder="e.g. 250000"></label>
-      <label class="f wide">Scope of work<textarea id="f-scope" placeholder="e.g. New 750 sf detached ADU, 1 story, 2 bed / 1 bath, rear yard"></textarea></label>
-      <label class="f">Living area (sf)<input type="number" id="f-living" min="0"></label>
+      <label class="f">Living area of work (sf)<input type="number" id="f-living" min="0" placeholder="New, added or remodeled"></label>
       <label class="f">Garage area (sf)<input type="number" id="f-garage" min="0"></label>
+      <label class="f">Cost per sf ($)<input type="number" id="f-rate" min="0" value="250"></label>
+      <label class="f">Valuation ($)<input type="number" id="f-val" min="0" placeholder="Area × cost per sf"><span class="small" id="f-val-hint">Fills from the area at $250/sf. Change either one if your contract price is different.</span></label>
+      <label class="f wide">Scope of work<textarea id="f-scope" placeholder="e.g. New 750 sf detached ADU, 1 story, 2 bed / 1 bath, rear yard"></textarea></label>
       <label class="f">Dwelling units<input type="number" id="f-units" min="0" value="1"></label>
       <label class="f">Stories<input type="number" id="f-stories" min="0" value="1"></label>
       <div class="f wide"><span class="small">Permits needed</span>${chk("f-permits",["Building","Electrical","Mechanical","Plumbing","Solar/PV","EV charger","Demolition","Grading","Pool/Spa"],["Building","Electrical","Mechanical","Plumbing"])}</div>
@@ -1121,10 +1140,15 @@ function newForm(){
       <label class="f">Owner email<input type="text" id="f-owner-email" placeholder="name@email.com"></label>
       <label class="f">Owner phone<input type="tel" id="f-owner-phone" placeholder="626-555-0100"></label>
       <label class="f">Designer or architect<input type="text" id="f-designer" placeholder="Name, firm"></label>
-      <label class="f">License # (if licensed)<input type="text" id="f-license" placeholder="e.g. C-12345"></label>
+      <label class="f">Architect / engineer license # (optional)<input type="text" id="f-license" placeholder="e.g. C-12345"></label>
       <label class="f">Designer email<input type="text" id="f-designer-email"></label>
       <label class="f">Designer phone<input type="tel" id="f-designer-phone"></label>
       <label class="f">Who is submitting?<select id="f-role"><option>Design professional in charge</option><option>Non-licensed designer</option><option>Owner</option><option>Authorized agent</option></select></label>
+      <div class="f wide"><span class="small" style="font-weight:600">Contractor (optional for now)</span></div>
+      <label class="f">Who will pick up the permit?<select id="f-pull"><option value="">Not decided yet</option><option>Licensed contractor</option><option>Owner-builder</option></select></label>
+      <label class="f">Contractor (optional)<input type="text" id="f-contractor" placeholder="Name, company"></label>
+      <label class="f">CSLB license # (optional)<input type="text" id="f-cslb" inputmode="numeric" placeholder="e.g. 1012345"></label>
+      <div class="wide note pullnote" id="f-pull-note">${PULL_NOTE}</div>
     </div></div>
     <div class="fs"><h3>Plans</h3>
       ${storePick()}
@@ -1149,26 +1173,144 @@ function otherForm(a){
       <label class="f">Your name<input type="text" id="f-owner" placeholder="Full name"></label>
       <label class="f">You are the<select id="f-role"><option>Owner</option><option>Contractor</option><option>Designer / engineer</option><option>Business owner</option><option>Authorized agent</option></select></label>
       <label class="f">Email<input type="text" id="f-owner-email"></label>
-      <label class="f">License # (contractors)<input type="text" id="f-license"></label>
+      <label class="f">Contractor license # (optional)<input type="text" id="f-license" inputmode="numeric"></label>
     </div></div>
     <div class="fs"><h3>Attachments</h3>${dropZone("Drop plans, a site sketch or traffic plan (PDF, optional)")}</div>
     <div class="fs"><h3>Note</h3><label class="f">Note to the City (optional)<textarea id="f-note" placeholder="Anything the reviewer should know"></textarea></label></div>
     <div class="acts"><button class="btn primary" type="submit">Submit to ${esc(a.dept==="City"?"the City":a.dept)}</button><button class="btn" type="button" id="f-cancel">Cancel</button></div>`;
 }
-function parcelCard(){
-  const apn=$("#f-apn").value.trim(), zone=$("#f-zone").value, flags=checked("f-flags"), addr=$("#f-address").value.trim();
-  const el=$("#parcel"); if(!el) return;
-  if(!addr){ el.innerHTML='<span class="small">APN, zoning and site conditions fill in from the address.</span>'; return; }
-  if(!apn && !zone){ el.innerHTML=`<div class="note"><b>Parcel lookup</b><br>In the live portal, the APN, zone and site conditions (hillside, fire zone, historic) fill in here from LA County parcel data and Monrovia's zoning map as soon as you type the address. This preview can't reach those servers, so open “Edit parcel details” if you know them, or leave them for the City.</div>`; return; }
-  el.innerHTML=`<div class="facts"><span>APN <b>${esc(apn||"—")}</b></span><span>Zone <b>${esc(zone||"—")}</b></span>${flags.map(f=>`<span class="pill p-warn">${esc(f)}</span>`).join("")}</div>`;
+const PULL_NOTE=`<b>Who picks up the permit.</b> When the permit is ready, it's usually picked up by the licensed contractor doing the work, since their California (CSLB) license, workers' comp and insurance cover the job. You can leave this blank now and add the contractor before the permit issues. <a href="https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx" target="_blank" rel="noopener">Check a license on CSLB ↗</a>
+  <div class="ob"><b>Owner-builder.</b> An owner can pick up the permit themselves under California's owner-builder exemption (B&amp;P Code §7044), at their own risk. Before issuance the owner signs the State owner-builder declaration under penalty of perjury (B&amp;P Code §7031.5, Health &amp; Safety Code §19825) and proves identity. The owner is then legally and financially responsible for the work: hiring anyone can make them an employer (workers' comp, payroll taxes), they can be liable for injuries on site that homeowner's insurance may not cover, and later buyers can hold them liable for defects. The City inspects for code compliance only. It does not supervise, insure or guarantee owner-builder work.</div>`;
+/* ---------- parcel lookup: LA County parcels + Monrovia zoning (SCAG 2024, saved as zoning.json) ---------- */
+const GIS={parcels:"https://public.gis.lacounty.gov/public/rest/services/LACounty_Cache/LACounty_Parcel/MapServer", zoning:"zoning.json"};
+const ZONE_CODES=["RL","RE","RF","RM2500","RM3000","RM3500","RM4000","RM/RH","RH","NC","C-R/S","RCC","RCM","HC-D","M","O/RD/LM","BE","HWP","HR","PD","SP","P/QP","ANF"];
+const ZONE_NAMES={RL:"Residential Low Density",RE:"Residential Estate",RF:"Residential Foothill",RH:"Residential High Density","RM/RH":"Residential Medium/High Density",NC:"Neighborhood Commercial","C-R/S":"Commercial Retail/Service",M:"Manufacturing",PD:"Planned Development","P/QP":"Public / Quasi-Public",SP:"Specific Plan","O/RD/LM":"Office / R&D / Light Manufacturing",ANF:"Angeles National Forest"};
+const zoneName=z=>!z?"":ZONE_NAMES[z]||(/^RM\d/.test(z)?"Residential Medium Density"+(/PUD/.test(z)?", PUD overlay":""):"");
+const zoneColor=z=>/^R[LE]/.test(z)?"#f3d36a":/^RF/.test(z)?"#c9d98a":/^RM/.test(z)?"#f2a65e":/^RH/.test(z)?"#d9773f":/^(NC|C-|RC)/.test(z)?"#e2655c":/^(M|O\/RD)/.test(z)?"#a98bd6":/^(PD|SP|HC|BE|HWP|HR)/.test(z)?"#7fb4e0":/^(P\/QP|ANF)/.test(z)?"#8cc79a":"#c8c8c8";
+const PF="AIN,APN,SitusAddress,SitusCity,SitusZIP,UseDescription,YearBuilt1,SQFTmain1,Units1,Bedrooms1,Bathrooms1,CENTER_LAT,CENTER_LON";
+let LEAF=null, ZONING=null;
+function leaflet(){
+  if(window.L) return Promise.resolve(window.L); if(LEAF) return LEAF;
+  LEAF=new Promise((res,rej)=>{ const c=document.createElement("link"); c.rel="stylesheet"; c.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"; document.head.appendChild(c);
+    const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"; s.onload=()=>res(window.L); s.onerror=()=>{LEAF=null; rej(new Error("map"));}; document.head.appendChild(s); });
+  return LEAF;
+}
+const zoningData=()=>ZONING||(ZONING=fetch(GIS.zoning).then(r=>r.json()).catch(e=>{ZONING=null; throw e;}));
+function inRing(x,y,r){ let c=false; for(let i=0,j=r.length-1;i<r.length;j=i++){ const [xi,yi]=r[i],[xj,yj]=r[j]; if(((yi>y)!==(yj>y)) && x<(xj-xi)*(y-yi)/(yj-yi)+xi) c=!c; } return c; }
+function inPoly(x,y,rings){ if(!inRing(x,y,rings[0])) return false; for(let k=1;k<rings.length;k++) if(inRing(x,y,rings[k])) return false; return true; }
+async function zoneAt(lat,lng){
+  const g=await zoningData();
+  for(const f of g.features){ const G=f.geometry, polys=G.type==="Polygon"?[G.coordinates]:G.coordinates; if(polys.some(p=>inPoly(lng,lat,p))) return f.properties.z==="Unzoned"?"":f.properties.z; }
+  return "";
+}
+async function arcq(params){
+  const r=await fetch(GIS.parcels+"/0/query?"+new URLSearchParams({f:"json",outSR:"4326",...params}));
+  const j=await r.json(); if(j.error) throw new Error(j.error.message||"query"); return j.features||[];
+}
+function addrWhere(q){
+  const s=q.toUpperCase().replace(/,.*$/,"").replace(/[^A-Z0-9 -]/g," ").trim();
+  const apn=s.replace(/[\s-]/g,""); if(/^\d{10}$/.test(apn)) return `AIN='${apn}'`;
+  const m=s.match(/^(\d+)\s*(.*)$/);
+  const drop=new Set(["N","S","E","W","NORTH","SOUTH","EAST","WEST","AVE","AV","AVENUE","ST","STREET","BLVD","BOULEVARD","DR","DRIVE","RD","ROAD","LN","LANE","CT","COURT","PL","PLACE","WAY","CIR","CIRCLE","TER","TERRACE","PKWY","MONROVIA","CA","APT","UNIT"]);
+  const words=(m?m[2]:s).replace(/-/g," ").split(/\s+/).filter(w=>w&&!drop.has(w)&&!/^\d{5}$/.test(w));
+  if(m ? (!words.length && m[1].length<3) : words.join("").length<4) return null;
+  return `SitusCity LIKE 'MONROVIA%' AND SitusAddress LIKE '${m?m[1]+" ":""}%${words.join("%")}%'`;
+}
+const titleAddr=a=>String(a||"").toLowerCase().replace(/\b([a-z])/g,c=>c.toUpperCase()).replace(/\b(N|S|E|W)\b/g,c=>c.toUpperCase());
+function lotSf(rings){
+  const r=rings[0]; if(!r) return 0; const lat0=r[0][1]*Math.PI/180; let a=0;
+  for(let i=0,j=r.length-1;i<r.length;j=i++){ const xi=r[i][0]*111320*Math.cos(lat0), yi=r[i][1]*110540, xj=r[j][0]*111320*Math.cos(lat0), yj=r[j][1]*110540; a+=xj*yi-xi*yj; }
+  return Math.round(Math.abs(a/2)*10.7639);
+}
+const PM={map:null, hl:null, seq:0, picked:null};
+async function initParcelMap(){
+  const el=$("#pmap"); if(!el) return;
+  PM.map=null; PM.hl=null; PM.picked=null;
+  let L; try{ L=await leaflet(); }catch(e){ el.outerHTML=`<div class="note">The map didn't load. Type the address above and the APN and zone still fill in.</div>`; return; }
+  if(!document.body.contains(el)) return;
+  const map=L.map(el,{zoomControl:true, scrollWheelZoom:false, tap:true}).setView([34.1485,-118.0005],14);
+  PM.map=map;
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{maxZoom:20, attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+  const lines=L.tileLayer(GIS.parcels+"/tile/{z}/{y}/{x}",{minZoom:16, maxZoom:20, maxNativeZoom:20, opacity:.75, attribution:"Parcels: LA County"});
+  map.on("zoomend",()=>{ if(map.getZoom()>=16) lines.addTo(map); else lines.remove(); });
+  map.on("click",e=>pickAt(e.latlng.lat,e.latlng.lng));
+  zoningData().then(g=>{
+    const zl=L.geoJSON(g,{style:f=>({color:"#5d5a52",weight:.4,fillColor:zoneColor(f.properties.z),fillOpacity:.32}),
+      onEachFeature:(f,l)=>l.bindTooltip(`<b>${esc(f.properties.z)}</b> ${esc(zoneName(f.properties.z))}`,{sticky:true,direction:"top"})}).addTo(map);
+    zl.bringToBack(); map.attributionControl.addAttribution("Zoning: SCAG 2024");
+  }).catch(()=>{});
+  setTimeout(()=>map.invalidateSize(),60);
+  if(PM.pending){ const p=PM.pending; PM.pending=null; showParcel(p.f,p.zone); }
+}
+let SUGG_T=null;
+function onAddrInput(){
+  const q=$("#f-address").value.trim(), box=$("#psugg"); clearTimeout(SUGG_T);
+  if(PM.picked && q===PM.picked.addr) return;
+  const where=addrWhere(q); if(!where){ box.hidden=true; return; }
+  SUGG_T=setTimeout(async()=>{
+    const seq=++PM.seq; box.hidden=false; box.innerHTML=`<span class="small">Looking up ${esc(q)}…</span>`;
+    try{
+      const fs=await arcq({where, outFields:PF, returnGeometry:"true", resultRecordCount:"8", orderByFields:"SitusAddress"});
+      if(seq!==PM.seq) return;
+      if(!fs.length){ box.innerHTML=`<span class="small">No Monrovia parcel matches “${esc(q)}” yet. Keep typing, or tap the lot on the map.</span>`; return; }
+      const exact=fs.filter(f=>f.attributes.SitusAddress===q.toUpperCase().replace(/,.*$/,"").trim());
+      if(fs.length===1 || exact.length===1){ box.hidden=true; usePick(exact[0]||fs[0], true); return; }
+      PM.cands=fs;
+      box.innerHTML=`<span class="small">Pick your parcel</span><div class="chks">${fs.map((f,i)=>`<button type="button" class="bubble" data-cand="${i}">${esc(titleAddr(f.attributes.SitusAddress)||"No address")} <span class="mono">${esc(f.attributes.APN)}</span></button>`).join("")}</div>`;
+      box.querySelectorAll("[data-cand]").forEach(b=>b.onclick=()=>{ box.hidden=true; usePick(PM.cands[+b.dataset.cand], true); });
+    }catch(e){ if(seq===PM.seq) box.innerHTML=`<span class="small">LA County parcel data didn't answer. Try again in a moment, or enter the APN under “Not right?” below.</span>`; }
+  },450);
+}
+async function pickAt(lat,lng){
+  const seq=++PM.seq; $("#pcard").innerHTML=`<p class="small" style="margin-top:8px">Finding that parcel…</p>`;
+  try{
+    const fs=await arcq({geometry:`${lng},${lat}`, geometryType:"esriGeometryPoint", inSR:"4326", spatialRel:"esriSpatialRelIntersects", outFields:PF, returnGeometry:"true"});
+    if(seq!==PM.seq) return;
+    if(!fs.length){ $("#pcard").innerHTML=`<p class="small" style="margin-top:8px">No parcel there. Zoom in and tap inside a lot.</p>`; return; }
+    usePick(fs[0], true, {lat,lng});
+  }catch(e){ $("#pcard").innerHTML=`<p class="small" style="margin-top:8px">LA County parcel data didn't answer. Try again in a moment.</p>`; }
+}
+async function usePick(f, setAddr, at){
+  const a=f.attributes, lat=at?.lat??a.CENTER_LAT, lng=at?.lng??a.CENTER_LON;
+  let zone=""; try{ zone=await zoneAt(lat,lng); if(!zone && at) zone=await zoneAt(a.CENTER_LAT,a.CENTER_LON); }catch(e){}
+  const addr=titleAddr(a.SitusAddress);
+  if(setAddr && addr) $("#f-address").value=addr;
+  PM.picked={ain:a.AIN, addr:$("#f-address").value.trim()};
+  $("#f-apn").value=a.APN||""; $("#f-zone").value=zone;
+  const hill=$('#f-flags input[value="Hillside"]'); if(hill && /^RF/.test(zone)) hill.checked=true;
+  $("#psugg").hidden=true;
+  showParcel(f,zone);
+}
+function showParcel(f,zone){
+  const a=f.attributes, rings=f.geometry?.rings||[];
+  if(PM.map && window.L){
+    if(PM.hl) PM.hl.remove();
+    PM.hl=L.polygon(rings.map(r=>r.map(([x,y])=>[y,x])),{color:"#C8322B",weight:2.5,fillColor:"#C8322B",fillOpacity:.18,interactive:false}).addTo(PM.map);
+    PM.map.fitBounds(PM.hl.getBounds(),{maxZoom:19,padding:[30,30]});
+  } else PM.pending={f,zone};
+  const lot=lotSf(rings), n=x=>Number(x||0).toLocaleString();
+  const facts=[["APN",a.APN],["Zone",zone?`${zone}${zoneName(zone)?` · ${zoneName(zone)}`:""}`:"Not mapped, the City will confirm"],["Lot",lot?`≈ ${n(lot)} sf`:""],["Existing use",a.UseDescription==="Single"?"Single-family home":a.UseDescription],
+    ["Built",+a.YearBuilt1?a.YearBuilt1:""],["Existing building",+a.SQFTmain1?`${n(a.SQFTmain1)} sf${+a.Bedrooms1?` · ${a.Bedrooms1} bd / ${a.Bathrooms1||0} ba`:""}`:""]].filter(x=>x[1]);
+  $("#pcard").innerHTML=`<div class="pfacts">${facts.map(([k,v])=>`<div><span>${k}</span><b>${esc(String(v))}</b></div>`).join("")}</div>
+    <p class="small" style="margin-top:6px">From LA County Assessor parcels and SCAG's 2024 Monrovia zoning map. Planning confirms the zone at intake.</p>`;
+}
+function bindParcel(){
+  $("#f-address").addEventListener("input",onAddrInput);
+  $("#f-address").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); clearTimeout(SUGG_T); onAddrInput(); } });
+  initParcelMap();
 }
 function bindNew(){
   document.querySelectorAll("[data-app]").forEach(b=>b.onclick=()=>{ S.app=b.dataset.app; renderWorkspace(); });
   if(S.app!=="plancheck") return bindOther();
   let file=null; bindDrop(f=>file=f); bindStorePick();
-  ["f-address","f-apn","f-zone"].forEach(id=>$("#"+id).addEventListener("change",parcelCard));
-  $("#f-address").addEventListener("blur",parcelCard);
-  $("#f-flags").addEventListener("change",parcelCard);
+  bindParcel();
+  let valAuto=true; const num=id=>Number($("#"+id).value)||0;
+  const reval=()=>{ const area=num("f-living")+num("f-garage"), rate=num("f-rate");
+    $("#f-val-hint").textContent=area&&rate?`${area.toLocaleString()} sf × $${rate.toLocaleString()}/sf${valAuto?"":` = $${(area*rate).toLocaleString()} (you entered your own)`}. Change either one if your contract price is different.`:`Fills from the area at $${(rate||250).toLocaleString()}/sf. Change it if your contract price is different.`;
+    if(valAuto) $("#f-val").value=area&&rate?Math.round(area*rate):""; };
+  ["f-living","f-garage","f-rate"].forEach(id=>$("#"+id).addEventListener("input",reval));
+  $("#f-val").addEventListener("input",()=>{ valAuto=$("#f-val").value===""; reval(); });
+  $("#f-pull").addEventListener("change",()=>$("#f-pull-note").classList.toggle("owner",$("#f-pull").value==="Owner-builder"));
   $("#f-cancel").onclick=()=>{ S.mode=null; render(); };
   $("#newform").onsubmit=e=>{ e.preventDefault();
     const v=id=>$("#"+id).value.trim();
@@ -1177,9 +1319,9 @@ function bindNew(){
     if(!file){ flash("Attach the plan set PDF."); return; }
     if(!linkOk(v("f-link"))){ flash("Use a Google Drive or Dropbox link for the full set."); return; }
     const p={id:uid(), address:v("f-address"), apn:v("f-apn"), zone:$("#f-zone").value||"Not sure", flags:checked("f-flags"), projectType:$("#f-type").value,
-      valuation:Number(v("f-val"))||0, scope:v("f-scope")||"(not described)", livingSf:Number(v("f-living"))||0, garageSf:Number(v("f-garage"))||0,
+      valuation:Number(v("f-val"))||0, costPerSf:Number(v("f-rate"))||0, scope:v("f-scope")||"(not described)", livingSf:Number(v("f-living"))||0, garageSf:Number(v("f-garage"))||0,
       units:Number(v("f-units"))||0, stories:Number(v("f-stories"))||0, permits:checked("f-permits"), calcs:checked("f-calcs"),
-      owner:{name:v("f-owner"), email:v("f-owner-email"), phone:v("f-owner-phone")}, designer:{name:v("f-designer"), license:v("f-license"), email:v("f-designer-email"), phone:v("f-designer-phone")}, applicant:{name:`${ME.name}, ${ME.firm}`, email:ME.email, phone:ME.phone}, submitterRole:$("#f-role").value,
+      owner:{name:v("f-owner"), email:v("f-owner-email"), phone:v("f-owner-phone")}, designer:{name:v("f-designer"), license:v("f-license"), email:v("f-designer-email"), phone:v("f-designer-phone")}, contractor:{name:v("f-contractor"), license:v("f-cslb"), pullBy:$("#f-pull").value}, applicant:{name:`${ME.name}, ${ME.firm}`, email:ME.email, phone:ME.phone}, submitterRole:$("#f-role").value,
       appType:"plancheck", dept:"Building", setLink:v("f-link"), applicantId:ME.id, applicantName:ME.firm, reviewerId:staffFor("Building").id, reviewerName:staffFor("Building").name, permitNo:"BLD-2026-"+String(Math.floor(500+Math.random()*400)), note:v("f-note"), status:"submitted", cycle:1, createdAt:now(), submittedAt:now(), sheets:[], completeness:[], corrections:[], changes:[], timeline:[], aiState:"pending"};
     addLog(p,"applicant",`Submitted ${file.name} to the City`);
     S.mode=null; S.sel=p.id; if(S.local||!S.db) S.projects.unshift(p);
@@ -1188,8 +1330,7 @@ function bindNew(){
 }
 function bindOther(){
   const a=APPS.find(x=>x.id===S.app); let file=null; bindDrop(f=>file=f);
-  ["f-address","f-apn","f-zone"].forEach(id=>$("#"+id).addEventListener("change",parcelCard));
-  $("#f-address").addEventListener("blur",parcelCard); $("#f-flags").addEventListener("change",parcelCard);
+  bindParcel();
   $("#f-cancel").onclick=()=>{ S.mode=null; S.app="plancheck"; render(); };
   $("#newform").onsubmit=e=>{ e.preventDefault();
     const v=id=>($("#"+id)?.value||"").trim();
@@ -1373,7 +1514,7 @@ function projectView(p){
   const rv = STAFF.find(r=>r.id===p.reviewerId);
   const ap = p.applicant || {name:p.applicantName||"", email:"", phone:""};
   const person=(role,x,extra="")=>`<div class="person"><span class="role">${role}</span><b>${esc(x?.name||"—")}</b>${extra}${x?.email?`<a href="mailto:${esc(x.email)}">${esc(x.email)}</a>`:"<span>—</span>"}${x?.phone?`<a href="tel:${esc(x.phone.replace(/[^0-9+]/g,""))}">${esc(x.phone)}</a>`:"<span>—</span>"}</div>`;
-  const people = `<div class="people">${person("Owner",p.owner)}${person("Designer / Architect",p.designer,p.designer?.license?`<span>Lic. ${esc(p.designer.license)}</span>`:"")}${person("Applicant",ap)}
+  const people = `<div class="people">${person("Owner",p.owner)}${person("Designer / Architect",p.designer,p.designer?.license?`<span>Lic. ${esc(p.designer.license)}</span>`:"")}${p.contractor&&(p.contractor.name||p.contractor.license||p.contractor.pullBy)?person(p.contractor.pullBy==="Owner-builder"?"Owner-builder":"Contractor",{name:p.contractor.name||(p.contractor.pullBy==="Owner-builder"?p.owner?.name:"")},p.contractor.license?`<span>CSLB ${esc(p.contractor.license)}</span>`:""):""}${person("Applicant",ap)}
     ${isAdmin()?`<div class="person"><span class="role">Reviewer</span><select id="assign" aria-label="Reviewer">${STAFF.map(r=>`<option value="${r.id}" ${r.id===p.reviewerId?"selected":""}>${esc(r.name)} · ${esc(r.dept)}</option>`).join("")}</select>${rv?`<a href="mailto:${esc(rv.email)}">${esc(rv.email)}</a><span>${esc(rv.phone)}</span>`:""}</div>`
       : person(`Reviewer · ${esc(appOf(p).dept)}`, rv||{name:p.reviewerName})}</div>`;
   return `<div class="ws">
