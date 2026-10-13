@@ -3,163 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redline Permit · AI plan check for California cities</title>
 <meta name="description" content="Redline Permit: AI-assisted plan check for California cities. Every correction circled on the sheet it belongs to.">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
+<meta property="og:title" content="Redline Permit · AI plan check for California cities">
+<meta property="og:description" content="Redline Permit: AI-assisted plan check for California cities. Every correction circled on the sheet it belongs to.">
 <meta property="og:image" content="https://redlinepermit.com/logo.svg">
-<title>Redline Permit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>
-/* Layout: same Sand & Glass system as the Monrovia portal — sand page, blurred red/teal orbs, frosted header, glass panels, department cards, 8-stage rail. */
-:root{
-  --sand:#E9E1D4; --sand2:#F2EDE4; --sand3:#DED4C3; --glass:rgba(251,249,245,.72); --glass-solid:#FBF9F5; --hair:#CFC5B4;
-  --ink:#242B31; --ink2:#565F67; --ink3:#8B939A;
-  --red:#C8322B; --red-soft:#F6DCD8; --oxblood:#8C2A2A; --ox-soft:#EFD9D4;
-  --teal:#1E7A78; --teal-deep:#145856; --teal-soft:#D6EBE8;
-  --sheet:#FFFFFF; --line:#3B444C; --hdr:rgba(233,225,212,.72); --rim:rgba(255,255,255,.85);
-  --f-body:"Inter",Helvetica,Arial,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
-  color-scheme:light;
-}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --sand:#17191B; --sand2:#1F2326; --sand3:#2A2F33; --glass:rgba(34,38,42,.72); --glass-solid:#22262A; --hair:#3A4046;
-  --ink:#ECE6DC; --ink2:#B5AEA3; --ink3:#8A857D;
-  --red:#E5574F; --red-soft:#3A1F1E; --oxblood:#C66A62; --ox-soft:#33201F;
-  --teal:#4FB3AE; --teal-deep:#7CCBC6; --teal-soft:#16302F;
-  --sheet:#1B1F23; --line:#C9C2B6; --hdr:rgba(23,25,27,.75); --rim:rgba(255,255,255,.08); color-scheme:dark}}
-:root[data-theme="dark"]{
-  --sand:#17191B; --sand2:#1F2326; --sand3:#2A2F33; --glass:rgba(34,38,42,.72); --glass-solid:#22262A; --hair:#3A4046;
-  --ink:#ECE6DC; --ink2:#B5AEA3; --ink3:#8A857D;
-  --red:#E5574F; --red-soft:#3A1F1E; --oxblood:#C66A62; --ox-soft:#33201F;
-  --teal:#4FB3AE; --teal-deep:#7CCBC6; --teal-soft:#16302F;
-  --sheet:#1B1F23; --line:#C9C2B6; --hdr:rgba(23,25,27,.75); --rim:rgba(255,255,255,.08); color-scheme:dark}
-*{box-sizing:border-box}
-html{background:var(--sand)}
-body{background:var(--sand);color:var(--ink);font:400 15px/1.55 var(--f-body);margin:0;-webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
-a{color:var(--red)}
-:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:6px}
-/* background orbs + top line, as in the portal */
-.bg{position:absolute;inset:0 0 auto 0;height:900px;overflow:hidden;pointer-events:none;z-index:0;-webkit-mask-image:linear-gradient(#000 50%,transparent);mask-image:linear-gradient(#000 50%,transparent)}
-.orb{position:absolute;border-radius:50%;filter:blur(64px)}
-.orb.a{width:560px;height:560px;background:var(--red);top:-280px;right:-170px;opacity:.42}
-.orb.b{width:380px;height:380px;background:var(--teal);top:160px;right:18%;opacity:.26}
-.orb.c{width:320px;height:320px;background:#5FA8A3;top:360px;left:-160px;opacity:.22}
-.topline{height:6px;background:linear-gradient(90deg,var(--red) 0 46%,var(--oxblood) 46% 58%,var(--teal) 58% 100%);position:relative;z-index:6}
-.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 48px;position:relative;z-index:1}
-/* glass */
-.panel{position:relative;background:var(--glass);border:1px solid var(--rim);border-radius:18px;padding:20px;
-  backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);
-  box-shadow:0 1px 0 var(--rim) inset,0 10px 30px -12px rgba(36,43,49,.18)}
-.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(116deg,rgba(255,255,255,.45),rgba(255,255,255,0) 38%)}
-.panel>*{position:relative}
-/* header */
-header.top{position:sticky;top:0;z-index:5;background:var(--hdr);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom:1px solid var(--hair)}
-.top-in{max-width:1280px;margin:0 auto;padding:12px 16px;display:flex;gap:10px 20px;align-items:center;flex-wrap:wrap}
-.brand{font-weight:700;font-size:24px;letter-spacing:-.035em;line-height:1;position:relative;padding-bottom:5px;color:var(--ink);text-decoration:none}
-.brand::after{content:"";position:absolute;left:0;right:-3px;bottom:0;height:3px;border-radius:2px;background:var(--red)}
-.brandwrap{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
-.mark{width:34px;height:34px;display:block;flex:none}
-.city{font-size:13px;color:var(--ink2)}
-.city b{color:var(--ink);font-weight:600}
-.spacer{flex:1}
-.seg{display:inline-flex;background:var(--glass);border:1px solid var(--rim);border-radius:999px;padding:3px;gap:3px;flex-wrap:wrap}
-.seg a{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink2);text-decoration:none}
-.seg a:hover{background:var(--ink);color:var(--sand)}
-/* type */
-.kicker{font-size:11px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--ink3)}
-.kicker::after{content:"";display:block;width:36px;height:2px;background:var(--red);margin-top:10px}
-h1,h2,h3{margin:0;text-wrap:balance}
-h2{font-weight:600;font-size:clamp(24px,3.2vw,32px);letter-spacing:-.028em;line-height:1.12;margin-top:12px;max-width:26ch}
-.sub{color:var(--ink2);max-width:62ch;margin:10px 0 0}
-.small{font-size:13px;color:var(--ink2)}
-section{margin-top:44px}
-/* buttons + pills */
-.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hair);background:var(--glass-solid);border-radius:999px;padding:9px 18px;font:600 14px/1.2 var(--f-body);cursor:pointer;color:var(--ink);text-decoration:none}
-.btn:hover{border-color:var(--teal)}
-.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
-.btn.primary:hover{background:#B42B25}
-.btn.sm{padding:5px 12px;font-size:13px}
-.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;letter-spacing:.08em;text-transform:uppercase}
-.p-corr{background:var(--red-soft);color:var(--red)}
-.p-ok{background:var(--teal-soft);color:var(--teal-deep)}
-/* hero */
-.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:28px;align-items:center;padding:40px 0 8px}
-.hero h1{margin-top:12px;font-size:clamp(32px,5.4vw,54px);font-weight:600;letter-spacing:-.032em;line-height:1.05;max-width:16ch}
-.hero h1 em{font-style:normal;color:var(--red)}
-.hero .sub{font-size:17px}
-.ctas{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
-.facts{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2);margin-top:18px}
-.facts b{color:var(--ink);font-weight:600}
-/* demo workspace in hero */
-.ws{display:grid;gap:12px;padding:16px}
-.ws-h{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap}
-.ws-h b{font-size:16px;letter-spacing:-.015em}
-.sheet-main{background:var(--sheet);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
-.sheet-main svg{display:block;width:100%;height:auto}
-.corr{border:1px solid var(--hair);border-left:3px solid var(--red);border-radius:4px 12px 12px 4px;padding:10px 12px;display:grid;gap:6px;background:var(--glass-solid)}
-.corr-h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px}
-.num{width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font:700 12px/22px var(--f-body);text-align:center;flex:none}
-.cite{font-family:var(--f-mono);font-size:12px;font-weight:500;color:var(--ink);background:var(--sand2);border:1px solid var(--sand3);border-radius:6px;padding:1px 7px}
-.dept{font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;font-weight:600;color:var(--teal)}
-.corr p{margin:0;font-size:13.5px;color:var(--ink2)}
-.corr p b{color:var(--ink);font-weight:600}
-/* process rail, as in the portal */
-.rail{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin:20px 0 6px}
-.stage{padding:9px 2px 0;border-top:3px solid var(--hair);font-size:12px;color:var(--ink3);min-width:0}
-.stage b{display:block;font-size:13.5px;color:var(--ink2);font-weight:600;letter-spacing:-.01em}
-.stage.done{border-color:var(--teal)}
-.stage.done b{color:var(--ink)}
-.stage.now{border-color:var(--red)}
-.stage.now b{color:var(--red)}
-.who{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;font-weight:600}
-.stage .round{display:block;font-size:11px;font-weight:700;color:var(--red);margin-top:2px}
-.stage .loop{display:block;font-size:11px;color:var(--teal);font-weight:600;margin-top:2px}
-.rounds{display:flex;gap:3px;margin-top:4px}.rounds i{width:14px;height:4px;border-radius:2px;background:var(--teal)}.rounds i.cur{background:var(--red)}
-@media (max-width:760px){.rail{grid-template-columns:repeat(4,minmax(0,1fr))}}
-/* department cards, as on the portal home */
-.deptgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
-.dcard{position:relative;border:1px solid var(--rim);background:var(--glass-solid);border-radius:16px;padding:16px;display:grid;gap:6px;align-content:start}
-.dcard:hover,.dcard:focus-within{border-color:var(--teal)}
-.dcard b{font-size:16px;letter-spacing:-.01em}
-.dcard.main{grid-column:1/-1;background:linear-gradient(120deg,var(--red-soft),var(--glass-solid) 55%,var(--teal-soft));padding:22px}
-.dcard.main b{font-size:22px}
-.dcard .go{font-size:13px;font-weight:600;color:var(--teal)}
-.dcard.main .go{color:var(--red)}
-.tip{display:none;position:absolute;left:12px;right:12px;top:calc(100% - 6px);z-index:20;background:#242B31;color:#fff;border-radius:12px;padding:14px;font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.dcard:hover .tip,.dcard:focus-within .tip{display:block}
-.tip .row{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-top:8px}
-.tip .k{font-weight:700;color:#F6DCD8;white-space:nowrap}
-.hint{font-size:12px;color:var(--teal);font-weight:600;cursor:help}
-/* two sides */
-.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:20px}
-.two .panel{border-top:3px solid var(--teal)}
-.two .panel.app{border-top-color:var(--red)}
-.two h3{font-size:18px;letter-spacing:-.015em}
-.two ul{margin:12px 0 0;padding-left:18px;display:grid;gap:6px;color:var(--ink2);font-size:14.5px}
-.people{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
-.person{border:1px solid var(--sand3);border-radius:12px;padding:10px 12px;background:var(--glass-solid);display:grid;gap:2px;font-size:12.5px;min-width:0}
-.person .role{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
-.person b{font-size:13.5px}
-.person span{color:var(--ink2)}
-/* codes + security */
-.codes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:20px}
-.code{border:1px solid var(--hair);border-left:3px solid var(--teal);border-radius:4px 12px 12px 4px;padding:12px 14px;background:var(--glass-solid);display:grid;gap:4px}
-.code .cite{justify-self:start}
-.code b{font-weight:600;font-size:14.5px}
-.factgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:20px}
-.note{font-size:14px;color:var(--ink2);background:var(--sand2);border-left:3px solid var(--teal);border-radius:0 12px 12px 0;padding:12px 14px}
-.note b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
-.note.red{background:var(--red-soft);border-left-color:var(--red)}
-/* contact */
-.contact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;padding:clamp(20px,4vw,30px)}
-.mail{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.mail code{font:500 17px/1 var(--f-mono);background:var(--sand2);border:1px solid var(--hair);border-radius:10px;padding:12px 14px;user-select:all}
-.copied{font-size:13px;color:var(--teal);min-height:1em;margin-top:6px}
-footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink3)}
-@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.people{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:600px){.two,.contact{grid-template-columns:minmax(0,1fr)}.seg{display:none}}
-@media (prefers-reduced-motion:no-preference){#cloud1,#cloud2{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.4s .3s ease forwards}#cloud2{animation-delay:1s}@keyframes draw{to{stroke-dashoffset:0}}}
-</style>
+<link rel="stylesheet" href="assets/rp.css">
 </head>
 <body>
 <div class="bg" aria-hidden="true"><span class="orb a"></span><span class="orb b"></span><span class="orb c"></span></div>
@@ -168,7 +21,7 @@ footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);di
   <a class="brandwrap" href="#" aria-label="Redline Permit home"><img class="mark" src="logo.svg" alt="" width="34" height="34"><span class="brand">Redline Permit</span></a>
   <span class="city">AI plan check for <b>California cities</b></span>
   <span class="spacer"></span>
-  <nav class="seg" aria-label="Sections"><a href="#process">Process</a><a href="#departments">Departments</a><a href="#codes">Codes</a><a href="#security">Security</a></nav>
+  <nav class="seg" aria-label="Sections"><a href="#corrections">How it works</a><a href="#process">Process</a><a href="#departments">Departments</a><a href="#codes">Codes</a><a href="#security">Security</a><a href="#cities">Cities</a></nav>
   <a class="btn primary sm" href="#contact">Start a pilot</a>
 </div></header>
 
@@ -222,6 +75,87 @@ footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);di
           <p><b>Dwelling unit separation.</b> Show the 1-hour separation between the house and the attached ADU, extended to the roof sheathing.</p></div>
       </figure>
     </div>
+
+    <section id="corrections">
+      <div class="kicker">How corrections work</div>
+      <h2>Watch one sheet go from upload to resolved.</h2>
+      <p class="sub">The AI marks up the set, a city reviewer decides what goes out, and on the resubmittal Redline checks each numbered comment against the new sheet. It plays on its own; tap any step to jump.</p>
+      <div class="panel player" id="anim" aria-label="Animated example of a correction cycle">
+        <div class="pl-grid">
+          <div class="stagebox" id="stage">
+            <svg viewBox="0 0 520 300" role="img" aria-label="Floor plan sheet A2.1 with corrections being marked">
+              <g class="sheetg">
+                <g fill="none" stroke="var(--line)" stroke-width="2.2">
+                  <rect x="40" y="40" width="300" height="220"/>
+                  <line x1="190" y1="40" x2="190" y2="150"/><line x1="40" y1="150" x2="250" y2="150"/><line x1="250" y1="150" x2="250" y2="260"/>
+                  <line x1="190" y1="110" x2="190" y2="150" stroke="var(--sheet)" stroke-width="5"/>
+                  <path d="M190 110 A40 40 0 0 1 230 150" stroke-width="1.2"/>
+                </g>
+                <g fill="none" stroke="var(--line)" stroke-width="1">
+                  <line x1="40" y1="20" x2="340" y2="20"/><line x1="40" y1="14" x2="40" y2="26"/><line x1="340" y1="14" x2="340" y2="26"/>
+                  <line x1="360" y1="40" x2="360" y2="260"/><line x1="354" y1="40" x2="366" y2="40"/><line x1="354" y1="260" x2="366" y2="260"/>
+                  <rect class="win-old" x="74" y="36" width="70" height="8" fill="var(--sheet)"/>
+                  <rect class="win-new" x="64" y="36" width="96" height="8" fill="var(--sheet)"/>
+                </g>
+                <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--line)">
+                  <text x="168" y="15">30'-0"</text><text x="370" y="154">22'-0"</text>
+                  <text x="78" y="95">BEDROOM 2</text><text x="78" y="108" font-size="9">108 SF</text>
+                  <text x="268" y="95">BATH</text><text x="100" y="210">LIVING / KITCHEN</text>
+                  <text class="win-old" x="82" y="58" font-size="9">W3 4'-0" x 2'-4"</text>
+                  <text class="win-new" x="82" y="58" font-size="9">W3 5'-4" x 4'-0"</text>
+                  <text class="win-new" x="262" y="140" font-size="8">1-HR WALL</text>
+                </g>
+                <line class="win-new" x1="250" y1="150" x2="250" y2="260" stroke="var(--line)" stroke-width="5"/>
+                <g font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink3)">
+                  <rect x="400" y="216" width="104" height="60" fill="none" stroke="var(--line)" stroke-width="1"/>
+                  <text x="408" y="234">A2.1</text><text x="408" y="248">FLOOR PLAN</text><text x="408" y="264" id="cyc">CYCLE 1</text>
+                </g>
+              </g>
+              <!-- step 1: file arrives from Drive -->
+              <g class="drop">
+                <rect x="412" y="66" width="70" height="88" rx="6" fill="var(--sheet)" stroke="var(--line)" stroke-width="1.4"/>
+                <path d="M462 66 v16 h20" fill="none" stroke="var(--line)" stroke-width="1.4"/>
+                <rect x="420" y="98" width="38" height="16" rx="3" fill="var(--red)"/>
+                <text x="439" y="110" font-family="Inter, sans-serif" font-weight="700" font-size="10" fill="#fff" text-anchor="middle">PDF</text>
+                <text x="447" y="140" font-family="IBM Plex Mono, monospace" font-size="8" fill="var(--ink3)" text-anchor="middle">from Drive</text>
+              </g>
+              <!-- step 2: AI scan -->
+              <g class="scan"><rect x="20" y="10" width="360" height="3" fill="var(--teal)" opacity=".9"/><rect x="20" y="-30" width="360" height="40" fill="var(--teal)" opacity=".1"/></g>
+              <g class="chk" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--teal-deep)">
+                <text x="392" y="60">CRC R310 egress</text><text x="392" y="76">CRC R302 sep.</text><text x="392" y="92">CEC 210.12 AFCI</text><text x="392" y="108">CPC 408.3 valve</text><text x="392" y="124">MMC 17.44 ADU</text>
+              </g>
+              <!-- step 3: clouds + badges -->
+              <path id="ac1" class="ac a"/>
+              <path id="ac2" class="ac b"/>
+              <g font-family="Inter, sans-serif" font-weight="700" font-size="13" text-anchor="middle">
+                <g class="badge a"><circle cx="166" cy="30" r="12"/><text x="166" y="35" fill="#fff">1</text></g>
+                <g class="badge b"><circle cx="338" cy="112" r="12"/><text x="338" y="117" fill="#fff">2</text></g>
+              </g>
+              <!-- step 4: reviewer cursor -->
+              <g class="cursor" id="cursor"><path d="M0 0 L0 18 L5 13 L9 22 L12 21 L8 12 L15 12 Z" fill="var(--ink)" stroke="#fff" stroke-width="1.2"/></g>
+              <!-- step 5: sent -->
+              <g class="env"><rect x="400" y="170" width="54" height="36" rx="4" fill="var(--red)"/><path d="M400 172 L427 192 L454 172" fill="none" stroke="#fff" stroke-width="2"/></g>
+            </svg>
+            <div class="cap" aria-live="polite"><span class="stepno" id="stepno">STEP 1 / 6</span><span class="captxt" id="captxt">Sheet A2.1 arrives from Google Drive</span></div>
+          </div>
+          <div class="side">
+            <h4>Correction list · A2.1</h4>
+            <div class="ccard" id="cc1"><div class="corr-h"><span class="num">1</span><span class="cite">CRC R310.2.1</span><span class="pill draft st" id="p1">AI draft</span></div><p><b>Bedroom 2 escape window.</b> W3 gives about 3.5 sf clear; provide 5.7 sf net.</p></div>
+            <div class="ccard" id="cc2"><div class="corr-h"><span class="num">2</span><span class="cite">CRC R302.3</span><span class="pill draft st" id="p2">AI draft</span></div><p id="t2"><b>Unit separation.</b> Show the 1-hour wall between house and ADU.</p></div>
+            <div class="status"><span>Round <b id="rnd">1</b></span><span id="who">Applicant</span><span>Clock <b id="clk">day 0</b></span></div>
+          </div>
+        </div>
+        <div class="timeline" id="tl" role="tablist" aria-label="Steps">
+          <button class="tl" type="button" data-s="0"><span>1 Upload</span><i><b></b></i></button>
+          <button class="tl" type="button" data-s="1"><span>2 AI read</span><i><b></b></i></button>
+          <button class="tl" type="button" data-s="2"><span>3 Draft</span><i><b></b></i></button>
+          <button class="tl" type="button" data-s="3"><span>4 Review</span><i><b></b></i></button>
+          <button class="tl" type="button" data-s="4"><span>5 Send</span><i><b></b></i></button>
+          <button class="tl" type="button" data-s="5"><span>6 Recheck</span><i><b></b></i></button>
+        </div>
+        <div class="plctl"><button class="btn" id="play" type="button" aria-pressed="true">Pause</button><span class="small">The AI drafts; a city reviewer approves every comment before it goes out.</span></div>
+      </div>
+    </section>
 
     <section id="process">
       <div class="kicker">How a plan set moves</div>
@@ -305,18 +239,43 @@ footer.foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--hair);di
       </div>
     </section>
 
+    <section id="cities">
+      <div class="kicker">City portals</div>
+      <h2>Every city gets its own address, codes and queues.</h2>
+      <p class="sub">Applicants and plan reviewers sign in at their city's page. Each portal carries that city's municipal code, standard notes and departments, and keeps its records apart from every other city.</p>
+      <div class="citygrid">
+        <a class="city-card live" href="monrovia/"><span class="pill p-ok" style="justify-self:start">Pilot</span><b>Monrovia</b><span class="url">redlinepermit.com/monrovia</span><span class="small">Building plan check, Planning, Public Works and Fire. Applicant and reviewer entry, Monrovia Municipal Code references.</span></a>
+        <a class="city-card soon" href="#contact"><span class="pill" style="justify-self:start">Your city</span><b>Add your city</b><span class="url">redlinepermit.com/yourcity</span><span class="small">Tell us about your department below and we'll set up a city profile.</span></a>
+      </div>
+    </section>
+
     <section id="contact">
-      <div class="panel contact">
+      <div class="panel intake">
         <div><div class="kicker">Pilots</div><h2>Bring Redline Permit to your city.</h2>
-          <p class="sub">Our first city profile is being set up in the San Gabriel Valley. Write to us for a live walkthrough with real plan sets.</p></div>
-        <div><div class="mail"><code id="addr">hello@redlinepermit.com</code><button class="btn" id="copy" type="button">Copy</button></div><div class="copied" id="copied" aria-live="polite"></div></div>
+          <p class="sub">Tell us a little about your department. We'll reply within one business day to set up a walkthrough with real plan sets.</p>
+          <ul class="checks">
+            <li>A city page at redlinepermit.com/yourcity with your codes and departments</li>
+            <li>Applicants submit from Google Drive or Dropbox; PDFs stay in their accounts</li>
+            <li>Reviewers approve every AI comment before it goes out</li>
+          </ul></div>
+        <form class="form" id="intake" novalidate>
+          <label>Name<input name="name" autocomplete="name" required></label>
+          <label>Title<input name="title" autocomplete="organization-title" placeholder="Building Official"></label>
+          <label>City or agency<input name="city" autocomplete="organization" required></label>
+          <label>Work email<input name="email" type="email" autocomplete="email" required></label>
+          <label>Phone<input name="phone" type="tel" autocomplete="tel"></label>
+          <label>Plan checks per month<select name="volume"><option value="">Choose</option><option>Under 25</option><option>25–75</option><option>75–200</option><option>200+</option></select></label>
+          <label class="full">Current permit system<input name="system" placeholder="Paper, email PDFs, Accela, ProjectDox, EnerGov…"></label>
+          <label class="full">What would help most?<textarea name="message" placeholder="Backlog, ADU deadlines, consultant costs, resubmittal tracking…"></textarea></label>
+          <input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="full" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn primary" type="submit" id="send">Request a pilot</button><span class="formmsg" id="formmsg" aria-live="polite"></span></div>
+        </form>
       </div>
     </section>
   </main>
 
   <footer class="foot"><span>redlinepermit.com · © 2026 Redline Permit</span><span>Drawings stay in your Google Drive or Dropbox; Redline keeps only clips</span></footer>
 </div>
-
 <script>
 // Revision clouds: scalloped arcs around a rectangle.
 function cloud(id,x,y,w,h,r){
@@ -331,11 +290,79 @@ function cloud(id,x,y,w,h,r){
 }
 cloud("cloud1",62,26,98,40,9);
 cloud("cloud2",238,80,94,44,9);
-document.getElementById("copy").addEventListener("click",()=>{
-  const t=document.getElementById("addr").textContent, out=document.getElementById("copied");
-  const sel=()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("addr"));const s=getSelection();s.removeAllRanges();s.addRange(r);out.textContent="Selected. Press Ctrl+C or Cmd+C to copy.";};
-  try{navigator.clipboard.writeText(t).then(()=>{out.textContent="Copied.";},sel);}catch(e){sel();}
-});
+cloud("ac1",54,26,112,40,9);
+cloud("ac2",238,80,94,44,9);
+/* corrections player: autoplays on load, loops, click a step to jump */
+(function(){
+  const stage=document.getElementById("stage"); if(!stage) return;
+  const tls=[...document.querySelectorAll("#tl .tl")], btn=document.getElementById("play");
+  const $=id=>document.getElementById(id);
+  const cc1=$("cc1"),cc2=$("cc2"),p1=$("p1"),p2=$("p2"),t2=$("t2"),cyc=$("cyc"),cur=$("cursor");
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const DUR=[2800,3200,3600,3800,3000,4200];
+  const MSG=["Sheet A2.1 arrives from Google Drive","AI first read: Title 24 + Monrovia standard notes","Two corrections clouded and numbered","City reviewer approves #1 and edits #2","Correction letter sent to the designer","Resubmittal: Redline confirms both are fixed"];
+  const WHO=["Applicant","Redline AI","Redline AI","City reviewer","Applicant","Redline + reviewer"];
+  const CLK=["day 0","day 0","day 1","day 3","day 3","day 12"];
+  let s=0, playing=!reduce, timer=null, t0=performance.now();
+  const pill=(el,txt,cls)=>{el.textContent=txt;el.className="pill st "+cls;};
+  function show(n){
+    s=n;
+    stage.className="stagebox on s"+n+(n>=2?" drawn":"")+(n>=5?" done":"");
+    tls.forEach((b,i)=>{b.className="tl"+(i<n?" past":i===n?" cur":"");b.setAttribute("aria-selected",i===n);b.querySelector("b").style.width=i<n?"100%":"0";});
+    cc1.classList.toggle("show",n>=2); cc2.classList.toggle("show",n>=2);
+    cc1.classList.toggle("ok",n>=5); cc2.classList.toggle("ok",n>=5);
+    cc1.classList.remove("hl"); cc2.classList.remove("hl");
+    if(n<3){pill(p1,"AI draft","draft");pill(p2,"AI draft","draft");t2.innerHTML="<b>Unit separation.</b> Show the 1-hour wall between house and ADU.";}
+    else if(n<5){pill(p1,"Approved","p-ok");pill(p2,"Edited","p-ok");t2.innerHTML="<b>Unit separation.</b> Show the 1-hour wall between house and ADU, <u>extended to the roof sheathing</u>.";}
+    else{pill(p1,"Resolved ✓","p-ok");pill(p2,"Resolved ✓","p-ok");}
+    if(n===4){pill(p1,"Sent","p-corr");pill(p2,"Sent","p-corr");}
+    if(n===3){ /* cursor visits badge 1, then badge 2 */
+      cur.style.transition="none"; cur.setAttribute("transform","translate(430 260)");
+      cur.style.transform="translate(430px,260px)"; void cur.getBoundingClientRect(); cur.style.transition="";
+      setTimeout(()=>{if(s===3){cur.style.transform="translate(170px,36px)";cc1.classList.add("hl");}},150);
+      setTimeout(()=>{if(s===3){cur.style.transform="translate(342px,118px)";cc1.classList.remove("hl");cc2.classList.add("hl");}},1800);
+    }
+    cyc.textContent=n>=5?"CYCLE 2":"CYCLE 1";
+    $("rnd").textContent=n>=5?"2":"1"; $("who").textContent=WHO[n]; $("clk").textContent=CLK[n];
+    $("stepno").textContent="STEP "+(n+1)+" / 6"; $("captxt").textContent=MSG[n];
+    t0=performance.now(); clearTimeout(timer);
+    if(playing) timer=setTimeout(()=>show((s+1)%6),DUR[n]);
+  }
+  function tick(now){
+    const b=tls[s]&&tls[s].querySelector("b");
+    if(b) b.style.width=(playing?Math.min(100,(now-t0)/DUR[s]*100):100)+"%";
+    requestAnimationFrame(tick);
+  }
+  function setPlay(p){playing=p;btn.textContent=p?"Pause":"Play";btn.setAttribute("aria-pressed",p);}
+  btn.onclick=()=>{setPlay(!playing);if(playing)show((s+1)%6);else clearTimeout(timer);};
+  tls.forEach((b,i)=>b.onclick=()=>{setPlay(false);show(i);});
+  document.addEventListener("visibilitychange",()=>{if(document.hidden)clearTimeout(timer);else if(playing)show(s);});
+  if(reduce) show(2); else show(0);
+  requestAnimationFrame(tick);
+})();
+/* pilot intake form: FormSubmit, with an email fallback */
+(function(){
+  const f=document.getElementById("intake"); if(!f) return;
+  const msg=document.getElementById("formmsg"), send=document.getElementById("send");
+  const TO="hello@redlinepermit.com";
+  f.addEventListener("submit",async e=>{
+    e.preventDefault();
+    const d=Object.fromEntries(new FormData(f).entries());
+    if(d._honey) return;
+    if(!d.name||!d.city||!/^\S+@\S+\.\S+$/.test(d.email||"")){msg.className="formmsg err";msg.textContent="Please add your name, city and a work email.";return;}
+    send.disabled=true; msg.className="formmsg"; msg.textContent="Sending…";
+    const body={...d,_subject:"Pilot request: "+d.city,_template:"table",_captcha:"false"}; delete body._honey;
+    try{
+      const r=await fetch("https://formsubmit.co/ajax/"+TO,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(body)});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok||String(j.success)==="false") throw new Error(j.message||"send failed");
+      f.reset(); msg.className="formmsg ok"; msg.textContent="Thanks. We'll be in touch within one business day.";
+    }catch(err){
+      const lines=["Name: "+d.name,"Title: "+(d.title||""),"City/agency: "+d.city,"Email: "+d.email,"Phone: "+(d.phone||""),"Plan checks/month: "+(d.volume||""),"Current system: "+(d.system||""),"",d.message||""];
+      msg.className="formmsg err"; msg.innerHTML='Couldn\'t send from here. <a href="mailto:'+TO+'?subject='+encodeURIComponent("Pilot request: "+d.city)+'&body='+encodeURIComponent(lines.join("\n"))+'">Email it instead</a>.';
+    }finally{send.disabled=false;}
+  });
+})();
 </script>
 </body>
 </html>
