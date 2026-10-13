@@ -99,6 +99,9 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .p-corrections{background:var(--red-soft);color:var(--red)}
 .p-void{background:var(--sand2);color:var(--ink3)}
 .p-fee_due{background:#fbecc8;color:#7a5200}
+.feebox{margin-top:10px;border:1px solid var(--hair);border-radius:12px;padding:10px 14px;background:var(--glass-solid)}
+.feebox summary{cursor:pointer;font-size:14px}
+.stage .loop.fee{color:#7a5200}
 .p-approved,.p-agencies,.p-issued{background:var(--ok-soft);color:var(--teal-deep)}
 .p-warn{background:var(--warn-soft);color:var(--warn)}
 .btn{border:1px solid var(--hair);background:var(--glass-solid);border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink)}
@@ -553,7 +556,6 @@ function pickReviewer(dept){
 const appOf = p => APPS.find(a=>a.id===(p?.appType||"plancheck")) || APPS[0];
 const STAGES = [
   {t:"Submit",who:"Owner / Designer"},
-  {t:"Plan check fee",who:"Applicant"},
   {t:"City review",who:"Redline AI + reviewers"},
   {t:"Corrections",who:"Owner / Designer"},
   {t:"Resubmit & recheck",who:"Redline + City"},
@@ -562,9 +564,9 @@ const STAGES = [
   {t:"Permit pickup",who:"Owner / Contractor"}
 ];
 /* Other agencies and permit pickup only apply to the Building plan check. */
-const stagesFor = app => (APPS.find(a=>a.id===app)||APPS[0]).main ? STAGES : STAGES.slice(0,6);
+const stagesFor = app => (APPS.find(a=>a.id===app)||APPS[0]).main ? STAGES : STAGES.slice(0,5);
 const STATUS_LABEL = {void:"Voided",fee_due:"Fee due",submitted:"In review",corrections:"Corrections issued",resubmitted:"Resubmitted",approved:"Other agencies",ready:"Ready for pickup",issued:"Permit issued"};
-const STATUS_STAGE = {void:-1,fee_due:1,submitted:2,corrections:3,resubmitted:4,approved:6,ready:7,issued:8};
+const STATUS_STAGE = {void:-1,fee_due:1,submitted:1,corrections:2,resubmitted:3,approved:5,ready:6,issued:7};
 const DONE = st => ["approved","ready","issued"].includes(st);
 /* Clearances that usually sit between plan check approval and permit issuance. Confirm the list with Monrovia before go-live. */
 const AGENCIES = ["School district fees paid (Monrovia USD)","Sanitation district connection fee","Fire Department sign-off","Contractor license & workers' comp on file"];
@@ -616,23 +618,26 @@ function feeFor(p){
   if(app.main){ if(!v) return null;
     const bpc=bp, ppc=r2(bp*.15), gp=r2(bpc*.15);
     const lines=[["Building plan check",bpc,`100% of the building permit fee (${money2(bp)} at ${money(v)} valuation)`],["Planning plan check",ppc,"15% of the building permit fee"],["Public Works review",334,"Building departmental review"],["Fire review",null,"No charge at plan check. Sprinkler or alarm plans are $320 + $21.78 per device, billed with those plans"],["General Plan maintenance",gp,"15% of the building plan check fee"],tech];
-    return {lines, dueNow:r2(lines.reduce((a,l)=>a+(l[1]||0),0)), later:[["Building permit",bp],["General Plan maintenance",r2(bp*.15)]]};
+    lines.splice(lines.length-1,0,["Building permit",bp,"Valuation chart"],["General Plan maintenance (permit)",r2(bp*.15),"15% of the building permit fee"]);
+    return {lines, dueNow:r2(lines.reduce((a,l)=>a+(l[1]||0),0))};
   }
   if(app.id==="adu-app") return {lines:[["ADU review",1162,"Moderate permit, Tier 3"],tech], dueNow:1170};
   if(app.id==="mep"){ if(!v) return null; const pr=r2(bp*.5); return {lines:[["Plan review",pr,"50% of the permit fee, for other permits"],tech], dueNow:r2(pr+8)}; }
   return null;
 }
 function feeHtml(p){ const f=p.fee; if(!f) return "";
-  return `<div class="tbl-wrap" style="margin-top:8px"><table class="stack"><thead><tr><th>Fee</th><th>Amount</th><th>Basis</th></tr></thead><tbody>${f.lines.map(l=>`<tr><td><b>${esc(l[0])}</b></td><td data-label="Amount">${l[1]==null?"—":money2(l[1])}</td><td data-label="Basis">${esc(l[2])}</td></tr>`).join("")}<tr><td><b>${f.paidAt?"Paid":"Due now"}</b></td><td data-label="${f.paidAt?"Paid":"Due now"}"><b>${money2(f.dueNow)}</b></td><td data-label="Status">${f.paidAt?`${fmtD(f.paidAt)} · ${esc(f.method||"")}`:"Before review starts"}</td></tr></tbody></table></div>
+  return `<div class="tbl-wrap" style="margin-top:8px"><table class="stack"><thead><tr><th>Fee</th><th>Amount</th><th>Basis</th></tr></thead><tbody>${f.lines.map(l=>`<tr><td><b>${esc(l[0])}</b></td><td data-label="Amount">${l[1]==null?"—":money2(l[1])}</td><td data-label="Basis">${esc(l[2])}</td></tr>`).join("")}<tr><td><b>${f.paidAt?"Paid":"Total due"}</b></td><td data-label="${f.paidAt?"Paid":"Total due"}"><b>${money2(f.dueNow)}</b></td><td data-label="Status">${f.paidAt?`${fmtD(f.paidAt)} · ${esc(f.method||"")}`:"Before the permit is issued"}</td></tr></tbody></table></div>
   ${f.later?`<p class="small" style="margin-top:6px">Due at permit pickup (estimate): ${f.later.map(l=>`${esc(l[0])} ${money2(l[1])}`).join(" · ")}.</p>`:""}
   <p class="small" style="margin-top:4px">Estimate from the City of Monrovia Schedule of Fees &amp; Charges, FY 2025-26. The City confirms the final amount.</p>`;
 }
+const feeOpen = p => !!(p.fee && p.fee.dueNow>0 && !p.fee.paidAt);
+function feeBox(p, staff){ if(!p.fee) return "";
+  return `<details class="feebox" ${feeOpen(p)&&["approved","ready"].includes(p.status)?"open":""}><summary><b>Fees ${money2(p.fee.dueNow)}</b> · ${p.fee.paidAt?`paid ${fmtD(p.fee.paidAt)}`:"due to the City before the permit is issued"}</summary>${feeHtml(p)}${staff&&feeOpen(p)?`<div class="acts" style="margin-top:8px;align-items:flex-end"><label class="f" style="max-width:220px">City receipt # (optional)<input type="text" id="fee-receipt"></label><button class="btn" data-a="payfee">Record fees as paid</button></div>`:""}</details>`; }
 function routeAndBill(p){
   const app=appOf(p), depts=app.main?PLANCHECK_DEPTS:[app.dept];
   p.reviews=depts.map(d=>{ const r=pickReviewer(d); return {dept:d, reviewerId:r.id, reviewerName:r.name}; });
   p.reviewerId=p.reviews[0].reviewerId; p.reviewerName=p.reviews[0].reviewerName;
   p.fee=feeFor(p);
-  if(p.fee && p.fee.dueNow>0) p.status="fee_due";
 }
 
 /* ---------- persistence ---------- */
@@ -1067,7 +1072,7 @@ function renderTasks(){
   $("#queue").innerHTML=(isAdmin()?`<div class="acts" style="margin:0 0 8px"><button class="btn sm" id="arch">${S.archive?"← Active files":`Archive · ${S.projects.filter(p=>p.status==="void").length}`}</button></div><input type="search" id="q" class="searchbox" placeholder="Search address, permit #, applicant, reviewer" value="${esc(S.q)}">
     <div class="chks" style="margin-bottom:10px">${depts.map(d=>`<label><input type="radio" name="deptf" value="${d}" ${S.deptFilter===d?"checked":""}>${d}</label>`).join("")}</div>`:`<p class="small" style="margin:0 4px 8px">Only files assigned to you.</p>`)+`
     ${statsHtml()}
-    <p class="small" style="margin:0 4px 8px">${list.length} file${list.length===1?"":"s"} · ${counts.overdue} overdue · ${counts.due} due soon${list.some(x=>x.p.status==="fee_due")?` · <b>${list.filter(x=>x.p.status==="fee_due").length} waiting on a fee</b>`:""} · sorted by urgency, size and days waiting</p>
+    <p class="small" style="margin:0 4px 8px">${list.length} file${list.length===1?"":"s"} · ${counts.overdue} overdue · ${counts.due} due soon${list.some(x=>feeOpen(x.p)&&["approved","ready"].includes(x.p.status))?` · <b>${list.filter(x=>feeOpen(x.p)&&["approved","ready"].includes(x.p.status)).length} waiting on fees</b>`:""} · sorted by urgency, size and days waiting</p>
     ${list.length?list.map(({p,m})=>`<button class="qitem" data-p="${p.id}" aria-current="${p.id===S.sel}">
       <span class="m">${p.status==="void"?'<span class="pill p-void">Voided</span>':`<span class="pill ${URG[m.urg][1]}">${URG[m.urg][0]}</span>`}<span class="dept">${esc(m.app.dept)}</span></span>
       <span class="t">${esc(p.address)}</span>
@@ -1084,10 +1089,11 @@ function renderRail(){
   $("#rail").innerHTML = stagesFor(p ? (p.appType||"plancheck") : S.app).map((s,i)=>{
     let extra="";
     const rounds = p ? (p.status==="corrections" ? cyc : Math.max(cyc-1,0)) : 0;
-    if(i===3 && p && rounds) extra=`<span class="round">${p.status==="corrections"?`Round ${rounds}`:`${rounds} round${rounds===1?"":"s"} so far`}</span><span class="rounds">${Array.from({length:rounds},(_,k)=>`<i class="${p.status==="corrections"&&k===rounds-1?"cur":""}"></i>`).join("")}</span>`;
-    if(i===4) extra=`<span class="loop">↺ back to Corrections if anything is still open</span>`;
-    if(i===1) extra=p?(p.fee?`<span class="loop">${money2(p.fee.dueNow)} ${p.fee.paidAt?"paid":"due"}</span>`:`<span class="loop">No fee to pay online</span>`):`<span class="loop">Shown after you submit</span>`;
-    if(i===6 && p && (p.agencies||[]).length) extra=`<span class="loop">${p.agencies.filter(a=>a.done).length} of ${p.agencies.length} cleared</span>`;
+    if(i===2 && p && rounds) extra=`<span class="round">${p.status==="corrections"?`Round ${rounds}`:`${rounds} round${rounds===1?"":"s"} so far`}</span><span class="rounds">${Array.from({length:rounds},(_,k)=>`<i class="${p.status==="corrections"&&k===rounds-1?"cur":""}"></i>`).join("")}</span>`;
+    if(i===3) extra=`<span class="loop">↺ back to Corrections if anything is still open</span>`;
+    const last=stagesFor(p?(p.appType||"plancheck"):S.app).length-1;
+    if(i===last) extra+=p&&p.fee?`<span class="loop fee">Fees ${money2(p.fee.dueNow)} ${p.fee.paidAt?"paid":"due before the permit"}</span>`:`<span class="loop fee">No fee, no permit</span>`;
+    if(i===5 && p && (p.agencies||[]).length) extra=`<span class="loop">${p.agencies.filter(a=>a.done).length} of ${p.agencies.length} cleared</span>`;
     return `<div class="stage ${i<at?"done":""} ${i===at?"now":""}"><b>${s.t}</b><span class="who">${s.who}</span>${extra}</div>`; }).join("");
 }
 function renderWorkspace(){
@@ -1592,13 +1598,13 @@ function projectView(p){
   let head="", primary="";
   if(!P){
     if(p.status==="submitted"||p.status==="resubmitted") head=`<div class="note">${p.status==="resubmitted"?"Revised set received":"Submitted"} ${fmtD(p.updatedAt||p.submittedAt)}. Monrovia reviewers are working on it. Their comments will appear here.</div>`;
-    if(p.status==="fee_due"){ head=`<div class="note red"><b>Plan check fee due: ${money2(p.fee?.dueNow)}.</b> Pay it to the City of Monrovia at City Hall, 415 S. Ivy Ave. Review starts, and Redline's AI first read runs, as soon as City staff record the payment. We'll email you when it's recorded.</div>${feeHtml(p)}`; }
     if(p.status==="corrections"){ head=`<div class="note red"><b>${openApproved} comment${openApproved===1?"":"s"} from the City.</b> Each one shows the spot on your sheets. Respond to each, then upload the revised set. Only these items get rechecked.</div>`;
       primary=`<input type="file" id="re-file" accept="application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="letter">Print the list</button>`; }
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
     else if(p.status==="approved") head=`<div class="note ok"><b>Plan check approved.</b> Waiting on the other agencies below. You'll get a pickup notice when they're all cleared.</div>${agencyHtml(p,false)}`;
-    if(p.status==="ready") head=`<div class="note ok"><b>Ready for permit pickup.</b> All clearances are in. Pay the permit fees online or at 415 S. Ivy Ave, then the permit is issued.</div>`;
+    if(p.status==="ready") head=`<div class="note ok"><b>Ready for permit pickup.</b> All clearances are in. ${feeOpen(p)?`Pay the fees of ${money2(p.fee.dueNow)} to the City of Monrovia at City Hall, 415 S. Ivy Ave. The permit is issued once City staff record the payment.`:"Fees are paid. The City will issue the permit."}</div>`;
     if(p.status==="issued") head=`<div class="note ok"><b>Permit issued${p.issuedPermitAt?` ${fmtD(p.issuedPermitAt)}`:""}.</b> Schedule inspections from here.</div>`;
+    if(p.fee && p.status!=="void") head+=feeBox(p,false);
     if(p.status==="void") head=`<div class="note"><b>The City voided this application</b>${p.voidReason?` (${esc(p.voidReason)})`:""}. If that's a mistake, contact the City. Otherwise start a new application.</div>`;
   } else {
     const stale=aiStale(p), hasSheets=!!((p.aiPages||[]).length||(p.sheets||[]).length);
@@ -1607,7 +1613,7 @@ function projectView(p){
     if(p.status==="submitted"||p.status==="resubmitted"){
       if(!head && p.aiState==="done") head=`<div class="note">${p.status==="resubmitted"?`Revised set in. Recheck notes sit under each open comment${openChanges?`, and <b>${openChanges} change${openChanges===1?"":"s"} nobody asked for</b> are listed below`:""}.`:`Redline drafted ${p.corrections.filter(c=>c.source==="ai").length} comments, each clipped from the sheet, plus ${p.corrections.filter(c=>c.source==="notes").length} missing standard notes. Send, edit or reject each one; only comments marked to send reach the applicant.`}</div>`;
       primary=`<button class="btn primary" data-a="issue" ${(drafts||!openApproved)?"disabled":""}>Send ${openApproved} comment${openApproved===1?"":"s"} to applicant</button>
-        <button class="btn ok" data-a="approveall" ${(drafts||openApproved||openChanges)?"disabled":""}>${appOf(p).main?"Approve plan check":"Approve application"}</button>
+        <button class="btn ok" data-a="approveall" ${(drafts||openApproved||openChanges||(!appOf(p).main&&feeOpen(p)))?"disabled":""}>${appOf(p).main?"Approve plan check":"Approve application"}</button>${!appOf(p).main&&feeOpen(p)&&!drafts&&!openApproved&&!openChanges?`<span class="small">Record the fees first. No fee, no permit.</span>`:""}
         ${(drafts||openChanges)?`<span class="small">${drafts?`${drafts} draft${drafts===1?"":"s"}`:""}${drafts&&openChanges?" and ":""}${openChanges?`${openChanges} change${openChanges===1?"":"s"}`:""} still need a decision</span>`:""}`;
     }
     const noteDrafts=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft").length;
@@ -1619,9 +1625,9 @@ function projectView(p){
     else if(p.status==="approved"){ const ag=p.agencies||AGENCIES.map(n=>({name:n,done:false})); const left=ag.filter(a=>!a.done).length;
       head=`<div class="note ok"><b>Plan check approved.</b> ${left?`${left} other-agency clearance${left===1?"":"s"} still open. Tick each one as it comes in.`:"All clearances are in."}</div>${agencyHtml(p,true)}`;
       primary=`<button class="btn primary" data-a="ready" ${left?"disabled":""}>Ready for pickup</button>`; }
-    if(p.status==="ready"){ head=`<div class="note ok"><b>Ready for permit pickup.</b> Waiting on fees and pickup.</div>`; primary=`<button class="btn ok" data-a="issue-permit">Mark permit issued</button>`; }
+    if(p.status==="ready"){ head=`<div class="note ok"><b>Ready for permit pickup.</b> ${feeOpen(p)?`Waiting on ${money2(p.fee.dueNow)} in fees. No fee, no permit.`:"Fees are paid."}</div>`; primary=`<button class="btn ok" data-a="issue-permit" ${feeOpen(p)?"disabled":""}>Mark permit issued</button>`; }
     if(p.status==="issued") head=`<div class="note ok"><b>Permit issued${p.issuedPermitAt?` ${fmtD(p.issuedPermitAt)}`:""}.</b></div>`;
-    if(p.status==="fee_due"){ head=`<div class="note">Waiting on the applicant's plan check fee (${money2(p.fee?.dueNow)}). Review and the AI first read start once it's paid.</div>${feeHtml(p)}`; primary=`<label class="f" style="max-width:220px">City receipt # (optional)<input type="text" id="fee-receipt"></label><button class="btn primary" data-a="payfee" ${busy?"disabled":""}>Record fee as paid</button>`; }
+    if(p.fee && p.status!=="void") head+=feeBox(p,true);
     if(p.status==="void"){ head=`<div class="note"><b>Voided ${fmtD(p.voidedAt)}</b>${p.voidReason?`: ${esc(p.voidReason)}`:""}. It stays in the archive and is deleted for good on ${fmtD(purgeAt(p))}.</div>`; primary=""; }
     if(isAdmin() && S.voiding===p.id) head=`<div class="note red"><b>Void this application?</b> It leaves every queue, moves to the archive, and is deleted with its sheets after 30 days. You can restore it until then.
       <div class="form" style="margin-top:10px"><label class="f">Reason<select id="void-reason"><option>Duplicate application</option><option>Information entered incorrectly</option><option>Withdrawn by applicant</option><option>Submitted in error</option><option>Other</option></select></label></div>
@@ -1723,16 +1729,15 @@ function act(p,a,cid){
       p.corrections.push({id:uid(), dept:"Planning", section:ch.mayAffect||"Unrequested change", sheet:ch.sheet, page:ch.page, finding:`Changed since the last set: ${ch.description} (was ${ch.previous||"—"}, now ${ch.now||"—"}).`, fix:"Explain this change and show it complies, or revert it.", severity:"correction", source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[], snip:ch.snip||null});
       addLog(p,"planner",`Made a comment from an unrequested change: ${ch.description}`); save(p); break;
     case "issue": { p.status="corrections"; p.issuedAt=now(); p.corrections.forEach(c=>{ if(c.state==="approved"&&!c.resolved&&!c.sentAt) c.sentAt=p.issuedAt; }); const n=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).length; addLog(p,"planner",`Sent ${n} comments to the applicant (cycle ${p.cycle}).`); save(p); break; }
-    case "approveall": if(!appOf(p).main){ p.status="approved"; p.agencies=[]; addLog(p,"planner","Application approved."); save(p); break; } p.status="approved"; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); addLog(p,"planner","Plan check approved. Waiting on other agencies."); save(p); break;
+    case "approveall": if(!appOf(p).main && feeOpen(p)){ flash("Record the fees first. No fee, no permit."); break; } if(!appOf(p).main){ p.status="approved"; p.agencies=[]; addLog(p,"planner","Application approved."); save(p); break; } p.status="approved"; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); addLog(p,"planner","Plan check approved. Waiting on other agencies."); save(p); break;
     case "ready": p.status="ready"; addLog(p,"planner","All agency clearances in. Ready for permit pickup."); save(p); break;
-    case "issue-permit": p.status="issued"; p.issuedPermitAt=now(); addLog(p,"planner","Permit issued."); save(p); break;
+    case "issue-permit": if(feeOpen(p)){ flash("Record the fees first. No fee, no permit."); break; } p.status="issued"; p.issuedPermitAt=now(); addLog(p,"planner","Permit issued."); save(p); break;
     case "resubmit": { const miss=p.corrections.filter(c=>c.state==="approved"&&!c.resolved&&!(c.draftResponse||"").trim()).length;
       if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first.`); return; } $("#re-file").click(); break; }
     case "firstread": $("#fr-file").click(); break;
     case "airun": runFirstRead(p, null); break;
-    case "payfee": { if(!p.fee || p.fee.paidAt || !isPlanner()) break; const rc=($("#fee-receipt")?.value||"").trim(); p.fee.paidAt=now(); p.fee.method=`Paid to the City${rc?`, receipt ${rc}`:""}`; p.fee.receipt=rc; p.status="submitted"; p.submittedAt=now();
-      addLog(p, "planner", `Plan check fee ${money2(p.fee.dueNow)} recorded as paid${rc?` (receipt ${rc})`:""}. Sent to ${reviewsOf(p).map(v=>v.dept).join(", ")} review.`);
-      save(p).then(()=>{ if(p.aiState!=="none") runFirstRead(p, null); }); break; }
+    case "payfee": { if(!p.fee || p.fee.paidAt || !isPlanner()) break; const rc=($("#fee-receipt")?.value||"").trim(); p.fee.paidAt=now(); p.fee.method=`Paid to the City${rc?`, receipt ${rc}`:""}`; p.fee.receipt=rc;
+      addLog(p, "planner", `Fees ${money2(p.fee.dueNow)} recorded as paid${rc?` (receipt ${rc})`:""}.`); save(p); break; }
     case "voidask": S.voiding=p.id; renderWorkspace(); break;
     case "voidcancel": S.voiding=null; renderWorkspace(); break;
     case "void": { const why=$("#void-reason")?.value||"Voided"; p.voidPrev=p.status; p.status="void"; p.voidedAt=now(); p.voidReason=why; addLog(p,"planner",`Voided: ${why}.`); S.voiding=null; S.sel=null; save(p); break; }
