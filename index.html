@@ -21,7 +21,9 @@
   <a class="brandwrap" href="#" aria-label="Redline Permit home"><img class="mark" src="logo.svg" alt="" width="34" height="34"><span class="brand">Redline Permit</span></a>
   <span class="city">AI plan check for <b>California cities</b></span>
   <span class="spacer"></span>
-  <nav class="seg" aria-label="Sections"><a href="#corrections">How it works</a><a href="#process">Process</a><a href="#departments">Departments</a><a href="#codes">Codes</a><a href="#security">Security</a><a class="citylink" href="monrovia/">City of Monrovia</a></nav>
+  <nav class="seg" aria-label="Sections"><a href="#corrections">How it works</a><a href="#process">Process</a><a href="#departments">Departments</a><a href="#codes">Codes</a><a href="#security">Security</a></nav>
+  <details class="cities" id="cities"><summary>Enrolled Cities</summary>
+    <div class="cities-pop" role="list"><a class="cbub" role="listitem" href="monrovia/">/Monrovia</a></div></details>
   <a class="btn primary sm" href="#contact">Start a pilot</a>
 </div></header>
 
@@ -32,7 +34,7 @@
         <div class="kicker">AI-assisted plan check</div>
         <h1>Every correction <em>circled</em> on the sheet it belongs to.</h1>
         <p class="sub">Redline Permit gives building departments an AI first read of each plan set. Reviewers approve, edit or reject every comment, and applicants get a numbered list with a clip of the exact spot on their drawings.</p>
-        <div class="ctas"><a class="btn primary" href="monrovia/">City of Monrovia · sign in</a><a class="btn" href="#contact">Bring it to your city</a></div>
+        <div class="ctas"><a class="btn primary" href="monrovia/">/Monrovia · Sign in</a><a class="btn" href="#contact">Bring it to your city</a></div>
         <div class="facts"><span><b>Piloting</b> in the San Gabriel Valley</span><span><b>Title 24</b> 2025 edition</span><span><b>Google Drive</b> and <b>Dropbox</b> submittals</span></div>
       </div>
 
@@ -364,5 +366,6 @@ cloud("ac2",238,80,94,44,9);
   });
 })();
 </script>
+<script>(function(){const d=document.getElementById("cities");if(!d)return;document.addEventListener("click",e=>{if(d.open&&!d.contains(e.target))d.open=false;});document.addEventListener("keydown",e=>{if(e.key==="Escape")d.open=false;});})();</script>
 </body>
 </html>

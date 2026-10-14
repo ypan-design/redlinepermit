@@ -269,3 +269,15 @@ a.city-card:hover{border-color:var(--teal)}
 .modal[hidden]{display:none}
 .modal .panel{max-width:460px;width:100%;background:var(--glass-solid)}
 .coderow .cite{grid-row:span 2}
+
+/* Enrolled Cities dropdown: one red /City bubble per enrolled city */
+.cities{position:relative}
+.cities summary{list-style:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;color:var(--red);border:1px solid var(--red);background:var(--glass);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.cities summary::-webkit-details-marker{display:none}
+.cities summary::after{content:"";width:6px;height:6px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+.cities[open] summary{background:var(--red);color:#fff}
+.cities[open] summary::after{transform:rotate(-135deg) translateY(-1px)}
+.cities-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:20;display:flex;flex-wrap:wrap;gap:8px;min-width:200px;max-width:min(360px,calc(100vw - 32px));padding:12px;border-radius:16px;background:var(--glass-solid,#fff);border:1px solid var(--hair);box-shadow:0 12px 32px rgba(0,0,0,.12)}
+.cbub{display:inline-flex;align-items:center;padding:7px 14px;border-radius:999px;background:var(--red);color:#fff;font:600 13px/1 "IBM Plex Mono",ui-monospace,monospace;text-decoration:none;letter-spacing:.01em}
+.cbub:hover{background:var(--oxblood)}
+@media (max-width:600px){.cities-pop{left:0;right:auto}}
