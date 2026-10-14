@@ -56,23 +56,40 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 /* hero */
 .hero{padding:30px 0 4px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:center}
 @media (max-width:860px){.hero{grid-template-columns:minmax(0,1fr)}}
-.cityart{position:relative;margin:0;border-radius:22px;overflow:hidden;aspect-ratio:3/2;background:radial-gradient(70% 60% at 92% 0%,rgba(200,50,43,.16),transparent 70%),radial-gradient(60% 55% at 0% 100%,rgba(30,122,120,.14),transparent 70%),linear-gradient(170deg,#34312E 0%,#282624 100%);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 18px 40px -24px rgba(36,43,49,.45)}
-.cityart::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);pointer-events:none}
-.cityart .hall{position:relative;z-index:1;width:100%;height:100%;display:block}
-.cityart path{stroke-width:1.1;stroke-opacity:.88;stroke-dasharray:1;stroke-dashoffset:1;animation:rl-draw 2.6s cubic-bezier(.4,0,.2,1) forwards}
-.cityart path.thin,.cityart path.brick{stroke-width:.9;opacity:.85}
-.cityart path.stone{stroke-width:.8;opacity:.75}
-.cityart path.mt{stroke-width:.9;opacity:.35;animation-duration:3.4s}
-.cityart path.mt.far{opacity:.18}
-.cityart path.plant{stroke-width:1;opacity:.9}
-.cityart path.cloud{stroke:#E5574F;stroke-width:1.2;opacity:.0;stroke-dasharray:none;animation:rl-fade .8s 2.4s forwards}
-.cityart .letters{font:600 21px/1 Inter,system-ui,sans-serif;letter-spacing:.32em;fill:none;stroke:#fff;stroke-width:.9;opacity:0;animation:rl-fade 1s 1.6s forwards}
-.cityart .badge{opacity:0;animation:rl-fade .6s 2.9s forwards}
-.cityart .badge circle{fill:#C8322B}.cityart .badge text{font:700 12px Inter,system-ui,sans-serif;fill:#fff}
-.cityart figcaption{position:absolute;z-index:2;left:18px;top:14px;color:rgba(255,255,255,.55);font:500 10.5px/1.3 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}
+.cityart{position:relative;margin:0;color:var(--ink,#242B31)}
+.cityart .hall{display:block;width:100%;height:auto;overflow:visible}
+.cityart path{stroke-width:1.05;stroke-opacity:.82;stroke-dasharray:1;stroke-dashoffset:1;animation:rl-draw 2.6s cubic-bezier(.4,0,.2,1) forwards}
+.cityart path.thin,.cityart path.brick{stroke-width:.8;stroke-opacity:.6}
+.cityart path.stone{stroke-width:.7;stroke-opacity:.5}
+.cityart path.mt{stroke-width:.8;stroke-opacity:.28;animation-duration:3.4s}
+.cityart path.mt.far{stroke-opacity:.14}
+.cityart path.plant{stroke-width:.9;stroke-opacity:.7}
+.cityart path.flag{stroke-dasharray:none;stroke-dashoffset:0;opacity:0;animation:rl-fade .8s 1.8s forwards}
+.cityart .letters{font:600 21px/1 Inter,system-ui,sans-serif;letter-spacing:.32em;fill:none;stroke:currentColor;stroke-width:.8;opacity:0;animation:rl-fade 1s 1.6s forwards}
+.cityart .sky path{stroke-dasharray:none;stroke-dashoffset:0;stroke-width:.9;stroke-opacity:.35;animation:rl-drift 26s ease-in-out infinite alternate}
+.cityart .sky .p2{animation-duration:32s;animation-delay:-8s}.cityart .sky .p3{animation-duration:21s;animation-delay:-4s;stroke-opacity:.25}
+.cityart .fronds{transform-box:view-box;transform-origin:574px 180px;animation:rl-sway 4.2s ease-in-out infinite alternate}
+.cityart .rcloud{transform-box:view-box;transform-origin:339px 210px;animation:rl-drop 9s cubic-bezier(.45,0,.25,1) 2.6s infinite both}
+.cityart .rc{stroke-dasharray:none;stroke-dashoffset:0;animation:none;stroke-opacity:1;stroke:var(--red,#C8322B);stroke-width:1.4;stroke-linejoin:round;fill:rgba(200,50,43,.04)}
+.cityart .badge{transform-box:fill-box;transform-origin:center;animation:rl-pop 9s ease 2.6s infinite both}
+.cityart .badge circle{fill:var(--red,#C8322B)}
+.cityart .badge text{font:700 11.5px Inter,system-ui,sans-serif;fill:#fff;stroke:none}
+.cityart figcaption{margin-top:6px;color:var(--ink3,#8B939A);font:500 10.5px/1.3 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;text-align:right}
 @keyframes rl-draw{to{stroke-dashoffset:0}}
 @keyframes rl-fade{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.cityart path,.cityart .letters,.cityart .badge,.cityart path.cloud{animation:none;stroke-dashoffset:0;opacity:1}}
+@keyframes rl-drift{from{transform:translateX(-14px)}to{transform:translateX(18px)}}
+@keyframes rl-sway{from{transform:rotate(-3deg)}to{transform:rotate(3.5deg)}}
+@keyframes rl-drop{
+ 0%{transform:translate(70px,-150px) scale(.82);opacity:0}
+ 8%{opacity:1}
+ 30%{transform:translate(20px,-150px) scale(.86)}
+ 46%{transform:translate(0,4px) scale(1.04,.94)}
+ 52%{transform:translate(0,0) scale(1)}
+ 72%{transform:translate(0,0) scale(1)}
+ 90%{transform:translate(-40px,-150px) scale(.84);opacity:1}
+ 100%{transform:translate(-70px,-160px) scale(.8);opacity:0}}
+@keyframes rl-pop{0%,48%{transform:scale(0)}54%{transform:scale(1.25)}58%,74%{transform:scale(1)}80%,100%{transform:scale(0)}}
+@media (prefers-reduced-motion:reduce){.cityart path,.cityart .letters,.cityart path.flag{animation:none;stroke-dashoffset:0;opacity:1}.cityart .rcloud,.cityart .badge,.cityart .fronds,.cityart .sky path{animation:none}}
 
 .kicker{font-size:11px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--ink3)}
 .kicker::after{content:"";display:block;width:36px;height:2px;background:var(--red);margin-top:10px}
@@ -387,12 +404,15 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
   <div class="hero" id="hero"><div class="hero-txt"><div class="kicker">Redline Permit · /Monrovia</div>
     <h1>Plan check.</h1>
     <p>Owners and designers submit the plan set once. Redline does the first read against Monrovia's codes and clips each issue straight from the sheets. Reviewers decide every comment, right in the portal.</p></div>
-    <figure class="cityart" aria-label="Monrovia City Hall"><svg class="hall" viewBox="0 0 600 400" role="img" aria-label="Line drawing of Monrovia City Hall with the San Gabriel Mountains behind">
-<g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+    <figure class="cityart" aria-label="Monrovia City Hall"><svg class="hall" viewBox="0 0 600 400" role="img" aria-label="Line drawing of Monrovia City Hall, with a red cloud that drops onto the MONROVIA sign and floats back up">
+<g class="sky" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+<path class="puff p1" d="M70 92 a7.800000000000001 7.800000000000001 0 0 1 13.0 -6.5 a11.700000000000001 11.700000000000001 0 0 1 22.1 -2.6 a9.1 9.1 0 0 1 14.3 6.5 a6.5 6.5 0 0 1 1.3 11.700000000000001 Z"/><path class="puff p2" d="M400 62 a6 6 0 0 1 10 -5 a9 9 0 0 1 17 -2 a7 7 0 0 1 11 5 a5 5 0 0 1 1 9 Z"/><path class="puff p3" d="M220 58 a4.800000000000001 4.800000000000001 0 0 1 8.0 -4.0 a7.2 7.2 0 0 1 13.600000000000001 -1.6 a5.6000000000000005 5.6000000000000005 0 0 1 8.8 4.0 a4.0 4.0 0 0 1 0.8 7.2 Z"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
 <path class="mt far" d="M0.0 175.0 L40.0 160.0 L90.0 150.0 L130.0 128.0 L170.0 140.0 L215.0 112.0 L260.0 124.0 L300.0 98.0 L345.0 118.0 L390.0 104.0 L430.0 126.0 L470.0 114.0 L520.0 140.0 L560.0 132.0 L600.0 150.0" pathLength="1"/>
 <path class="mt" d="M0.0 205.0 L50.0 190.0 L110.0 182.0 L160.0 170.0 L205.0 184.0 L255.0 166.0 L310.0 178.0 L365.0 160.0 L420.0 176.0 L480.0 168.0 L540.0 186.0 L600.0 180.0" pathLength="1"/>
 <path class="" d="M10.0 360.0 L590.0 360.0" pathLength="1"/>
-<path class="thin" d="M10.0 372.0 L590.0 372.0" pathLength="1"/>
+<path class="thin" d="M60.0 372.0 L540.0 372.0" pathLength="1"/>
 <path class="" d="M40.0 246.0 L560.0 246.0" pathLength="1"/>
 <path class="" d="M40.0 252.0 L560.0 252.0" pathLength="1"/>
 <path class="" d="M50.0 252.0 L50.0 334.0" pathLength="1"/>
@@ -556,20 +576,16 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
 <path class="plant" d="M235.0 334.0 Q222.4 332.4 215.5 330.9 M235.0 334.0 Q224.7 329.5 217.9 325.0 M235.0 334.0 Q228.2 327.1 222.3 320.2 M235.0 334.0 Q232.6 325.5 228.2 317.1 M235.0 334.0 Q237.3 325.0 235.0 316.0 M235.0 334.0 Q241.6 325.5 241.8 317.1 M235.0 334.0 Q245.2 327.1 247.7 320.2 M235.0 334.0 Q247.6 329.5 252.1 325.0 M235.0 334.0 Q248.4 332.4 254.5 330.9" pathLength="1"/>
 <path class="plant" d="M430.0 358.0 Q416.3 356.3 408.3 354.5 M430.0 358.0 Q418.7 353.0 410.9 348.0 M430.0 358.0 Q422.5 350.3 415.9 342.7 M430.0 358.0 Q427.2 348.6 422.5 339.2 M430.0 358.0 Q432.3 348.0 430.0 338.0 M430.0 358.0 Q437.0 348.6 437.5 339.2 M430.0 358.0 Q440.9 350.3 444.1 342.7 M430.0 358.0 Q443.5 353.0 449.1 348.0 M430.0 358.0 Q444.5 356.3 451.7 354.5" pathLength="1"/>
 <path class="" d="M520.0 118.0 L520.0 334.0" pathLength="1"/>
-<path class="thin" d="M520 124 C536 118 548 132 566 124 L566 152 C548 160 536 146 520 152" pathLength="1"/>
-<path class="thin" d="M520 131 C536 125 548 139 566 131" pathLength="1"/>
-<path class="thin" d="M520 138 C536 132 548 146 566 138" pathLength="1"/>
-<path class="thin" d="M520 145 C536 139 548 153 566 145" pathLength="1"/>
 <path class="" d="M578 360 C574 300 570 240 574 180" pathLength="1"/>
-<path class="plant" d="M574 180 Q553.2 158.0 539.4 168.0" pathLength="1"/>
+<g class="fronds"><path class="plant" d="M574 180 Q553.2 158.0 539.4 168.0" pathLength="1"/>
 <path class="plant" d="M574 180 Q560.2 146.1 551.0 148.2" pathLength="1"/>
 <path class="plant" d="M574 180 Q587.8 146.1 597.0 148.2" pathLength="1"/>
 <path class="plant" d="M574 180 Q594.8 158.0 608.6 168.0" pathLength="1"/>
-<path class="plant" d="M574 180 Q572.4 152.1 571.4 158.1" pathLength="1"/>
+<path class="plant" d="M574 180 Q572.4 152.1 571.4 158.1" pathLength="1"/></g>
+<path class="thin flag" d="M520 124 C534 124 548 127 566 130 L566 152 C548 155 534 152 520 152 M520 131 C534 131 548 134 566 137 M520 138 C534 138 548 141 566 144 M520 145 C534 145 548 148 566 151"><animate attributeName="d" dur="2.4s" repeatCount="indefinite" values="M520 124 C534 124 548 127 566 130 L566 152 C548 155 534 152 520 152 M520 131 C534 131 548 134 566 137 M520 138 C534 138 548 141 566 144 M520 145 C534 145 548 148 566 151;M520 124 C534 115 548 135 566 119 L566 152 C548 163 534 143 520 152 M520 131 C534 122 548 142 566 126 M520 138 C534 129 548 149 566 133 M520 145 C534 136 548 156 566 140;M520 124 C534 124 548 127 566 130 L566 152 C548 155 534 152 520 152 M520 131 C534 131 548 134 566 137 M520 138 C534 138 548 141 566 144 M520 145 C534 145 548 148 566 151" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/></path>
 <text class="letters" x="338" y="211" text-anchor="middle">MONROVIA</text>
-<path class="cloud" d="M226 186 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 14.1 0 a7 7 0 0 1 0 16.0 a7 7 0 0 1 0 16.0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 -14.1 0 a7 7 0 0 1 0 -16.0 a7 7 0 0 1 0 -16.0" pathLength="1"/>
 </g>
-<g class="badge"><circle cx="458" cy="186" r="11" fill="#fff"/><text x="458" y="190.5" text-anchor="middle">1</text></g>
+<g class="rcloud"><path class="rc" d="M228 201.1 a15.9 11.0 0 0 1 31.7 0 a15.9 14.0 0 0 1 31.7 0 a15.9 17.0 0 0 1 31.7 0 a15.9 15.0 0 0 1 31.7 0 a15.9 18.0 0 0 1 31.7 0 a15.9 14.0 0 0 1 31.7 0 a15.9 12.0 0 0 1 31.7 0 a7 10.5 0 0 1 0 18.9 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a11.1 4 0 0 1 -22.2 0 a7 10.5 0 0 1 0 -18.9 Z" fill="none"/><g class="badge"><circle cx="452" cy="176" r="10.5"/><text x="452" y="180.3" text-anchor="middle">1</text></g></g>
 </svg><figcaption>Monrovia City Hall · 415 S. Ivy Ave</figcaption></figure></div>
   <div id="banner" class="banner"></div>
   <div id="acctbar" class="banner"></div>
