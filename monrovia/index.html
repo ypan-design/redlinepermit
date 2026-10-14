@@ -56,20 +56,20 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 /* hero */
 .hero{padding:30px 0 4px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:center}
 @media (max-width:860px){.hero{grid-template-columns:minmax(0,1fr)}}
-.cityart{position:relative;margin:0;border-radius:22px;overflow:hidden;aspect-ratio:3/2;background:radial-gradient(90% 80% at 100% 100%,#1E7A78 0%,rgba(30,122,120,.85) 30%,rgba(30,122,120,0) 70%),radial-gradient(80% 70% at 10% 0%,#D9443B 0%,rgba(217,68,59,0) 70%),linear-gradient(160deg,#C8322B 0%,#A92B27 55%,#7E2A2A 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
-.cityart::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.08),transparent 40%);pointer-events:none}
+.cityart{position:relative;margin:0;border-radius:22px;overflow:hidden;aspect-ratio:3/2;background:radial-gradient(70% 60% at 92% 0%,rgba(200,50,43,.16),transparent 70%),radial-gradient(60% 55% at 0% 100%,rgba(30,122,120,.14),transparent 70%),linear-gradient(170deg,#34312E 0%,#282624 100%);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 18px 40px -24px rgba(36,43,49,.45)}
+.cityart::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);pointer-events:none}
 .cityart .hall{position:relative;z-index:1;width:100%;height:100%;display:block}
-.cityart path{stroke-width:1.4;stroke-dasharray:1;stroke-dashoffset:1;animation:rl-draw 2.6s cubic-bezier(.4,0,.2,1) forwards}
+.cityart path{stroke-width:1.1;stroke-opacity:.88;stroke-dasharray:1;stroke-dashoffset:1;animation:rl-draw 2.6s cubic-bezier(.4,0,.2,1) forwards}
 .cityart path.thin,.cityart path.brick{stroke-width:.9;opacity:.85}
 .cityart path.stone{stroke-width:.8;opacity:.75}
-.cityart path.mt{stroke-width:1;opacity:.55;animation-duration:3.4s}
-.cityart path.mt.far{opacity:.3}
+.cityart path.mt{stroke-width:.9;opacity:.35;animation-duration:3.4s}
+.cityart path.mt.far{opacity:.18}
 .cityart path.plant{stroke-width:1;opacity:.9}
-.cityart path.cloud{stroke-width:1.3;opacity:.0;stroke-dasharray:none;animation:rl-fade .8s 2.4s forwards}
+.cityart path.cloud{stroke:#E5574F;stroke-width:1.2;opacity:.0;stroke-dasharray:none;animation:rl-fade .8s 2.4s forwards}
 .cityart .letters{font:600 21px/1 Inter,system-ui,sans-serif;letter-spacing:.32em;fill:none;stroke:#fff;stroke-width:.9;opacity:0;animation:rl-fade 1s 1.6s forwards}
 .cityart .badge{opacity:0;animation:rl-fade .6s 2.9s forwards}
-.cityart .badge text{font:700 12px Inter,system-ui,sans-serif;fill:#C8322B}
-.cityart figcaption{position:absolute;z-index:2;left:18px;top:14px;color:rgba(255,255,255,.9);font:500 11px/1.3 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}
+.cityart .badge circle{fill:#C8322B}.cityart .badge text{font:700 12px Inter,system-ui,sans-serif;fill:#fff}
+.cityart figcaption{position:absolute;z-index:2;left:18px;top:14px;color:rgba(255,255,255,.55);font:500 10.5px/1.3 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}
 @keyframes rl-draw{to{stroke-dashoffset:0}}
 @keyframes rl-fade{to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.cityart path,.cityart .letters,.cityart .badge,.cityart path.cloud{animation:none;stroke-dashoffset:0;opacity:1}}
