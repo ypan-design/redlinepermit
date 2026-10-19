@@ -66,9 +66,10 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     const m = Math.min(W, H);
     L = Math.max(80, Math.min(m * 0.3, 230)); seg = L / N;
-    const ar = 1.45;
-    bw = Math.min(W * (W < 640 ? 0.74 : 0.56), H * 0.5 * ar); bh = bw / ar;
-    bx = (W - bw) / 2; by = Math.max(H * 0.14, H * (W < 640 ? 0.36 : 0.42) - bh / 2);
+    // the plan sheet keeps its own proportions (1400 x 1070)
+    const sc = Math.min(W * (W < 640 ? 0.93 : 0.86) / PW, H * (W < 640 ? 0.52 : 0.74) / PH);
+    bw = PW * sc; bh = PH * sc;
+    bx = (W - bw) / 2; by = Math.max(H * 0.06, H * (W < 640 ? 0.36 : 0.44) - bh / 2);
     plan = mk(); drawPlan(plan.getContext('2d'));
     rev = mk(); rctx = rev.getContext('2d');
     resetCycle(performance.now() / 1000, true);
@@ -92,134 +93,46 @@
     target = null; wake = [];
   }
 
-  /* ---------- the hidden plan sheet ---------- */
+  /* ---------- the hidden plan sheet: a medical office building, Level 1, fully annotated ---------- */
+  const PLAN_IMG = new Image(), PW = 1400, PH = 1070;
+  PLAN_IMG.onload = () => { if (plan) drawPlan(plan.getContext('2d')); };
+  PLAN_IMG.src = '/assets/plan-l1.png';
   function drawPlan(g) {
-    const X = x => bx + x * bw, Y = y => by + y * bh;
-    const t = Math.max(3, bw * 0.011), thin = Math.max(1, bw * 0.0022);
-    const fs = Math.max(7, bw * 0.02);
-    g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineJoin = 'miter';
-
-    const line = (x1, y1, x2, y2, w) => { g.lineWidth = w; g.beginPath(); g.moveTo(X(x1), Y(y1)); g.lineTo(X(x2), Y(y2)); g.stroke(); };
-    const rect = (x1, y1, x2, y2, w = thin) => { g.lineWidth = w; g.strokeRect(X(x1), Y(y1), X(x2) - X(x1), Y(y2) - Y(y1)); };
-
-    // walls (solid poché)
-    g.lineCap = 'square';
-    g.lineWidth = t * 1.4; g.strokeRect(X(0), Y(0), bw, bh);
-    [[0.42, 0, 0.42, 1], [0, 0.55, 0.42, 0.55], [0.42, 0.4, 1, 0.4], [0.72, 0.4, 0.72, 1]].forEach(a => line(...a, t));
-    g.lineCap = 'butt';
-
-    // openings: cut, then draw
-    const cut = (x1, y1, x2, y2, th) => {
-      g.globalCompositeOperation = 'destination-out';
-      if (y1 === y2) g.fillRect(X(x1), Y(y1) - th, X(x2) - X(x1), th * 2);
-      else g.fillRect(X(x1) - th, Y(y1), th * 2, Y(y2) - Y(y1));
-      g.globalCompositeOperation = 'source-over';
-    };
-    const door = (x1, y1, x2, y2, dir) => {
-      cut(x1, y1, x2, y2, t * 0.9); g.lineWidth = thin; g.beginPath();
-      if (y1 === y2) {
-        const hx = X(x1), hy = Y(y1), len = X(x2) - X(x1);
-        g.moveTo(hx, hy); g.lineTo(hx, hy + dir * len); g.stroke();
-        g.beginPath(); g.setLineDash([3, 3]);
-        g.arc(hx, hy, len, dir > 0 ? Math.PI / 2 : -Math.PI / 2, 0, dir < 0); g.stroke();
-      } else {
-        const hx = X(x1), hy = Y(y1), len = Y(y2) - Y(y1);
-        g.moveTo(hx, hy); g.lineTo(hx + dir * len, hy); g.stroke();
-        g.beginPath(); g.setLineDash([3, 3]);
-        g.arc(hx, hy, len, dir > 0 ? 0 : Math.PI, Math.PI / 2, dir < 0); g.stroke();
-      }
-      g.setLineDash([]);
-    };
-    const win = (x1, y1, x2, y2) => {
-      const th = t * 1.1; cut(x1, y1, x2, y2, th); g.lineWidth = thin;
-      if (y1 === y2) [-th * 0.7, 0, th * 0.7].forEach(o => { g.beginPath(); g.moveTo(X(x1), Y(y1) + o); g.lineTo(X(x2), Y(y1) + o); g.stroke(); });
-      else [-th * 0.7, 0, th * 0.7].forEach(o => { g.beginPath(); g.moveTo(X(x1) + o, Y(y1)); g.lineTo(X(x1) + o, Y(y2)); g.stroke(); });
-    };
-    door(0.12, 0, 0.22, 0, 1);            // entry
-    door(0.42, 0.14, 0.42, 0.26, -1);      // living / kitchen
-    door(0.26, 0.55, 0.36, 0.55, 1);       // living / bed 1
-    door(0.42, 0.62, 0.42, 0.72, 1);       // bed 1 / bath
-    door(0.78, 0.4, 0.88, 0.4, 1);         // kitchen / bed 2
-    win(0.55, 0, 0.78, 0); win(0, 0.18, 0, 0.38); win(0, 0.68, 0, 0.86);
-    win(0.8, 1, 0.94, 1); win(1, 0.55, 1, 0.78); win(0.27, 1, 0.37, 1);
-
-    // fixtures
-    rect(0.45, 0.03, 0.7, 0.1); rect(0.91, 0.03, 0.97, 0.32);          // counters
-    rect(0.56, 0.19, 0.8, 0.27);                                         // island
-    rect(0.6, 0.045, 0.66, 0.085);
-    g.beginPath(); g.arc(X(0.63), Y(0.065), bw * 0.008, 0, 7); g.stroke(); // sink
-    rect(0.45, 0.8, 0.69, 0.96); rect(0.465, 0.825, 0.675, 0.935);       // tub
-    rect(0.6, 0.44, 0.69, 0.53);
-    g.beginPath(); g.ellipse(X(0.645), Y(0.485), bw * 0.018, bh * 0.025, 0, 0, 7); g.stroke();
-    rect(0.46, 0.44, 0.52, 0.47);
-    g.beginPath(); g.ellipse(X(0.49), Y(0.52), bw * 0.016, bh * 0.04, 0, 0, 7); g.stroke(); // wc
-    rect(0.07, 0.66, 0.3, 0.93); rect(0.09, 0.675, 0.17, 0.72); rect(0.2, 0.675, 0.28, 0.72); // bed 1
-    rect(0.77, 0.58, 0.96, 0.84); rect(0.79, 0.595, 0.855, 0.635); rect(0.875, 0.595, 0.94, 0.635); // bed 2
-    rect(0.05, 0.06, 0.08, 0.36); rect(0.05, 0.06, 0.25, 0.1);           // sofa
-    rect(0.13, 0.17, 0.25, 0.27);                                        // table
-
-    // room labels
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    const label = (s, a, x, y) => {
-      g.font = `600 ${fs}px system-ui,sans-serif`; g.fillText(s, X(x), Y(y));
-      g.font = `400 ${fs * 0.8}px system-ui,sans-serif`; g.fillText(a, X(x), Y(y) + fs * 1.15);
-    };
-    label('LIVING', '210 SF', 0.25, 0.43); label('KITCHEN', '180 SF', 0.7, 0.33);
-    label('BED 1', '150 SF', 0.19, 0.97 - 0.02 - 0.0); label('BATH', '72 SF', 0.57, 0.66);
-    label('BED 2', '120 SF', 0.86, 0.91);
-
-    // dimension string
-    g.lineWidth = thin; const dy = -0.07, tick = bw * 0.008;
-    line(0, dy, 1, dy, thin);
-    [[0], [0.42], [0.72], [1]].forEach(([x]) => { g.beginPath(); g.moveTo(X(x) - tick, Y(dy) + tick); g.lineTo(X(x) + tick, Y(dy) - tick); g.stroke(); });
-    g.font = `400 ${fs * 0.85}px system-ui,sans-serif`; g.textBaseline = 'bottom';
-    [[0.21, "14'-6\""], [0.57, "10'-4\""], [0.86, "9'-8\""]].forEach(([x, s]) => g.fillText(s, X(x), Y(dy) - 3));
-    const dx = -0.05; line(dx, 0, dx, 1, thin);
-    [0, 0.55, 1].forEach(y => { g.beginPath(); g.moveTo(X(dx) - tick, Y(y) + tick); g.lineTo(X(dx) + tick, Y(y) - tick); g.stroke(); });
-
-    // grid bubbles
-    const r = Math.max(6, bw * 0.02);
-    g.textBaseline = 'middle'; g.font = `600 ${fs * 0.85}px system-ui,sans-serif`;
-    g.setLineDash([4, 4]);
-    [0, 0.42, 0.72, 1].forEach(x => line(x, -0.13 + r / bh, x, -0.01, thin));
-    g.setLineDash([]);
-    [0, 0.42, 0.72, 1].forEach((x, i) => { g.beginPath(); g.arc(X(x), Y(-0.13), r, 0, 7); g.stroke(); g.fillText(String(i + 1), X(x), Y(-0.13)); });
-
-    // north arrow
-    const nx = X(1) + bw * 0.06, ny = Y(0.12);
-    g.beginPath(); g.arc(nx, ny, r * 1.2, 0, 7); g.stroke();
-    g.beginPath(); g.moveTo(nx, ny - r * 1.2); g.lineTo(nx + r * 0.5, ny + r * 0.6); g.lineTo(nx, ny + r * 0.2); g.closePath(); g.fill();
-    g.fillText('N', nx, ny - r * 2);
-
-    // sheet title
-    g.textAlign = 'left'; g.textBaseline = 'middle';
-    g.beginPath(); g.arc(X(0) + r, Y(1.09), r, 0, 7); g.stroke();
-    g.beginPath(); g.moveTo(X(0), Y(1.09)); g.lineTo(X(0) + 2 * r, Y(1.09)); g.stroke();
-    g.font = `600 ${fs * 0.7}px system-ui,sans-serif`; g.fillText('1', X(0) + r * 0.75, Y(1.09) - r * 0.45);
-    g.fillText('A1.1', X(0) + r * 0.45, Y(1.09) + r * 0.5);
-    g.font = `600 ${fs}px system-ui,sans-serif`; g.fillText('FLOOR PLAN', X(0) + r * 2.8, Y(1.09) - fs * 0.35);
-    g.font = `400 ${fs * 0.8}px system-ui,sans-serif`; g.fillText('1/4" = 1\'-0"', X(0) + r * 2.8, Y(1.09) + fs * 0.65);
-
-    // the redline: a teal revision cloud around the bath with its delta
-    g.strokeStyle = TEAL; g.fillStyle = TEAL; g.lineWidth = Math.max(1.2, thin * 1.3);
-    const c = [X(0.44), Y(0.415), X(0.705), Y(0.985)], bump = Math.max(5, bw * 0.016);
+    g.clearRect(0, 0, W, H);
+    if (!PLAN_IMG.complete || !PLAN_IMG.naturalWidth) return;
+    g.save(); g.globalAlpha = 0.92; g.drawImage(PLAN_IMG, bx, by, bw, bh); g.restore();
+    const S = bw / PW, X = x => bx + x * S, Y = y => by + y * S;
+    // large, readable dimension strings over the sheet's own (grids 1-5 at 36/30/30/24 ft; D-C-B-A at 28/24/28 ft)
+    {
+      const gx = [164, 464, 714, 964, 1164], gy = [192, 425, 625, 858];
+      const fsz = Math.max(8, bw * 0.0135), tk = Math.max(3, bw * 0.006);
+      g.save(); g.strokeStyle = '#F2EDE4'; g.fillStyle = '#F2EDE4'; g.lineWidth = Math.max(0.8, bw * 0.0009);
+      g.font = `600 ${fsz}px Inter,system-ui,sans-serif`; g.textBaseline = 'bottom';
+      const tick = (x, y) => { g.beginPath(); g.moveTo(x - tk, y + tk); g.lineTo(x + tk, y - tk); g.stroke(); };
+      const hdim = (xs, y, labels) => { g.beginPath(); g.moveTo(X(xs[0]) - tk * 2, Y(y)); g.lineTo(X(xs[xs.length - 1]) + tk * 2, Y(y)); g.stroke();
+        xs.forEach(x => { tick(X(x), Y(y)); g.beginPath(); g.moveTo(X(x), Y(y) + tk * 1.6); g.lineTo(X(x), Y(y) - tk * 1.6); g.stroke(); });
+        g.textAlign = 'center'; labels.forEach((s, i) => g.fillText(s, (X(xs[i]) + X(xs[i + 1])) / 2, Y(y) - tk * 0.9)); };
+      const vdim = (ys, x, labels) => { g.beginPath(); g.moveTo(X(x), Y(ys[0]) - tk * 2); g.lineTo(X(x), Y(ys[ys.length - 1]) + tk * 2); g.stroke();
+        ys.forEach(y => { tick(X(x), Y(y)); g.beginPath(); g.moveTo(X(x) - tk * 1.6, Y(y)); g.lineTo(X(x) + tk * 1.6, Y(y)); g.stroke(); });
+        labels.forEach((s, i) => { g.save(); g.translate(X(x) - tk * 0.9, (Y(ys[i]) + Y(ys[i + 1])) / 2); g.rotate(-Math.PI / 2); g.textAlign = 'center'; g.fillText(s, 0, 0); g.restore(); }); };
+      hdim(gx, 62, ["36'-0\"", "30'-0\"", "30'-0\"", "24'-0\""]);
+      hdim([gx[0], gx[4]], 18, ["120'-0\""]);
+      vdim(gy, 1330, ["28'-0\"", "24'-0\"", "28'-0\""]);
+      vdim([gy[0], gy[3]], 1385, ["80'-0\""]);
+      g.restore();
+    }
+    // a teal revision cloud on Urgent Care Waiting (room 121), like a plan-check comment
+    const c = [X(476), Y(644), X(626), Y(844)], bump = Math.max(3, bw * 0.006);
+    g.strokeStyle = TEAL; g.fillStyle = TEAL; g.lineWidth = Math.max(1.2, bw * 0.0018);
     g.beginPath(); g.moveTo(c[0], c[1]);
-    const edge = (x1, y1, x2, y2, nx, ny) => {
-      const len = Math.hypot(x2 - x1, y2 - y1), n = Math.max(2, Math.round(len / (bump * 2)));
-      for (let i = 0; i < n; i++) {
-        const ax = x1 + (x2 - x1) * (i + 1) / n, ay = y1 + (y2 - y1) * (i + 1) / n;
-        const mx = x1 + (x2 - x1) * (i + 0.5) / n, my = y1 + (y2 - y1) * (i + 0.5) / n;
-        g.quadraticCurveTo(mx + nx * bump * 1.6, my + ny * bump * 1.6, ax, ay);
-      }
-    };
-    edge(c[0], c[1], c[2], c[1], 0, -1); edge(c[2], c[1], c[2], c[3], 1, 0);
-    edge(c[2], c[3], c[0], c[3], 0, 1); edge(c[0], c[3], c[0], c[1], -1, 0);
-    g.stroke();
-    const tx = c[2] + bump * 2.2, ty = c[1] - bump * 1.2, ts = Math.max(9, bw * 0.03);
-    g.beginPath(); g.moveTo(tx, ty - ts * 0.6); g.lineTo(tx + ts * 0.6, ty + ts * 0.45); g.lineTo(tx - ts * 0.6, ty + ts * 0.45); g.closePath(); g.stroke();
-    g.textAlign = 'center'; g.font = `600 ${fs * 0.8}px system-ui,sans-serif`; g.fillText('1', tx, ty + ts * 0.12);
+    const edge = (x1, y1, x2, y2, nx, ny) => { const n = Math.max(2, Math.round(Math.hypot(x2 - x1, y2 - y1) / (bump * 2)));
+      for (let i = 0; i < n; i++) { const ax = x1 + (x2 - x1) * (i + 1) / n, ay = y1 + (y2 - y1) * (i + 1) / n, mx = x1 + (x2 - x1) * (i + .5) / n, my = y1 + (y2 - y1) * (i + .5) / n;
+        g.quadraticCurveTo(mx + nx * bump * 1.6, my + ny * bump * 1.6, ax, ay); } };
+    edge(c[0], c[1], c[2], c[1], 0, -1); edge(c[2], c[1], c[2], c[3], 1, 0); edge(c[2], c[3], c[0], c[3], 0, 1); edge(c[0], c[3], c[0], c[1], -1, 0); g.stroke();
+    const tx = c[2] + bump * 2.6, ty = c[1] - bump * 0.4, ts = Math.max(8, bw * 0.012);
+    g.beginPath(); g.moveTo(tx, ty - ts * .6); g.lineTo(tx + ts * .6, ty + ts * .45); g.lineTo(tx - ts * .6, ty + ts * .45); g.closePath(); g.stroke();
+    g.font = `600 ${ts * .8}px system-ui,sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('1', tx, ty + ts * .12);
   }
-
   /* ---------- the koi ---------- */
   function cellOf(x, y) {
     const cx = Math.floor((x - bx) / bw * 8), cy = Math.floor((y - by) / bh * 6);
@@ -349,8 +262,7 @@
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,0,0,0.28)');
     ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
 
-    // faint hint of the hidden sheet, then what the koi has revealed
-    ctx.globalAlpha = 0.045; ctx.drawImage(plan, 0, 0, W, H);
+    // only what the koi has swum over is revealed; the rest stays plain red
     const fade = phase > CYCLE - FADE ? Math.max(0, (CYCLE - phase) / FADE) : 1;
     ctx.globalAlpha = fade; ctx.drawImage(rev, 0, 0, W, H); ctx.globalAlpha = 1;
 
