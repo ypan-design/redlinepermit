@@ -2,370 +2,384 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Redline Permit · AI plan check for California cities</title>
-<meta name="description" content="Redline Permit: AI-assisted plan check for California cities. Every correction circled on the sheet it belongs to.">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Redline Permit</title>
 <link rel="icon" type="image/svg+xml" href="logo.svg">
-<meta property="og:title" content="Redline Permit · AI plan check for California cities">
-<meta property="og:description" content="Redline Permit: AI-assisted plan check for California cities. Every correction circled on the sheet it belongs to.">
-<meta property="og:image" content="https://redlinepermit.com/logo.svg">
+<meta name="description" content="Redline Permit gives building departments an AI first read of each plan set. Reviewers decide every comment.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/rp.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rl-red:#b3201c;      /* Redline field */
+    --rl-teal:#4fc3b4;     /* second colour */
+    --rl-white:#ffffff;
+    --rl-soft:rgba(255,255,255,.72);
+  }
+  html,body{margin:0;height:100%;background:var(--rl-red);overflow:hidden;color:var(--rl-white);
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  canvas{position:fixed;inset:0;display:block;width:100vw;height:100vh}
+  a{color:inherit;text-decoration:none}
+  .rl-city{position:fixed;top:24px;left:28px;font-size:15px;font-weight:500;letter-spacing:.01em;
+    padding:6px 0;border-bottom:1px solid rgba(255,255,255,.55);transition:border-color .2s}
+  .rl-city:hover,.rl-city:focus-visible{border-color:#fff}
+  .rl-copy{position:fixed;left:28px;bottom:28px;max-width:380px;pointer-events:none}
+  .rl-copy h1{margin:0 0 10px;font-size:22px;font-weight:600;letter-spacing:-.01em}
+  .rl-copy p{margin:0;font-size:14px;line-height:1.55;color:var(--rl-soft)}
+  .rl-foot{position:fixed;right:28px;bottom:28px;font-size:12px;color:var(--rl-soft);display:flex;gap:16px}
+  .rl-foot a:hover{color:#fff}
+  @media (max-width:640px){
+    .rl-city{top:16px;left:16px}
+    .rl-copy{left:16px;right:16px;bottom:52px;max-width:none}
+    .rl-foot{left:16px;right:auto;bottom:18px}
+  }
+</style>
 </head>
 <body>
-<div class="bg" aria-hidden="true"><span class="orb a"></span><span class="orb b"></span><span class="orb c"></span></div>
-<div class="topline" aria-hidden="true"></div>
-<header class="top"><div class="top-in">
-  <a class="brandwrap" href="#" aria-label="Redline Permit home"><img class="mark" src="logo.svg" alt="" width="34" height="34"><span class="brand">Redline Permit</span></a>
-  <span class="city">AI plan check for <b>California cities</b></span>
-  <span class="spacer"></span>
-  <nav class="seg" aria-label="Sections"><a href="#corrections">How it works</a><a href="#process">Process</a><a href="#departments">Departments</a><a href="#codes">Codes</a><a href="#security">Security</a></nav>
-  <details class="cities" id="cities"><summary>Enrolled Cities</summary>
-    <div class="cities-pop" role="list"><a class="cbub" role="listitem" href="monrovia/">/Monrovia</a></div></details>
-  <a class="btn primary sm" href="#contact">Start a pilot</a>
-</div></header>
-
-<div class="wrap">
-  <main>
-    <div class="hero">
-      <div>
-        <div class="kicker">AI-assisted plan check</div>
-        <h1>Every correction <em>circled</em> on the sheet it belongs to.</h1>
-        <p class="sub">Redline Permit gives building departments an AI first read of each plan set. Reviewers approve, edit or reject every comment, and applicants get a numbered list with a clip of the exact spot on their drawings.</p>
-        <div class="ctas"><a class="btn primary" href="monrovia/">/Monrovia · Sign in</a><a class="btn" href="#contact">Bring it to your city</a></div>
-        <div class="facts"><span><b>Piloting</b> in the San Gabriel Valley</span><span><b>Title 24</b> 2025 edition</span><span><b>Google Drive</b> and <b>Dropbox</b> submittals</span></div>
-      </div>
-
-      <figure class="panel ws" style="margin:0" aria-label="Example: a floor plan sheet with two numbered corrections circled in red">
-        <div class="ws-h"><b>Example ADU · Building plan check</b><span class="pill p-corr">Corrections · round 2</span><span class="spacer"></span><span class="small" style="font-family:var(--f-mono)">A2.1</span></div>
-        <div class="sheet-main">
-          <svg viewBox="0 0 520 300" role="img" aria-hidden="true">
-            <g fill="none" stroke="var(--line)" stroke-width="2.2">
-              <rect x="40" y="40" width="300" height="220"/>
-              <line x1="190" y1="40" x2="190" y2="150"/><line x1="40" y1="150" x2="250" y2="150"/><line x1="250" y1="150" x2="250" y2="260"/>
-              <line x1="190" y1="110" x2="190" y2="150" stroke="var(--sheet)" stroke-width="5"/>
-              <path d="M190 110 A40 40 0 0 1 230 150" stroke-width="1.2"/>
-            </g>
-            <g fill="none" stroke="var(--line)" stroke-width="1">
-              <line x1="40" y1="20" x2="340" y2="20"/><line x1="40" y1="14" x2="40" y2="26"/><line x1="340" y1="14" x2="340" y2="26"/>
-              <line x1="360" y1="40" x2="360" y2="260"/><line x1="354" y1="40" x2="366" y2="40"/><line x1="354" y1="260" x2="366" y2="260"/>
-              <rect x="74" y="36" width="70" height="8" fill="var(--sheet)"/>
-            </g>
-            <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--line)">
-              <text x="168" y="15">30'-0"</text><text x="370" y="154">22'-0"</text>
-              <text x="78" y="95">BEDROOM 2</text><text x="78" y="108" font-size="9">108 SF</text>
-              <text x="268" y="95">BATH</text><text x="100" y="210">LIVING / KITCHEN</text>
-              <text x="82" y="58" font-size="9">W3 4'-0" x 2'-4"</text>
-            </g>
-            <path id="cloud1" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linejoin="round"/>
-            <path id="cloud2" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linejoin="round"/>
-            <g font-family="Inter, sans-serif" font-weight="700" font-size="13" text-anchor="middle">
-              <circle cx="166" cy="30" r="12" fill="var(--red)"/><text x="166" y="35" fill="#fff">1</text>
-              <circle cx="338" cy="112" r="12" fill="var(--red)"/><text x="338" y="117" fill="#fff">2</text>
-            </g>
-            <g font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink3)">
-              <rect x="400" y="216" width="104" height="60" fill="none" stroke="var(--line)" stroke-width="1"/>
-              <text x="408" y="234">A2.1</text><text x="408" y="248">FLOOR PLAN</text><text x="408" y="264">CYCLE 2</text>
-            </g>
-          </svg>
-        </div>
-        <div class="corr"><div class="corr-h"><span class="num">1</span><span class="cite">CRC R310.2.1</span><span class="dept">Building</span><span class="pill p-corr">Critical</span></div>
-          <p><b>Bedroom 2 escape window.</b> W3 gives about 3.5 sf clear. Provide 5.7 sf net with a sill no higher than 44 in.</p></div>
-        <div class="corr"><div class="corr-h"><span class="num">2</span><span class="cite">CRC R302.3</span><span class="dept">Building</span></div>
-          <p><b>Dwelling unit separation.</b> Show the 1-hour separation between the house and the attached ADU, extended to the roof sheathing.</p></div>
-      </figure>
-    </div>
-
-    <section id="corrections">
-      <div class="kicker">How corrections work</div>
-      <h2>Watch one sheet go from upload to resolved.</h2>
-      <p class="sub">The AI marks up the set, a city reviewer decides what goes out, and on the resubmittal Redline checks each numbered comment against the new sheet. It plays on its own; tap any step to jump.</p>
-      <div class="panel player" id="anim" aria-label="Animated example of a correction cycle">
-        <div class="pl-grid">
-          <div class="stagebox" id="stage">
-            <svg viewBox="0 0 520 300" role="img" aria-label="Floor plan sheet A2.1 with corrections being marked">
-              <g class="sheetg">
-                <g fill="none" stroke="var(--line)" stroke-width="2.2">
-                  <rect x="40" y="40" width="300" height="220"/>
-                  <line x1="190" y1="40" x2="190" y2="150"/><line x1="40" y1="150" x2="250" y2="150"/><line x1="250" y1="150" x2="250" y2="260"/>
-                  <line x1="190" y1="110" x2="190" y2="150" stroke="var(--sheet)" stroke-width="5"/>
-                  <path d="M190 110 A40 40 0 0 1 230 150" stroke-width="1.2"/>
-                </g>
-                <g fill="none" stroke="var(--line)" stroke-width="1">
-                  <line x1="40" y1="20" x2="340" y2="20"/><line x1="40" y1="14" x2="40" y2="26"/><line x1="340" y1="14" x2="340" y2="26"/>
-                  <line x1="360" y1="40" x2="360" y2="260"/><line x1="354" y1="40" x2="366" y2="40"/><line x1="354" y1="260" x2="366" y2="260"/>
-                  <rect class="win-old" x="74" y="36" width="70" height="8" fill="var(--sheet)"/>
-                  <rect class="win-new" x="64" y="36" width="96" height="8" fill="var(--sheet)"/>
-                </g>
-                <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--line)">
-                  <text x="168" y="15">30'-0"</text><text x="370" y="154">22'-0"</text>
-                  <text x="78" y="95">BEDROOM 2</text><text x="78" y="108" font-size="9">108 SF</text>
-                  <text x="268" y="95">BATH</text><text x="100" y="210">LIVING / KITCHEN</text>
-                  <text class="win-old" x="82" y="58" font-size="9">W3 4'-0" x 2'-4"</text>
-                  <text class="win-new" x="82" y="58" font-size="9">W3 5'-4" x 4'-0"</text>
-                  <text class="win-new" x="262" y="140" font-size="8">1-HR WALL</text>
-                </g>
-                <line class="win-new" x1="250" y1="150" x2="250" y2="260" stroke="var(--line)" stroke-width="5"/>
-                <g font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink3)">
-                  <rect x="400" y="216" width="104" height="60" fill="none" stroke="var(--line)" stroke-width="1"/>
-                  <text x="408" y="234">A2.1</text><text x="408" y="248">FLOOR PLAN</text><text x="408" y="264" id="cyc">CYCLE 1</text>
-                </g>
-              </g>
-              <!-- step 1: file arrives from Drive -->
-              <g class="drop">
-                <rect x="412" y="66" width="70" height="88" rx="6" fill="var(--sheet)" stroke="var(--line)" stroke-width="1.4"/>
-                <path d="M462 66 v16 h20" fill="none" stroke="var(--line)" stroke-width="1.4"/>
-                <rect x="420" y="98" width="38" height="16" rx="3" fill="var(--red)"/>
-                <text x="439" y="110" font-family="Inter, sans-serif" font-weight="700" font-size="10" fill="#fff" text-anchor="middle">PDF</text>
-                <text x="447" y="140" font-family="IBM Plex Mono, monospace" font-size="8" fill="var(--ink3)" text-anchor="middle">from Drive</text>
-              </g>
-              <!-- step 2: AI scan -->
-              <g class="scan"><rect x="20" y="10" width="360" height="3" fill="var(--teal)" opacity=".9"/><rect x="20" y="-30" width="360" height="40" fill="var(--teal)" opacity=".1"/></g>
-              <g class="chk" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--teal-deep)">
-                <text x="392" y="60">CRC R310 egress</text><text x="392" y="76">CRC R302 sep.</text><text x="392" y="92">CEC 210.12 AFCI</text><text x="392" y="108">CPC 408.3 valve</text><text x="392" y="124">MMC 17.44 ADU</text>
-              </g>
-              <!-- step 3: clouds + badges -->
-              <path id="ac1" class="ac a"/>
-              <path id="ac2" class="ac b"/>
-              <g font-family="Inter, sans-serif" font-weight="700" font-size="13" text-anchor="middle">
-                <g class="badge a"><circle cx="166" cy="30" r="12"/><text x="166" y="35" fill="#fff">1</text></g>
-                <g class="badge b"><circle cx="338" cy="112" r="12"/><text x="338" y="117" fill="#fff">2</text></g>
-              </g>
-              <!-- step 4: reviewer cursor -->
-              <g class="cursor" id="cursor"><path d="M0 0 L0 18 L5 13 L9 22 L12 21 L8 12 L15 12 Z" fill="var(--ink)" stroke="#fff" stroke-width="1.2"/></g>
-              <!-- step 5: sent -->
-              <g class="env"><rect x="400" y="170" width="54" height="36" rx="4" fill="var(--red)"/><path d="M400 172 L427 192 L454 172" fill="none" stroke="#fff" stroke-width="2"/></g>
-            </svg>
-            <div class="cap" aria-live="polite"><span class="stepno" id="stepno">STEP 1 / 6</span><span class="captxt" id="captxt">Sheet A2.1 arrives from Google Drive</span></div>
-          </div>
-          <div class="side">
-            <h4>Correction list · A2.1</h4>
-            <div class="ccard" id="cc1"><div class="corr-h"><span class="num">1</span><span class="cite">CRC R310.2.1</span><span class="pill draft st" id="p1">AI draft</span></div><p><b>Bedroom 2 escape window.</b> W3 gives about 3.5 sf clear; provide 5.7 sf net.</p></div>
-            <div class="ccard" id="cc2"><div class="corr-h"><span class="num">2</span><span class="cite">CRC R302.3</span><span class="pill draft st" id="p2">AI draft</span></div><p id="t2"><b>Unit separation.</b> Show the 1-hour wall between house and ADU.</p></div>
-            <div class="status"><span>Round <b id="rnd">1</b></span><span id="who">Applicant</span><span>Clock <b id="clk">day 0</b></span></div>
-          </div>
-        </div>
-        <div class="timeline" id="tl" role="tablist" aria-label="Steps">
-          <button class="tl" type="button" data-s="0"><span>1 Upload</span><i><b></b></i></button>
-          <button class="tl" type="button" data-s="1"><span>2 AI read</span><i><b></b></i></button>
-          <button class="tl" type="button" data-s="2"><span>3 Draft</span><i><b></b></i></button>
-          <button class="tl" type="button" data-s="3"><span>4 Review</span><i><b></b></i></button>
-          <button class="tl" type="button" data-s="4"><span>5 Send</span><i><b></b></i></button>
-          <button class="tl" type="button" data-s="5"><span>6 Recheck</span><i><b></b></i></button>
-        </div>
-        <div class="plctl"><button class="btn" id="play" type="button" aria-pressed="true">Pause</button><span class="small">The AI drafts; a city reviewer approves every comment before it goes out.</span></div>
-      </div>
-    </section>
-
-    <section id="process">
-      <div class="kicker">How a plan set moves</div>
-      <h2>From submittal to permit pickup, in one shared record.</h2>
-      <p class="sub">The same eight stages applicants and reviewers see in the portal. Correction rounds loop back until the set is clean, and every round is counted.</p>
-      <div class="panel" style="margin-top:18px">
-        <div class="rail" role="list" aria-label="Example project at round 2">
-          <div class="stage done" role="listitem"><b>Submit</b><span class="who">Applicant</span></div>
-          <div class="stage done" role="listitem"><b>AI first read</b><span class="who">Redline</span></div>
-          <div class="stage done" role="listitem"><b>City review</b><span class="who">Reviewer</span></div>
-          <div class="stage now" role="listitem"><b>Corrections</b><span class="who">Applicant</span><span class="round">Round 2</span><span class="rounds"><i></i><i class="cur"></i></span></div>
-          <div class="stage" role="listitem"><b>Resubmit &amp; recheck</b><span class="who">Both</span><span class="loop">Loops until clean</span></div>
-          <div class="stage" role="listitem"><b>Plan check approved</b><span class="who">Reviewer</span></div>
-          <div class="stage" role="listitem"><b>Other agencies</b><span class="who">Applicant</span></div>
-          <div class="stage" role="listitem"><b>Permit pickup</b><span class="who">City</span></div>
-        </div>
-        <div class="people">
-          <div class="person"><span class="role">Owner</span><b>Property owner</b><span>Sees status and rounds</span></div>
-          <div class="person"><span class="role">Designer</span><b>Architect or designer</b><span>Gets every numbered comment</span></div>
-          <div class="person"><span class="role">Applicant</span><b>Who submits</b><span>Uploads and resubmits</span></div>
-          <div class="person"><span class="role">Reviewer</span><b>City plan checker</b><span>Approves every comment</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="departments">
-      <div class="kicker">One portal, every department</div>
-      <h2>Each application goes to the right desk, with its own reviewer.</h2>
-      <div class="deptgrid">
-        <div class="dcard main"><span class="dept">Building &amp; Safety · most applications start here</span><b>Building plan check</b>
-          <span>New homes, ADUs, additions, remodels, multifamily and commercial. One short form, a PDF from Google Drive or Dropbox, and every comment comes back clipped from the sheets and numbered.</span>
-          <span class="go">AI first read in minutes, not weeks →</span></div>
-        <div class="dcard" tabindex="0"><span class="dept">Planning</span><b>Planning</b><span class="small">Zoning review before plan check: larger ADUs, design review, Planning Commission.</span><span class="hint">Hover: which ADU path?</span>
-          <span class="tip"><b>Which Planning path is an ADU?</b>
-            <span class="row"><span class="k">800 sf or less</span><span>Planning takes a quick look at setbacks, height and location, then it goes straight to Building plan check.</span>
-            <span class="k">Over 800 sf</span><span>Full Planning review first, under the state 60-day clock. Plan check starts after Planning signs off.</span></span></span></div>
-        <div class="dcard"><span class="dept">Public Works</span><b>Public Works</b><span class="small">Work in the street or parkway, utilities, grading and drainage.</span></div>
-        <div class="dcard"><span class="dept">Fire</span><b>Fire</b><span class="small">Sprinklers, alarms, access and operational permits.</span></div>
-        <div class="dcard"><span class="dept">City</span><b>City permits</b><span class="small">Special events, filming and other city-issued permits.</span></div>
-      </div>
-    </section>
-
-    <section id="who">
-      <div class="kicker">Who it serves</div>
-      <h2>Built for both sides of the counter.</h2>
-      <div class="two">
-        <div class="panel"><span class="dept">For cities</span><h3 style="margin-top:6px">Building departments</h3><ul>
-          <li>Reviewers see only their own files; an admin sees and searches everything</li>
-          <li>Task lists sorted by urgency, project size and days waiting</li>
-          <li>Standard notes checked on every sheet the moment a set arrives</li>
-          <li>Statutory clocks, like the 60-day ADU deadline, on every file</li>
-          <li>One flat fee for the whole city, not per seat</li></ul></div>
-        <div class="panel app"><span class="dept" style="color:var(--red)">For applicants</span><h3 style="margin-top:6px">Owners, designers and architects</h3><ul>
-          <li>Each application tracked on its own, with its department and reviewer</li>
-          <li>Numbered circles on your sheets that match the comment list</li>
-          <li>Owner, designer, applicant and reviewer contacts on one screen</li>
-          <li>See which round you're on and what's left before pickup</li>
-          <li>Submit straight from Google Drive or Dropbox</li></ul></div>
-      </div>
-    </section>
-
-    <section id="codes">
-      <div class="kicker">California first</div>
-      <h2>Checked against the codes California cities enforce.</h2>
-      <div class="codes">
-        <div class="code"><span class="cite">Title 24 · 2025</span><b>Building, Residential, Electrical, Mechanical, Plumbing, Energy, Fire, CALGreen</b><span class="small">In effect since January 1, 2026, plus each city's local amendments</span></div>
-        <div class="code"><span class="cite">Gov. Code 66310–66342</span><b>ADU and JADU law</b><span class="small">Setbacks, size, height and the 60-day approval clock</span></div>
-        <div class="code"><span class="cite">Gov. Code 65852.21 · 66411.7</span><b>SB 9</b><span class="small">Two units and lot splits in single-family zones</span></div>
-        <div class="code"><span class="cite">Municipal code</span><b>Each city's zoning and building titles</b><span class="small">A rule pack per city, confirmed with its staff</span></div>
-      </div>
-    </section>
-
-    <section id="security">
-      <div class="kicker">Security and data</div>
-      <h2>The city keeps its records. The AI never approves anything.</h2>
-      <div class="factgrid">
-        <div class="note"><b>Drawings stay where they are</b>Applicants share only the files they pick. Redline keeps small clips, about 1–2 MB per project.</div>
-        <div class="note"><b>City sign-in with security keys</b>Staff use the city's own accounts. Admins sign in with hardware keys or passkeys.</div>
-        <div class="note"><b>Every action logged</b>Each view, approval and change goes into an audit log the city can export.</div>
-        <div class="note red"><b>Reviewers decide</b>Every AI comment cites a code section and waits for a reviewer. Nothing reaches the applicant unapproved.</div>
-      </div>
-    </section>
-
-    <section id="cities">
-      <div class="kicker">City portals</div>
-      <h2>Every city gets its own address, codes and queues.</h2>
-      <p class="sub">Applicants and plan reviewers sign in at their city's page. Each portal carries that city's municipal code, standard notes and departments, and keeps its records apart from every other city.</p>
-      <div class="citygrid">
-        <a class="city-card live" href="monrovia/"><span class="pill p-ok" style="justify-self:start">Pilot</span><b>Monrovia</b><span class="url">redlinepermit.com/monrovia</span><span class="small">Sign up or sign in as an applicant, plan reviewer or portal admin. Building, Planning, Public Works and Fire, with the Monrovia Municipal Code built in.</span><span class="go">Open the Monrovia portal →</span></a>
-        <a class="city-card soon" href="#contact"><span class="pill" style="justify-self:start">Your city</span><b>Add your city</b><span class="url">redlinepermit.com/yourcity</span><span class="small">Tell us about your department below and we'll set up a city profile.</span></a>
-      </div>
-    </section>
-
-    <section id="contact">
-      <div class="panel intake">
-        <div><div class="kicker">Pilots</div><h2>Bring Redline Permit to your city.</h2>
-          <p class="sub">Tell us a little about your department. We'll reply within one business day to set up a walkthrough with real plan sets.</p>
-          <ul class="checks">
-            <li>A city page at redlinepermit.com/yourcity with your codes and departments</li>
-            <li>Applicants submit from Google Drive or Dropbox; PDFs stay in their accounts</li>
-            <li>Reviewers approve every AI comment before it goes out</li>
-          </ul></div>
-        <form class="form" id="intake" novalidate>
-          <label>Name<input name="name" autocomplete="name" required></label>
-          <label>Title<input name="title" autocomplete="organization-title" placeholder="Building Official"></label>
-          <label>City or agency<input name="city" autocomplete="organization" required></label>
-          <label>Work email<input name="email" type="email" autocomplete="email" required></label>
-          <label>Phone<input name="phone" type="tel" autocomplete="tel"></label>
-          <label>Plan checks per month<select name="volume"><option value="">Choose</option><option>Under 25</option><option>25–75</option><option>75–200</option><option>200+</option></select></label>
-          <label class="full">Current permit system<input name="system" placeholder="Paper, email PDFs, Accela, ProjectDox, EnerGov…"></label>
-          <label class="full">What would help most?<textarea name="message" placeholder="Backlog, ADU deadlines, consultant costs, resubmittal tracking…"></textarea></label>
-          <input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <div class="full" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn primary" type="submit" id="send">Request a pilot</button><span class="formmsg" id="formmsg" aria-live="polite"></span></div>
-        </form>
-      </div>
-    </section>
-  </main>
-
-  <footer class="foot"><span>redlinepermit.com · © 2026 Redline Permit · <a href="privacy/">Privacy</a> · <a href="terms/">Terms</a></span><span>Drawings stay in your Google Drive or Dropbox; Redline keeps only clips</span></footer>
+<canvas id="rl-koi" aria-hidden="true"></canvas>
+<a class="rl-city" href="/monrovia/">/Monrovia</a>
+<div class="rl-copy">
+  <h1>Redline Permit</h1>
+  <p>An AI first read for city plan check. Every correction is circled on the sheet it belongs to, and a reviewer decides each one.</p>
 </div>
+<nav class="rl-foot"><a href="mailto:ypan@redlinepermit.com?subject=Redline%20Permit%20pilot">Start a pilot</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav>
 <script>
-// Revision clouds: scalloped arcs around a rectangle.
-function cloud(id,x,y,w,h,r){
-  const el=document.getElementById(id); if(!el) return;
-  const pts=[]; const step=r*1.6;
-  const edge=(x1,y1,x2,y2)=>{const len=Math.hypot(x2-x1,y2-y1),n=Math.max(2,Math.round(len/step));for(let i=0;i<n;i++)pts.push([x1+(x2-x1)*i/n,y1+(y2-y1)*i/n]);};
-  edge(x,y,x+w,y);edge(x+w,y,x+w,y+h);edge(x+w,y+h,x,y+h);edge(x,y+h,x,y);
-  let d=`M${pts[0][0]} ${pts[0][1]}`;
-  for(let i=1;i<=pts.length;i++){const p=pts[i%pts.length];d+=` A${r} ${r} 0 0 1 ${p[0].toFixed(1)} ${p[1].toFixed(1)}`;}
-  el.setAttribute("d",d);
-  try{el.style.setProperty("--len",Math.ceil(el.getTotalLength()));}catch(e){}
-}
-cloud("cloud1",62,26,98,40,9);
-cloud("cloud2",238,80,94,44,9);
-cloud("ac1",54,26,112,40,9);
-cloud("ac2",238,80,94,44,9);
-/* corrections player: autoplays on load, loops, click a step to jump */
-(function(){
-  const stage=document.getElementById("stage"); if(!stage) return;
-  const tls=[...document.querySelectorAll("#tl .tl")], btn=document.getElementById("play");
-  const $=id=>document.getElementById(id);
-  const cc1=$("cc1"),cc2=$("cc2"),p1=$("p1"),p2=$("p2"),t2=$("t2"),cyc=$("cyc"),cur=$("cursor");
-  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const DUR=[2800,3200,3600,3800,3000,4200];
-  const MSG=["Sheet A2.1 arrives from Google Drive","AI first read: Title 24 + Monrovia standard notes","Two corrections clouded and numbered","City reviewer approves #1 and edits #2","Correction letter sent to the designer","Resubmittal: Redline confirms both are fixed"];
-  const WHO=["Applicant","Redline AI","Redline AI","City reviewer","Applicant","Redline + reviewer"];
-  const CLK=["day 0","day 0","day 1","day 3","day 3","day 12"];
-  let s=0, playing=!reduce, timer=null, t0=performance.now();
-  const pill=(el,txt,cls)=>{el.textContent=txt;el.className="pill st "+cls;};
-  function show(n){
-    s=n;
-    stage.className="stagebox on s"+n+(n>=2?" drawn":"")+(n>=5?" done":"");
-    tls.forEach((b,i)=>{b.className="tl"+(i<n?" past":i===n?" cur":"");b.setAttribute("aria-selected",i===n);b.querySelector("b").style.width=i<n?"100%":"0";});
-    cc1.classList.toggle("show",n>=2); cc2.classList.toggle("show",n>=2);
-    cc1.classList.toggle("ok",n>=5); cc2.classList.toggle("ok",n>=5);
-    cc1.classList.remove("hl"); cc2.classList.remove("hl");
-    if(n<3){pill(p1,"AI draft","draft");pill(p2,"AI draft","draft");t2.innerHTML="<b>Unit separation.</b> Show the 1-hour wall between house and ADU.";}
-    else if(n<5){pill(p1,"Approved","p-ok");pill(p2,"Edited","p-ok");t2.innerHTML="<b>Unit separation.</b> Show the 1-hour wall between house and ADU, <u>extended to the roof sheathing</u>.";}
-    else{pill(p1,"Resolved ✓","p-ok");pill(p2,"Resolved ✓","p-ok");}
-    if(n===4){pill(p1,"Sent","p-corr");pill(p2,"Sent","p-corr");}
-    if(n===3){ /* cursor visits badge 1, then badge 2 */
-      cur.style.transition="none"; cur.setAttribute("transform","translate(430 260)");
-      cur.style.transform="translate(430px,260px)"; void cur.getBoundingClientRect(); cur.style.transition="";
-      setTimeout(()=>{if(s===3){cur.style.transform="translate(170px,36px)";cc1.classList.add("hl");}},150);
-      setTimeout(()=>{if(s===3){cur.style.transform="translate(342px,118px)";cc1.classList.remove("hl");cc2.classList.add("hl");}},1800);
+/* Redline Permit landing: a koi swims across the red pond; its wake reveals a plan sheet. */
+(() => {
+  const RED = '#b3201c', TEAL = '#4fc3b4', PATCH = '#d93a2e', EYE = '#3a0e0b';
+  const cv = document.getElementById('rl-koi'), ctx = cv.getContext('2d');
+  const N = 16, CYCLE = 18, FADE = 1.6;
+  let W, H, DPR, L, seg, bx, by, bw, bh, plan, rev, rctx;
+  let pts = [], ang = 0, target = null, grid, wake = [], sparkles = [];
+  let cycleStart = 0, last = 0, external = null;
+
+  function mk() {
+    const c = document.createElement('canvas');
+    c.width = W * DPR; c.height = H * DPR;
+    const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0);
+    return c;
+  }
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * DPR; cv.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const m = Math.min(W, H);
+    L = Math.max(80, Math.min(m * 0.3, 230)); seg = L / N;
+    const ar = 1.45;
+    bw = Math.min(W * (W < 640 ? 0.74 : 0.56), H * 0.5 * ar); bh = bw / ar;
+    bx = (W - bw) / 2; by = Math.max(H * 0.14, H * (W < 640 ? 0.36 : 0.42) - bh / 2);
+    plan = mk(); drawPlan(plan.getContext('2d'));
+    rev = mk(); rctx = rev.getContext('2d');
+    resetCycle(performance.now() / 1000, true);
+    sparkles = Array.from({length: 16}, () => ({
+      x: Math.random() * W, y: Math.random() * H * 0.85,
+      s: 2 + Math.random() * 4, p: Math.random() * 6.28, sp: 0.6 + Math.random() * 1.2,
+      c: Math.random() < 0.3 ? TEAL : '#fff'
+    }));
+  }
+
+  function resetCycle(now, newFish) {
+    cycleStart = now;
+    rctx.setTransform(1, 0, 0, 1, 0, 0); rctx.clearRect(0, 0, rev.width, rev.height);
+    rctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    grid = Array.from({length: 6}, () => new Array(8).fill(0));
+    if (newFish || !pts.length) {
+      const y = by + bh * (0.25 + Math.random() * 0.5);
+      ang = 0;
+      pts = Array.from({length: N + 1}, (_, i) => ({x: -L * 0.2 - i * seg, y}));
     }
-    cyc.textContent=n>=5?"CYCLE 2":"CYCLE 1";
-    $("rnd").textContent=n>=5?"2":"1"; $("who").textContent=WHO[n]; $("clk").textContent=CLK[n];
-    $("stepno").textContent="STEP "+(n+1)+" / 6"; $("captxt").textContent=MSG[n];
-    t0=performance.now(); clearTimeout(timer);
-    if(playing) timer=setTimeout(()=>show((s+1)%6),DUR[n]);
+    target = null; wake = [];
   }
-  function tick(now){
-    const b=tls[s]&&tls[s].querySelector("b");
-    if(b) b.style.width=(playing?Math.min(100,(now-t0)/DUR[s]*100):100)+"%";
-    requestAnimationFrame(tick);
+
+  /* ---------- the hidden plan sheet ---------- */
+  function drawPlan(g) {
+    const X = x => bx + x * bw, Y = y => by + y * bh;
+    const t = Math.max(3, bw * 0.011), thin = Math.max(1, bw * 0.0022);
+    const fs = Math.max(7, bw * 0.02);
+    g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineJoin = 'miter';
+
+    const line = (x1, y1, x2, y2, w) => { g.lineWidth = w; g.beginPath(); g.moveTo(X(x1), Y(y1)); g.lineTo(X(x2), Y(y2)); g.stroke(); };
+    const rect = (x1, y1, x2, y2, w = thin) => { g.lineWidth = w; g.strokeRect(X(x1), Y(y1), X(x2) - X(x1), Y(y2) - Y(y1)); };
+
+    // walls (solid poché)
+    g.lineCap = 'square';
+    g.lineWidth = t * 1.4; g.strokeRect(X(0), Y(0), bw, bh);
+    [[0.42, 0, 0.42, 1], [0, 0.55, 0.42, 0.55], [0.42, 0.4, 1, 0.4], [0.72, 0.4, 0.72, 1]].forEach(a => line(...a, t));
+    g.lineCap = 'butt';
+
+    // openings: cut, then draw
+    const cut = (x1, y1, x2, y2, th) => {
+      g.globalCompositeOperation = 'destination-out';
+      if (y1 === y2) g.fillRect(X(x1), Y(y1) - th, X(x2) - X(x1), th * 2);
+      else g.fillRect(X(x1) - th, Y(y1), th * 2, Y(y2) - Y(y1));
+      g.globalCompositeOperation = 'source-over';
+    };
+    const door = (x1, y1, x2, y2, dir) => {
+      cut(x1, y1, x2, y2, t * 0.9); g.lineWidth = thin; g.beginPath();
+      if (y1 === y2) {
+        const hx = X(x1), hy = Y(y1), len = X(x2) - X(x1);
+        g.moveTo(hx, hy); g.lineTo(hx, hy + dir * len); g.stroke();
+        g.beginPath(); g.setLineDash([3, 3]);
+        g.arc(hx, hy, len, dir > 0 ? Math.PI / 2 : -Math.PI / 2, 0, dir < 0); g.stroke();
+      } else {
+        const hx = X(x1), hy = Y(y1), len = Y(y2) - Y(y1);
+        g.moveTo(hx, hy); g.lineTo(hx + dir * len, hy); g.stroke();
+        g.beginPath(); g.setLineDash([3, 3]);
+        g.arc(hx, hy, len, dir > 0 ? 0 : Math.PI, Math.PI / 2, dir < 0); g.stroke();
+      }
+      g.setLineDash([]);
+    };
+    const win = (x1, y1, x2, y2) => {
+      const th = t * 1.1; cut(x1, y1, x2, y2, th); g.lineWidth = thin;
+      if (y1 === y2) [-th * 0.7, 0, th * 0.7].forEach(o => { g.beginPath(); g.moveTo(X(x1), Y(y1) + o); g.lineTo(X(x2), Y(y1) + o); g.stroke(); });
+      else [-th * 0.7, 0, th * 0.7].forEach(o => { g.beginPath(); g.moveTo(X(x1) + o, Y(y1)); g.lineTo(X(x1) + o, Y(y2)); g.stroke(); });
+    };
+    door(0.12, 0, 0.22, 0, 1);            // entry
+    door(0.42, 0.14, 0.42, 0.26, -1);      // living / kitchen
+    door(0.26, 0.55, 0.36, 0.55, 1);       // living / bed 1
+    door(0.42, 0.62, 0.42, 0.72, 1);       // bed 1 / bath
+    door(0.78, 0.4, 0.88, 0.4, 1);         // kitchen / bed 2
+    win(0.55, 0, 0.78, 0); win(0, 0.18, 0, 0.38); win(0, 0.68, 0, 0.86);
+    win(0.8, 1, 0.94, 1); win(1, 0.55, 1, 0.78); win(0.27, 1, 0.37, 1);
+
+    // fixtures
+    rect(0.45, 0.03, 0.7, 0.1); rect(0.91, 0.03, 0.97, 0.32);          // counters
+    rect(0.56, 0.19, 0.8, 0.27);                                         // island
+    rect(0.6, 0.045, 0.66, 0.085);
+    g.beginPath(); g.arc(X(0.63), Y(0.065), bw * 0.008, 0, 7); g.stroke(); // sink
+    rect(0.45, 0.8, 0.69, 0.96); rect(0.465, 0.825, 0.675, 0.935);       // tub
+    rect(0.6, 0.44, 0.69, 0.53);
+    g.beginPath(); g.ellipse(X(0.645), Y(0.485), bw * 0.018, bh * 0.025, 0, 0, 7); g.stroke();
+    rect(0.46, 0.44, 0.52, 0.47);
+    g.beginPath(); g.ellipse(X(0.49), Y(0.52), bw * 0.016, bh * 0.04, 0, 0, 7); g.stroke(); // wc
+    rect(0.07, 0.66, 0.3, 0.93); rect(0.09, 0.675, 0.17, 0.72); rect(0.2, 0.675, 0.28, 0.72); // bed 1
+    rect(0.77, 0.58, 0.96, 0.84); rect(0.79, 0.595, 0.855, 0.635); rect(0.875, 0.595, 0.94, 0.635); // bed 2
+    rect(0.05, 0.06, 0.08, 0.36); rect(0.05, 0.06, 0.25, 0.1);           // sofa
+    rect(0.13, 0.17, 0.25, 0.27);                                        // table
+
+    // room labels
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    const label = (s, a, x, y) => {
+      g.font = `600 ${fs}px system-ui,sans-serif`; g.fillText(s, X(x), Y(y));
+      g.font = `400 ${fs * 0.8}px system-ui,sans-serif`; g.fillText(a, X(x), Y(y) + fs * 1.15);
+    };
+    label('LIVING', '210 SF', 0.25, 0.43); label('KITCHEN', '180 SF', 0.7, 0.33);
+    label('BED 1', '150 SF', 0.19, 0.97 - 0.02 - 0.0); label('BATH', '72 SF', 0.57, 0.66);
+    label('BED 2', '120 SF', 0.86, 0.91);
+
+    // dimension string
+    g.lineWidth = thin; const dy = -0.07, tick = bw * 0.008;
+    line(0, dy, 1, dy, thin);
+    [[0], [0.42], [0.72], [1]].forEach(([x]) => { g.beginPath(); g.moveTo(X(x) - tick, Y(dy) + tick); g.lineTo(X(x) + tick, Y(dy) - tick); g.stroke(); });
+    g.font = `400 ${fs * 0.85}px system-ui,sans-serif`; g.textBaseline = 'bottom';
+    [[0.21, "14'-6\""], [0.57, "10'-4\""], [0.86, "9'-8\""]].forEach(([x, s]) => g.fillText(s, X(x), Y(dy) - 3));
+    const dx = -0.05; line(dx, 0, dx, 1, thin);
+    [0, 0.55, 1].forEach(y => { g.beginPath(); g.moveTo(X(dx) - tick, Y(y) + tick); g.lineTo(X(dx) + tick, Y(y) - tick); g.stroke(); });
+
+    // grid bubbles
+    const r = Math.max(6, bw * 0.02);
+    g.textBaseline = 'middle'; g.font = `600 ${fs * 0.85}px system-ui,sans-serif`;
+    g.setLineDash([4, 4]);
+    [0, 0.42, 0.72, 1].forEach(x => line(x, -0.13 + r / bh, x, -0.01, thin));
+    g.setLineDash([]);
+    [0, 0.42, 0.72, 1].forEach((x, i) => { g.beginPath(); g.arc(X(x), Y(-0.13), r, 0, 7); g.stroke(); g.fillText(String(i + 1), X(x), Y(-0.13)); });
+
+    // north arrow
+    const nx = X(1) + bw * 0.06, ny = Y(0.12);
+    g.beginPath(); g.arc(nx, ny, r * 1.2, 0, 7); g.stroke();
+    g.beginPath(); g.moveTo(nx, ny - r * 1.2); g.lineTo(nx + r * 0.5, ny + r * 0.6); g.lineTo(nx, ny + r * 0.2); g.closePath(); g.fill();
+    g.fillText('N', nx, ny - r * 2);
+
+    // sheet title
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    g.beginPath(); g.arc(X(0) + r, Y(1.09), r, 0, 7); g.stroke();
+    g.beginPath(); g.moveTo(X(0), Y(1.09)); g.lineTo(X(0) + 2 * r, Y(1.09)); g.stroke();
+    g.font = `600 ${fs * 0.7}px system-ui,sans-serif`; g.fillText('1', X(0) + r * 0.75, Y(1.09) - r * 0.45);
+    g.fillText('A1.1', X(0) + r * 0.45, Y(1.09) + r * 0.5);
+    g.font = `600 ${fs}px system-ui,sans-serif`; g.fillText('FLOOR PLAN', X(0) + r * 2.8, Y(1.09) - fs * 0.35);
+    g.font = `400 ${fs * 0.8}px system-ui,sans-serif`; g.fillText('1/4" = 1\'-0"', X(0) + r * 2.8, Y(1.09) + fs * 0.65);
+
+    // the redline: a teal revision cloud around the bath with its delta
+    g.strokeStyle = TEAL; g.fillStyle = TEAL; g.lineWidth = Math.max(1.2, thin * 1.3);
+    const c = [X(0.44), Y(0.415), X(0.705), Y(0.985)], bump = Math.max(5, bw * 0.016);
+    g.beginPath(); g.moveTo(c[0], c[1]);
+    const edge = (x1, y1, x2, y2, nx, ny) => {
+      const len = Math.hypot(x2 - x1, y2 - y1), n = Math.max(2, Math.round(len / (bump * 2)));
+      for (let i = 0; i < n; i++) {
+        const ax = x1 + (x2 - x1) * (i + 1) / n, ay = y1 + (y2 - y1) * (i + 1) / n;
+        const mx = x1 + (x2 - x1) * (i + 0.5) / n, my = y1 + (y2 - y1) * (i + 0.5) / n;
+        g.quadraticCurveTo(mx + nx * bump * 1.6, my + ny * bump * 1.6, ax, ay);
+      }
+    };
+    edge(c[0], c[1], c[2], c[1], 0, -1); edge(c[2], c[1], c[2], c[3], 1, 0);
+    edge(c[2], c[3], c[0], c[3], 0, 1); edge(c[0], c[3], c[0], c[1], -1, 0);
+    g.stroke();
+    const tx = c[2] + bump * 2.2, ty = c[1] - bump * 1.2, ts = Math.max(9, bw * 0.03);
+    g.beginPath(); g.moveTo(tx, ty - ts * 0.6); g.lineTo(tx + ts * 0.6, ty + ts * 0.45); g.lineTo(tx - ts * 0.6, ty + ts * 0.45); g.closePath(); g.stroke();
+    g.textAlign = 'center'; g.font = `600 ${fs * 0.8}px system-ui,sans-serif`; g.fillText('1', tx, ty + ts * 0.12);
   }
-  function setPlay(p){playing=p;btn.textContent=p?"Pause":"Play";btn.setAttribute("aria-pressed",p);}
-  btn.onclick=()=>{setPlay(!playing);if(playing)show((s+1)%6);else clearTimeout(timer);};
-  tls.forEach((b,i)=>b.onclick=()=>{setPlay(false);show(i);});
-  document.addEventListener("visibilitychange",()=>{if(document.hidden)clearTimeout(timer);else if(playing)show(s);});
-  if(reduce) show(2); else show(0);
-  requestAnimationFrame(tick);
-})();
-/* pilot intake form: FormSubmit, with an email fallback */
-(function(){
-  const f=document.getElementById("intake"); if(!f) return;
-  const msg=document.getElementById("formmsg"), send=document.getElementById("send");
-  const TO="hello@redlinepermit.com";
-  f.addEventListener("submit",async e=>{
-    e.preventDefault();
-    const d=Object.fromEntries(new FormData(f).entries());
-    if(d._honey) return;
-    if(!d.name||!d.city||!/^\S+@\S+\.\S+$/.test(d.email||"")){msg.className="formmsg err";msg.textContent="Please add your name, city and a work email.";return;}
-    send.disabled=true; msg.className="formmsg"; msg.textContent="Sending…";
-    const body={...d,_subject:"Pilot request: "+d.city,_template:"table",_captcha:"false"}; delete body._honey;
-    try{
-      const r=await fetch("https://formsubmit.co/ajax/"+TO,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(body)});
-      const j=await r.json().catch(()=>({}));
-      if(!r.ok||String(j.success)==="false") throw new Error(j.message||"send failed");
-      f.reset(); msg.className="formmsg ok"; msg.textContent="Thanks. We'll be in touch within one business day.";
-    }catch(err){
-      const lines=["Name: "+d.name,"Title: "+(d.title||""),"City/agency: "+d.city,"Email: "+d.email,"Phone: "+(d.phone||""),"Plan checks/month: "+(d.volume||""),"Current system: "+(d.system||""),"",d.message||""];
-      msg.className="formmsg err"; msg.innerHTML='Couldn\'t send from here. <a href="mailto:'+TO+'?subject='+encodeURIComponent("Pilot request: "+d.city)+'&body='+encodeURIComponent(lines.join("\n"))+'">Email it instead</a>.';
-    }finally{send.disabled=false;}
-  });
+
+  /* ---------- the koi ---------- */
+  function cellOf(x, y) {
+    const cx = Math.floor((x - bx) / bw * 8), cy = Math.floor((y - by) / bh * 6);
+    return (cx >= 0 && cx < 8 && cy >= 0 && cy < 6) ? [cx, cy] : null;
+  }
+  function pickTarget() {
+    if (Math.random() < 0.3) return {x: W * (0.08 + Math.random() * 0.84), y: H * (0.1 + Math.random() * 0.7)};
+    let best = null, bestScore = Infinity;
+    for (let k = 0; k < 10; k++) {
+      const cx = Math.floor(Math.random() * 8), cy = Math.floor(Math.random() * 6);
+      const x = bx + (cx + 0.5) / 8 * bw, y = by + (cy + 0.5) / 6 * bh;
+      const d = Math.hypot(x - pts[0].x, y - pts[0].y);
+      const score = grid[cy][cx] * 1000 + (d < L * 0.8 ? 500 : 0) + Math.random() * 50;
+      if (score < bestScore) { bestScore = score; best = {x, y}; }
+    }
+    return best;
+  }
+
+  function step(dt, time) {
+    if (!target || Math.hypot(target.x - pts[0].x, target.y - pts[0].y) < L * 0.45) target = pickTarget();
+    let want = Math.atan2(target.y - pts[0].y, target.x - pts[0].x), diff = want - ang;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    const turn = 2.0 * dt;
+    ang += Math.max(-turn, Math.min(turn, diff)) + Math.sin(time * 6.5) * 0.6 * dt;
+    const speed = L * (1.15 + 0.25 * Math.sin(time * 0.7));
+    const prev = {x: pts[0].x, y: pts[0].y};
+    pts[0].x += Math.cos(ang) * speed * dt; pts[0].y += Math.sin(ang) * speed * dt;
+    for (let i = 1; i <= N; i++) {
+      const a = pts[i - 1], b = pts[i], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+      if (d > seg) { b.x = a.x + dx / d * seg; b.y = a.y + dy / d * seg; }
+    }
+    // reveal the plan under the fish's body
+    const k = Math.floor(N * 0.3), src = pts[k], rr = L * 0.27;
+    const cell = cellOf(src.x, src.y); if (cell) grid[cell[1]][cell[0]] += dt;
+    rctx.save(); rctx.beginPath(); rctx.arc(src.x, src.y, rr, 0, 7); rctx.clip();
+    rctx.drawImage(plan, 0, 0, W, H); rctx.restore();
+    wake.push({x: pts[N >> 1].x, y: pts[N >> 1].y, t: time});
+    while (wake.length && time - wake[0].t > 2.6) wake.shift();
+    return prev;
+  }
+
+  function bodyGeom(time) {
+    const P = [], left = [], right = [], dirs = [];
+    for (let i = 0; i <= N; i++) {
+      const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, N)];
+      const d = Math.atan2(a.y - b.y, a.x - b.x); dirs.push(d);
+      const u = i / N, nx = Math.cos(d + Math.PI / 2), ny = Math.sin(d + Math.PI / 2);
+      const wv = Math.sin(time * 9 - i * 0.55) * L * 0.035 * Math.pow(u, 1.2);
+      P.push({x: pts[i].x + nx * wv, y: pts[i].y + ny * wv, nx, ny});
+    }
+    for (let i = 0; i <= N; i++) {
+      const u = i / N;
+      const prof = u < 0.2 ? 0.55 + 0.45 * Math.sin(u / 0.2 * Math.PI / 2) : (1 - Math.pow((u - 0.2) / 0.8, 1.6)) * 0.9 + 0.1;
+      const w = L * 0.115 * prof;
+      left.push({x: P[i].x + P[i].nx * w, y: P[i].y + P[i].ny * w});
+      right.push({x: P[i].x - P[i].nx * w, y: P[i].y - P[i].ny * w});
+    }
+    const tip = {x: P[0].x + Math.cos(dirs[0]) * L * 0.07, y: P[0].y + Math.sin(dirs[0]) * L * 0.07};
+    return {P, left, right, dirs, tip};
+  }
+  function bodyPath(g, G, ox = 0, oy = 0) {
+    const ring = [G.tip, ...G.left, ...G.right.slice().reverse()];
+    g.beginPath();
+    const m = (a, b) => ({x: (a.x + b.x) / 2 + ox, y: (a.y + b.y) / 2 + oy});
+    let s = m(ring[ring.length - 1], ring[0]); g.moveTo(s.x, s.y);
+    for (let i = 0; i < ring.length; i++) {
+      const c = ring[i], n = ring[(i + 1) % ring.length], e = m(c, n);
+      g.quadraticCurveTo(c.x + ox, c.y + oy, e.x, e.y);
+    }
+    g.closePath();
+  }
+  function fins(g, G, time, ox = 0, oy = 0) {
+    const v = a => ({x: Math.cos(a), y: Math.sin(a)});
+    // pectoral fins
+    const i = 4, p = G.P[i], d = G.dirs[i], flap = Math.sin(time * 5) * 0.25;
+    [1, -1].forEach(s => {
+      const a = d + Math.PI - s * (0.95 + flap), w = L * 0.1;
+      const cx = p.x + p.nx * s * L * 0.08 + v(a).x * L * 0.07, cy = p.y + p.ny * s * L * 0.08 + v(a).y * L * 0.07;
+      g.beginPath(); g.ellipse(cx + ox, cy + oy, w, L * 0.038, a, 0, 7); g.fill();
+    });
+    // tail
+    const T = G.P[N], back = G.dirs[N] + Math.PI, fl = Math.sin(time * 9 - N * 0.55) * 0.35;
+    const at = (a, r) => ({x: T.x + v(a).x * r + ox, y: T.y + v(a).y * r + oy});
+    const t1 = at(back - 0.5 + fl, L * 0.27), t2 = at(back + 0.5 + fl, L * 0.27), notch = at(back + fl, L * 0.13);
+    const c1 = at(back - 0.22 + fl, L * 0.2), c2 = at(back + 0.22 + fl, L * 0.2);
+    g.beginPath(); g.moveTo(T.x + ox, T.y + oy);
+    g.quadraticCurveTo(c1.x, c1.y, t1.x, t1.y); g.quadraticCurveTo(notch.x, notch.y, notch.x, notch.y);
+    g.quadraticCurveTo(notch.x, notch.y, t2.x, t2.y); g.quadraticCurveTo(c2.x, c2.y, T.x + ox, T.y + oy);
+    g.fill();
+    // dorsal ridge
+    g.save(); g.globalAlpha *= 0.5; g.lineWidth = L * 0.025; g.lineCap = 'round'; g.beginPath();
+    for (let k = 5; k <= 11; k++) { const q = G.P[k]; k === 5 ? g.moveTo(q.x + ox, q.y + oy) : g.lineTo(q.x + ox, q.y + oy); }
+    g.stroke(); g.restore();
+  }
+  function drawKoi(time) {
+    const G = bodyGeom(time), sx = L * 0.05, sy = L * 0.08;
+    // shadow on the pond floor
+    ctx.save(); ctx.fillStyle = 'rgba(70,0,0,0.28)'; ctx.strokeStyle = 'rgba(70,0,0,0.28)';
+    bodyPath(ctx, G, sx, sy); ctx.fill(); fins(ctx, G, time, sx, sy); ctx.restore();
+    // fins (translucent white)
+    ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.82)'; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    fins(ctx, G, time); ctx.restore();
+    // body
+    ctx.save(); bodyPath(ctx, G); ctx.fillStyle = '#fffaf6'; ctx.fill(); ctx.clip();
+    ctx.fillStyle = PATCH;
+    [[1, 0.9, 0.25], [6, 1.25, -0.35], [10, 1.05, 0.4], [13, 0.8, -0.2]].forEach(([i, s, off]) => {
+      const p = G.P[i], w = L * 0.115;
+      ctx.beginPath(); ctx.ellipse(p.x + p.nx * w * off, p.y + p.ny * w * off, w * s, w * s * 0.85, G.dirs[i], 0, 7); ctx.fill();
+    });
+    ctx.restore();
+    // eyes
+    const h = G.P[1], d = G.dirs[1];
+    ctx.fillStyle = EYE;
+    [1, -1].forEach(s => { ctx.beginPath(); ctx.arc(h.x + h.nx * s * L * 0.065 + Math.cos(d) * L * 0.02, h.y + h.ny * s * L * 0.065 + Math.sin(d) * L * 0.02, L * 0.013, 0, 7); ctx.fill(); });
+  }
+
+  /* ---------- frame ---------- */
+  function frame(ms) {
+    const now = ms / 1000, dt = Math.min(0.05, now - (last || now)); last = now;
+    let phase = now - cycleStart;
+    if (phase > CYCLE) { resetCycle(now, false); phase = 0; }
+    step(dt, now);
+
+    // pond
+    ctx.fillStyle = RED; ctx.fillRect(0, 0, W, H);
+    const vg = ctx.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.2, W / 2, H * 0.45, Math.max(W, H) * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,0,0,0.28)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+    // faint hint of the hidden sheet, then what the koi has revealed
+    ctx.globalAlpha = 0.045; ctx.drawImage(plan, 0, 0, W, H);
+    const fade = phase > CYCLE - FADE ? Math.max(0, (CYCLE - phase) / FADE) : 1;
+    ctx.globalAlpha = fade; ctx.drawImage(rev, 0, 0, W, H); ctx.globalAlpha = 1;
+
+    // white line wake
+    ctx.lineCap = 'round'; ctx.lineWidth = 1.4;
+    for (let i = 1; i < wake.length; i++) {
+      const a = wake[i - 1], b = wake[i];
+      ctx.strokeStyle = `rgba(255,255,255,${0.75 * (1 - (now - b.t) / 2.6)})`;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+
+    drawKoi(now);
+
+    // small sparkles
+    sparkles.forEach(s => {
+      const a = Math.max(0, Math.sin(now * s.sp + s.p)); if (a < 0.05) return;
+      const r = s.s * a; ctx.fillStyle = s.c; ctx.globalAlpha = a * 0.9;
+      ctx.beginPath(); ctx.moveTo(s.x, s.y - r); ctx.quadraticCurveTo(s.x, s.y, s.x + r, s.y);
+      ctx.quadraticCurveTo(s.x, s.y, s.x, s.y + r); ctx.quadraticCurveTo(s.x, s.y, s.x - r, s.y);
+      ctx.quadraticCurveTo(s.x, s.y, s.x, s.y - r); ctx.fill(); ctx.globalAlpha = 1;
+    });
+
+    requestAnimationFrame(frame);
+  }
+
+  addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(frame);
 })();
 </script>
-<script>(function(){const d=document.getElementById("cities");if(!d)return;document.addEventListener("click",e=>{if(d.open&&!d.contains(e.target))d.open=false;});document.addEventListener("keydown",e=>{if(e.key==="Escape")d.open=false;});})();</script>
 </body>
 </html>

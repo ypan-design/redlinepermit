@@ -392,6 +392,75 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
 .pilotbar a{color:inherit;font-weight:600}
 .brandlogo{display:inline-flex}.brandlogo img{display:block;width:34px;height:34px}
 </style>
+<style id="front-css">
+/* Monrovia front door for signed-out visitors (Yifu, 2026-10-18): oxblood, sister of the landing red */
+#front{position:fixed;inset:0;z-index:50;background:#8C2A2A;color:#F2EDE4;overflow-y:auto;--red:#7FD3C7;--ink:#F2EDE4;
+  font-family:Inter,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;display:none}
+body.front-on #front{display:block}
+body.front-on{overflow:hidden}
+#front a{color:inherit;text-decoration:none}
+#fr-koi{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+#front .fr-top{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:24px 28px;z-index:2}
+#front .fr-crumb{font-size:15px;font-weight:500}
+#front .fr-crumb a{color:rgba(242,237,228,.72)}
+#front .fr-crumb a:hover{color:#F2EDE4}
+#front .fr-crumb span{border-bottom:1px solid rgba(242,237,228,.35);padding-bottom:4px}
+#front .fr-pill{font:500 14px/1 Inter,Helvetica,Arial,sans-serif;color:#F2EDE4;background:none;padding:10px 16px;border:1px solid rgba(242,237,228,.35);border-radius:999px;cursor:pointer}
+#front .fr-pill:hover{border-color:#F2EDE4}
+#front .fr-main{position:relative;z-index:1;min-height:calc(100vh - 150px);display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:48px;align-items:center;padding:24px 28px 40px}
+#front .fr-eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:rgba(242,237,228,.72);margin:0 0 18px}
+#front h1{font-size:56px;line-height:1;font-weight:600;letter-spacing:-.03em;margin:0 0 20px;color:#F2EDE4}
+#front .fr-lede{font-size:15px;line-height:1.6;color:rgba(242,237,228,.72);margin:0 0 32px;max-width:380px}
+#front .fr-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+#front .fr-btn{font:500 14px/1 Inter,Helvetica,Arial,sans-serif;padding:14px 22px;border-radius:999px;border:1px solid #F2EDE4;cursor:pointer;background:none;color:#F2EDE4}
+#front .fr-btn.solid{background:#F2EDE4;color:#6E1F20}
+#front .fr-btn.solid:hover{background:#fff}
+#front .fr-btn:not(.solid):hover{background:rgba(242,237,228,.1)}
+#front .fr-browse{display:inline-block;margin-top:22px;font-size:13px;color:rgba(242,237,228,.72);border-bottom:1px solid rgba(242,237,228,.3);padding-bottom:2px;background:none;border-top:0;border-left:0;border-right:0;cursor:pointer;font-family:inherit}
+#front .fr-browse:hover{color:#F2EDE4}
+#front .fr-art{margin:0;justify-self:center;width:min(640px,100%);color:#F2EDE4}
+#front .fr-art figcaption{font-size:12px;color:rgba(242,237,228,.72);margin-top:10px;text-align:right}
+#front .fr-foot{position:relative;z-index:1;padding:0 28px 24px;font-size:11px;color:rgba(242,237,228,.72);display:flex;gap:14px;flex-wrap:wrap}
+#front .fr-foot a:hover{color:#F2EDE4}
+@media (max-width:760px){
+  #front .fr-top{padding:16px;background:#8C2A2A}
+  #front .fr-main{grid-template-columns:1fr;gap:28px;padding:8px 16px 40px;align-items:start;min-height:0}
+  #front .fr-art{order:-1}
+  #front h1{font-size:44px}
+  #front .fr-foot{padding:0 16px 20px}
+}
+.acct-wrap{z-index:1000}
+</style>
+<div id="front" aria-label="Redline Permit, City of Monrovia">
+<canvas id="fr-koi" aria-hidden="true"></canvas>
+<header class="fr-top">
+  <div class="fr-crumb"><a href="/">Redline Permit </a><span>/Monrovia</span></div>
+  <button type="button" class="fr-pill" data-fr="in">Sign in</button>
+</header>
+<div class="fr-main">
+  <section>
+    <p class="fr-eyebrow">City of Monrovia · plan check portal</p>
+    <h1>Plan check.</h1>
+    <p class="fr-lede">Owners and designers submit the plan set once. Redline does the first read against Monrovia's codes and clips each issue straight from the sheets. Reviewers decide every comment, right in the portal.</p>
+    <div class="fr-actions">
+      <button type="button" class="fr-btn solid" data-fr="in">Sign in</button>
+      <button type="button" class="fr-btn" data-fr="up">Create an account</button>
+    </div>
+    <button type="button" class="fr-browse" data-fr="browse">Look around first</button>
+  </section>
+  <figure class="cityart fr-art" aria-label="Monrovia City Hall"><figcaption>Monrovia City Hall</figcaption></figure>
+</div>
+<footer class="fr-foot"><span>Redline Permit pilot · not an official City of Monrovia website</span><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a></footer>
+</div>
+<script>
+(function(){
+  /* show the front door to signed-out visitors before the portal loads */
+  var hasSession=false, browse=false;
+  try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i)||''; if(k.indexOf('sb-')===0 && k.indexOf('auth-token')>0){ hasSession=true; break; } } }catch(e){}
+  try{ browse=sessionStorage.getItem('rl-browse')==='1'; }catch(e){}
+  if(!hasSession && !browse) document.body.classList.add('front-on');
+})();
+</script>
 <div class="bg" aria-hidden="true"><span class="orb a"></span><span class="orb b"></span><span class="orb c"></span></div>
 <div class="pilotbar">Redline Permit pilot for Monrovia plan check. Not an official City of Monrovia website. <a href="/">redlinepermit.com</a></div>
 <div class="topline"></div>
@@ -2466,5 +2535,85 @@ window.__redline={S,render};
 })();
 </script>
 
+<script id="front-js">
+(function(){
+  var front=document.getElementById('front'); if(!front) return;
+  var art=front.querySelector('.fr-art'), hall=document.querySelector('.hero svg.hall');
+  if(hall && art) art.insertBefore(hall.cloneNode(true), art.firstChild);
+  function browsing(){ try{ return sessionStorage.getItem('rl-browse')==='1'; }catch(e){ return false; } }
+  function sync(){
+    if(typeof S==='undefined' || !S.acctReady) return;
+    var out = !S.acct && !S.signedIn && !browsing();
+    document.body.classList.toggle('front-on', out);
+  }
+  if(typeof renderAcctBanner==='function'){
+    var _rab=renderAcctBanner;
+    renderAcctBanner=function(){ var r=_rab.apply(this,arguments); try{ sync(); }catch(e){} return r; };
+  }
+  front.addEventListener('click',function(e){
+    var b=e.target.closest('[data-fr]'); if(!b) return;
+    var a=b.getAttribute('data-fr');
+    if(a==='browse'){ try{ sessionStorage.setItem('rl-browse','1'); }catch(err){} document.body.classList.remove('front-on'); return; }
+    if(typeof openAcct==='function') openAcct();
+  });
+  setInterval(sync, 1500);
+
+  /* one koi drifting across the oxblood pond, leaving a fading white line */
+  var cv=document.getElementById('fr-koi'), ctx=cv.getContext('2d');
+  var N=16, PATCH='#d93a2e', EYE='#3a0e0b', W, H, DPR, L, seg, pts=[], ang=0, target=null, wake=[], last=0;
+  function resize(){ DPR=Math.min(window.devicePixelRatio||1,2); W=innerWidth; H=innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+    L=Math.max(70,Math.min(Math.min(W,H)*0.2,160)); seg=L/N;
+    if(!pts.length){ var y=H*0.7; for(var i=0;i<=N;i++) pts.push({x:-L*0.3-i*seg,y:y}); } }
+  function pick(){ return {x:W*(0.06+Math.random()*0.88), y:H*(0.1+Math.random()*0.8)}; }
+  function step(dt,t){
+    if(!target || Math.hypot(target.x-pts[0].x,target.y-pts[0].y)<L*0.5) target=pick();
+    var d=Math.atan2(target.y-pts[0].y,target.x-pts[0].x)-ang; d=Math.atan2(Math.sin(d),Math.cos(d));
+    ang+=Math.max(-1.4*dt,Math.min(1.4*dt,d))+Math.sin(t*5.5)*0.5*dt;
+    var sp=L*0.7; pts[0].x+=Math.cos(ang)*sp*dt; pts[0].y+=Math.sin(ang)*sp*dt;
+    for(var i=1;i<=N;i++){ var a=pts[i-1], b=pts[i], dx=b.x-a.x, dy=b.y-a.y, q=Math.hypot(dx,dy)||1; if(q>seg){ b.x=a.x+dx/q*seg; b.y=a.y+dy/q*seg; } }
+    wake.push({x:pts[N>>1].x,y:pts[N>>1].y,t:t}); while(wake.length && t-wake[0].t>3.2) wake.shift();
+  }
+  function geom(t){
+    var P=[], Lf=[], R=[], D=[], i;
+    for(i=0;i<=N;i++){ var a=pts[Math.max(i-1,0)], b=pts[Math.min(i+1,N)], d=Math.atan2(a.y-b.y,a.x-b.x); D.push(d);
+      var u=i/N, nx=Math.cos(d+Math.PI/2), ny=Math.sin(d+Math.PI/2), wv=Math.sin(t*8-i*0.55)*L*0.035*Math.pow(u,1.2);
+      P.push({x:pts[i].x+nx*wv, y:pts[i].y+ny*wv, nx:nx, ny:ny}); }
+    for(i=0;i<=N;i++){ var u2=i/N, pr=u2<0.2?0.55+0.45*Math.sin(u2/0.2*Math.PI/2):(1-Math.pow((u2-0.2)/0.8,1.6))*0.9+0.1, w=L*0.115*pr;
+      Lf.push({x:P[i].x+P[i].nx*w, y:P[i].y+P[i].ny*w}); R.push({x:P[i].x-P[i].nx*w, y:P[i].y-P[i].ny*w}); }
+    return {P:P, Lf:Lf, R:R, D:D, tip:{x:P[0].x+Math.cos(D[0])*L*0.07, y:P[0].y+Math.sin(D[0])*L*0.07}};
+  }
+  function body(G,ox,oy){ ox=ox||0; oy=oy||0; var ring=[G.tip].concat(G.Lf, G.R.slice().reverse());
+    var m=function(a,b){ return {x:(a.x+b.x)/2+ox, y:(a.y+b.y)/2+oy}; };
+    ctx.beginPath(); var s=m(ring[ring.length-1],ring[0]); ctx.moveTo(s.x,s.y);
+    ring.forEach(function(c,i){ var e=m(c,ring[(i+1)%ring.length]); ctx.quadraticCurveTo(c.x+ox,c.y+oy,e.x,e.y); }); ctx.closePath(); }
+  function fins(G,t,ox,oy){ ox=ox||0; oy=oy||0;
+    var v=function(a){ return {x:Math.cos(a), y:Math.sin(a)}; }, p=G.P[4], d=G.D[4], fl=Math.sin(t*5)*0.25;
+    [1,-1].forEach(function(s){ var a=d+Math.PI-s*(0.95+fl); ctx.beginPath();
+      ctx.ellipse(p.x+p.nx*s*L*0.08+v(a).x*L*0.07+ox, p.y+p.ny*s*L*0.08+v(a).y*L*0.07+oy, L*0.1, L*0.038, a, 0, 7); ctx.fill(); });
+    var T=G.P[N], bk=G.D[N]+Math.PI, f=Math.sin(t*8-N*0.55)*0.35, at=function(a,r){ return {x:T.x+v(a).x*r+ox, y:T.y+v(a).y*r+oy}; };
+    var t1=at(bk-0.5+f,L*0.27), t2=at(bk+0.5+f,L*0.27), n=at(bk+f,L*0.13), c1=at(bk-0.22+f,L*0.2), c2=at(bk+0.22+f,L*0.2);
+    ctx.beginPath(); ctx.moveTo(T.x+ox,T.y+oy); ctx.quadraticCurveTo(c1.x,c1.y,t1.x,t1.y); ctx.quadraticCurveTo(n.x,n.y,n.x,n.y);
+    ctx.quadraticCurveTo(n.x,n.y,t2.x,t2.y); ctx.quadraticCurveTo(c2.x,c2.y,T.x+ox,T.y+oy); ctx.fill(); }
+  function frame(ms){
+    var t=ms/1000, dt=Math.min(0.05,t-(last||t)); last=t;
+    if(document.body.classList.contains('front-on')){
+      step(dt,t); ctx.clearRect(0,0,W,H); ctx.lineCap='round'; ctx.lineWidth=1.2;
+      for(var i=1;i<wake.length;i++){ var a=wake[i-1], b=wake[i]; ctx.strokeStyle='rgba(242,237,228,'+(0.55*(1-(t-b.t)/3.2))+')'; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+      var G=geom(t);
+      ctx.fillStyle='rgba(40,0,0,0.3)'; body(G,L*0.05,L*0.08); ctx.fill(); fins(G,t,L*0.05,L*0.08);
+      ctx.fillStyle='rgba(255,255,255,0.82)'; fins(G,t);
+      ctx.save(); body(G); ctx.fillStyle='#fffaf6'; ctx.fill(); ctx.clip(); ctx.fillStyle=PATCH;
+      [[1,0.9,0.25],[6,1.25,-0.35],[10,1.05,0.4],[13,0.8,-0.2]].forEach(function(q){ var p=G.P[q[0]], w=L*0.115;
+        ctx.beginPath(); ctx.ellipse(p.x+p.nx*w*q[2], p.y+p.ny*w*q[2], w*q[1], w*q[1]*0.85, G.D[q[0]], 0, 7); ctx.fill(); });
+      ctx.restore();
+      var h=G.P[1], dd=G.D[1]; ctx.fillStyle=EYE;
+      [1,-1].forEach(function(s){ ctx.beginPath(); ctx.arc(h.x+h.nx*s*L*0.065+Math.cos(dd)*L*0.02, h.y+h.ny*s*L*0.065+Math.sin(dd)*L*0.02, L*0.013, 0, 7); ctx.fill(); });
+    }
+    requestAnimationFrame(frame);
+  }
+  var reduce=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  addEventListener('resize',resize); resize(); if(!reduce) requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
