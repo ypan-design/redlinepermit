@@ -392,6 +392,57 @@ a.cite{text-decoration:none}a.cite:hover{text-decoration:underline}
 .pilotbar a{color:inherit;font-weight:600}
 .brandlogo{display:inline-flex}.brandlogo img{display:block;width:34px;height:34px}
 </style>
+<style id="red-theme">
+/* Redline red theme for the whole Monrovia portal, signed in or not (Yifu, 2026-10-18).
+   Oxblood field like the front door; sand text; brighter red for actions; light teal for status.
+   Plan sheets, clips and thumbnails stay on white so drawings read correctly. */
+:root{
+  --sand:#8C2A2A; --sand2:#7A2324; --sand3:rgba(242,237,228,.14);
+  --glass:rgba(255,255,255,.06); --glass-solid:#992F2F; --hair:rgba(242,237,228,.22);
+  --ink:#F2EDE4; --ink2:rgba(242,237,228,.82); --ink3:rgba(242,237,228,.6);
+  --red:#E5483E; --red-soft:rgba(229,72,62,.24);
+  --oxblood:#F4C9C3; --ox-soft:rgba(255,255,255,.09);
+  --teal:#7FD3C7; --teal-deep:#7FD3C7; --teal-soft:rgba(127,211,199,.16);
+  --ok:#7FD3C7; --ok-soft:rgba(127,211,199,.16);
+  --warn:#F2A65A; --warn-soft:rgba(242,166,90,.18);
+  --bg:var(--sand); --surface:var(--glass-solid); --sunk:var(--sand2); --line:var(--hair); --muted:var(--ink2);
+  --info:var(--oxblood); --info-soft:var(--ox-soft);
+  color-scheme:dark;
+}
+html,body{background:#8C2A2A}
+.bg{display:none}
+.pilotbar{background:#6E1F20;color:rgba(242,237,228,.85)}
+.topline{background:linear-gradient(90deg,#E5483E,#7FD3C7)!important}
+header.top{background:rgba(140,42,42,.86)!important;border-bottom:1px solid var(--hair)}
+a{color:#FFB4AB}
+.panel,.glass{background:rgba(255,255,255,.05);border:1px solid var(--hair);box-shadow:0 10px 30px -14px rgba(30,4,4,.55)}
+.panel::before,.glass::before{background:linear-gradient(116deg,rgba(255,255,255,.06),rgba(255,255,255,0) 38%)!important}
+.seg,.path,.who-sel,.bubble,.person,.lane,.bench{background:rgba(255,255,255,.06)!important;border-color:var(--hair)!important}
+.seg button[aria-pressed="true"]{color:#6E1F20}
+.brief{background:linear-gradient(135deg,rgba(127,211,199,.16),rgba(255,255,255,.04))!important;border-color:var(--hair)!important}
+.dcard{border-color:var(--hair)!important;background:rgba(255,255,255,.05)!important}
+.dcard.main{background:linear-gradient(120deg,rgba(229,72,62,.28),rgba(255,255,255,.04) 55%,rgba(127,211,199,.16))!important}
+.dcard .go,.stage.now b,.stage .round,.p-corrections,.mark-n,.path b{color:#FFB4AB}
+.btn{background:rgba(255,255,255,.07);color:var(--ink)}
+.btn:hover{background:rgba(255,255,255,.14)}
+.btn.primary{background:#E5483E;border-color:#E5483E;color:#fff}
+.btn.primary:hover{background:#F0594F}
+.btn.ok{color:#3A1213}
+.appmain,.appsel,.rcard,.chks label{background:rgba(255,255,255,.06)}
+input[type=text],input[type=email],input[type=tel],input[type=number],input[type=date],input[type=search],input:not([type]),select,textarea{
+  background:rgba(0,0,0,.18)!important;color:var(--ink)!important;border-color:var(--hair)!important}
+input::placeholder,textarea::placeholder{color:rgba(242,237,228,.45)}
+select option{color:#242B31;background:#F2EDE4}
+.acct-wrap{background:rgba(40,8,8,.62)}
+.acct{background:#8C2A2A!important;border:1px solid var(--hair)}
+.p-fee_due{background:rgba(242,166,90,.2);color:#F7C98C}
+.stage .loop.fee{color:#F7C98C}
+.note{background:rgba(255,255,255,.06)}
+tbody tr:nth-child(even) td{background:rgba(255,255,255,.045)}
+.tabs{border-bottom-color:var(--hair)}
+.lb-x{background:#F2EDE4}
+::selection{background:rgba(127,211,199,.35)}
+</style>
 <style id="front-css">
 /* Monrovia front door for signed-out visitors (Yifu, 2026-10-18): oxblood, sister of the landing red */
 #front{position:fixed;inset:0;z-index:50;background:#8C2A2A;color:#F2EDE4;overflow-y:auto;--red:#7FD3C7;--ink:#F2EDE4;
