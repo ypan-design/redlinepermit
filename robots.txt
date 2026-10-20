@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://redlinepermit.com/sitemap.xml
