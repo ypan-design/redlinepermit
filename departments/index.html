@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Redline Permit · For Building Departments</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="AI first read for city plan check. Every likely correction circled on its sheet with a code citation; reviewers approve, edit or reject each one. Built for California's two-review, 30-business-day rules.">
+<link rel="canonical" href="https://redlinepermit.com/departments/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Redline Permit for building departments">
+<meta property="og:description" content="A first read on every residential set. Every decision stays with your reviewers.">
+<meta property="og:url" content="https://redlinepermit.com/departments/">
+<meta property="og:image" content="https://redlinepermit.com/departments/portal.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Redline Permit","applicationCategory":"BusinessApplication","applicationSubCategory":"Electronic plan review / AI plan check","operatingSystem":"Web","url":"https://redlinepermit.com/departments/","description":"AI first read for city plan check. Every likely correction is circled on its sheet with a code citation, and reviewers approve, edit or reject each one.","audience":{"@type":"Audience","audienceType":"City building and planning departments"},"publisher":{"@type":"Organization","name":"Redline Permit","url":"https://redlinepermit.com/","email":"ypan@redlinepermit.com"}}
+</script>
+<style>
+/* Layout: a drawing set. Oxblood title sheet, sand "sheets" in between, each section a numbered sheet with a mono sheet label. */
+:root{
+  --ox:#8C2A2A; --ox-deep:#6E1F20; --sand:#F4EFE6; --paper:#FBF9F5; --hair:#D6CCBB;
+  --ink:#242B31; --ink2:#454E56; --red:#C8322B; --red-hi:#FF8B7E; --teal:#1E7A78; --teal-hi:#8FD3CE; --cream:#F2EDE4;
+  --f-sans:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--sand);color:var(--ink);font-family:var(--f-sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--red)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+img{max-width:100%;height:auto;display:block}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--f-mono)}
+.label{font-family:var(--f-mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+h1,h2,h3{text-wrap:balance;margin:0;letter-spacing:-.025em}
+p{margin:0;text-wrap:pretty}
+
+/* Top bar */
+.top{position:absolute;top:0;left:0;right:0;z-index:2;padding-top:calc(22px + env(safe-area-inset-top,0px))}
+.top .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;color:var(--cream);text-decoration:none;font-weight:600;font-size:16px}
+.top nav{display:flex;gap:20px;flex-wrap:wrap}
+.top nav a{color:var(--cream);text-decoration:none;font-size:15px;border-bottom:1px solid rgba(242,237,228,.5);padding:4px 0}
+.top nav a:hover{border-color:var(--cream)}
+
+/* Hero: the title sheet */
+.hero{background:var(--ox);color:var(--cream);min-height:min(100vh,940px);display:flex;align-items:center;padding-block:120px 72px;position:relative;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:56px;align-items:center;width:100%}
+.hero .label{color:var(--red-hi)}
+.hero h1{font-size:clamp(40px,5.6vw,72px);line-height:1.02;font-weight:800;margin-top:18px}
+.hero p.lede{font-size:19px;line-height:1.55;color:rgba(242,237,228,.9);margin-top:22px;max-width:34em}
+.hero p.rule{font-weight:600;margin-top:16px;font-size:17px}
+.cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:32px}
+.btn{display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;font-weight:600;font-size:16px;text-decoration:none}
+.btn.solid{background:var(--cream);color:var(--ox)}
+.btn.solid:hover{background:#fff}
+.btn.line{border:1.5px solid rgba(242,237,228,.7);color:var(--cream)}
+.btn.line:hover{border-color:var(--cream)}
+.sheet-art{width:100%;max-width:520px;justify-self:end}
+.sheet-art .cloud{fill:none;stroke:var(--red-hi);stroke-width:3;stroke-dasharray:900;stroke-dashoffset:0;animation:draw 1.6s ease-out both}
+.sheet-art .c2{animation-delay:.5s}.sheet-art .c3{animation-delay:1s}
+.sheet-art .tag{animation:pop .5s ease-out both}
+.sheet-art .t2{animation-delay:.9s}.sheet-art .t3{animation-delay:1.4s}
+@keyframes draw{from{stroke-dashoffset:900}to{stroke-dashoffset:0}}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.sheet-art .cloud,.sheet-art .tag{animation:none}html{scroll-behavior:auto}}
+
+/* Sheets */
+section.sheet{padding-block:96px}
+section.sheet + section.sheet{border-top:1px solid var(--hair)}
+.sheet-head{display:grid;grid-template-columns:120px minmax(0,1fr);gap:24px;align-items:baseline}
+.sheet-no{font-family:var(--f-mono);font-size:14px;font-weight:600;color:var(--red);letter-spacing:.06em}
+.sheet-head h2{font-size:clamp(30px,3.6vw,44px);line-height:1.08;font-weight:800}
+.sheet-head p{margin-top:16px;color:var(--ink2);max-width:40em;font-size:18px}
+.sheet-body{margin-left:144px;margin-top:40px}
+
+/* Law ledger */
+.ledger{display:grid;border-top:1.5px solid var(--ink)}
+.ledger .row{display:grid;grid-template-columns:120px minmax(0,1fr) 220px;gap:24px;padding:20px 0;border-bottom:1px solid var(--hair);align-items:baseline}
+.ledger .row:last-child{border-bottom:1.5px solid var(--ink)}
+.big{font-size:56px;font-weight:800;color:var(--red);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.cite{font-family:var(--f-mono);font-size:13px;color:var(--ink2)}
+.fine{font-size:14px;color:var(--ink2);margin-top:14px}
+
+/* Steps */
+.steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:28px}
+.step{background:var(--paper);border:1px solid var(--hair);padding:16px 14px;display:flex;flex-direction:column;gap:6px}
+.step b{font-size:16px;line-height:1.25}
+.step span{font-size:14px;color:var(--ink2);line-height:1.45}
+.step .mono{font-size:12px;color:var(--red);font-weight:600}
+.shot{border:1px solid var(--hair);background:#fff}
+figure{margin:0}
+figcaption{font-size:14px;color:var(--ink2);margin-top:10px}
+
+/* Correction anatomy */
+.anatomy{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:40px;align-items:start}
+.card{background:var(--paper);border:1.5px solid var(--ink);padding:22px;display:flex;flex-direction:column;gap:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-mono);font-size:12.5px}
+.chip{border:1px solid var(--ink);padding:2px 8px}
+.chip.crit{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.chip.ai{background:#E6DDCD;border-color:#E6DDCD}
+.num{width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;font-family:var(--f-sans);font-weight:700;font-size:14px;display:inline-flex;align-items:center;justify-content:center}
+.card .actions{display:flex;gap:10px;flex-wrap:wrap}
+.card .actions span{font-weight:600;font-size:14px;padding:8px 14px;border:1.5px solid var(--ink)}
+.card .actions span.ok{background:var(--teal);border-color:var(--teal);color:#fff}
+.keys{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;font-size:16px;line-height:1.45}
+.keys li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px}
+.keys b.k{font-family:var(--f-mono);color:var(--red)}
+.keys b.k.g{color:var(--teal)}
+
+/* Layers */
+.layers{display:grid;border-top:1.5px solid var(--ink)}
+.layers .row{display:grid;grid-template-columns:60px 220px minmax(0,1fr);gap:20px;padding:18px 0;border-bottom:1px solid var(--hair)}
+.layers .row:last-child{border-bottom:1.5px solid var(--ink)}
+.layers .mono{color:var(--red);font-weight:600}
+.notes{columns:2;column-gap:40px;margin-top:20px;font-size:15px;color:var(--ink2);padding-left:18px}
+.notes li{break-inside:avoid;margin-bottom:6px}
+
+/* Recheck */
+.cycle{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink)}
+.cycle > div{padding:20px 20px 20px 0;display:flex;flex-direction:column;gap:8px}
+.cycle > div + div{padding-left:20px;border-left:1px solid var(--hair)}
+.cycle .mono{font-size:12.5px;font-weight:600;color:var(--red)}
+.cycle .mono.g{color:var(--teal)}
+.cycle b{font-size:18px;line-height:1.25}
+.cycle span{font-size:15px;color:var(--ink2);line-height:1.5}
+
+/* Tools grid */
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:28px 36px}
+.tools div{display:flex;flex-direction:column;gap:6px}
+.tools b{font-size:18px}
+.tools span{color:var(--ink2);font-size:15.5px;line-height:1.5}
+
+/* Setup */
+.setup{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:start}
+.olist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:s}
+.olist li{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;counter-increment:s}
+.olist li::before{content:counter(s);font-family:var(--f-mono);font-weight:600;color:var(--red)}
+.tbl{overflow-x:auto;margin-top:36px}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:15px}
+th{font-family:var(--f-mono);font-size:12.5px;font-weight:600;color:var(--ink2);text-align:left;padding:10px 12px 10px 0;border-bottom:1.5px solid var(--ink)}
+td{padding:12px 12px 12px 0;border-bottom:1px solid var(--hair);vertical-align:top}
+td:first-child{font-weight:700}
+td.mono{font-size:13.5px}
+
+/* Records band */
+.band{background:var(--ox);color:var(--cream)}
+.band .sheet-no{color:var(--red-hi)}
+.band .sheet-head p{color:rgba(242,237,228,.86)}
+.band section.sheet{border:0}
+.pillars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px}
+.pillars div{border-top:2px solid var(--cream);padding-top:16px;display:flex;flex-direction:column;gap:8px}
+.pillars b{font-size:18px}
+.pillars span{color:rgba(242,237,228,.88);font-size:15.5px;line-height:1.55}
+
+/* Test results */
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar{display:grid;grid-template-columns:230px minmax(0,1fr) 110px;gap:16px;align-items:center;font-size:15px}
+.bar .track{display:flex;height:26px;background:#E7E2D8}
+.bar .a{background:var(--teal)}.bar .p{background:var(--teal-hi)}
+.bar .n{white-space:nowrap;font-family:var(--f-mono);font-size:13px;color:var(--ink2);text-align:right;font-variant-numeric:tabular-nums}
+.bar.total{font-weight:700}
+.legend{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:var(--ink2);margin-top:6px}
+.legend span{display:inline-flex;gap:8px;align-items:center}
+.legend i{width:14px;height:14px;display:inline-block}
+
+/* Pilot */
+.pilot{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:12px}
+.pilot div{background:var(--paper);border:1.5px solid var(--ink);padding:22px;display:flex;flex-direction:column;gap:8px}
+.pilot .mono{color:var(--red);font-size:12.5px;font-weight:600}
+.pilot b{font-size:19px;line-height:1.3}
+
+/* FAQ */
+details{border-bottom:1px solid var(--hair);padding:18px 0}
+details:first-of-type{border-top:1.5px solid var(--ink)}
+summary{cursor:pointer;font-weight:700;font-size:18px;list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--f-mono);color:var(--red);font-size:20px;line-height:1}
+details[open] summary::after{content:"\2212"}
+details p{margin-top:10px;color:var(--ink2);max-width:46em}
+
+/* Contact */
+.contact{background:var(--ox);color:var(--cream);padding-block:96px}
+.contact h2{font-size:clamp(32px,4vw,52px);font-weight:800;line-height:1.05}
+.contact .grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:48px;align-items:end}
+.contact p{color:rgba(242,237,228,.9);margin-top:18px;max-width:34em}
+.card-contact{display:flex;flex-direction:column;gap:6px;font-size:17px}
+.card-contact a{color:var(--cream)}
+.card-contact .addr{color:rgba(242,237,228,.8);font-size:15px}
+footer{background:var(--ox-deep);color:rgba(242,237,228,.85);font-size:14px;padding-block:22px calc(22px + env(safe-area-inset-bottom,0px))}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{color:var(--cream)}
+
+@media (max-width:900px){
+  .hero .wrap,.anatomy,.setup,.contact .grid{grid-template-columns:minmax(0,1fr)}
+  .sheet-art{justify-self:start;max-width:440px}
+  .sheet-head{grid-template-columns:minmax(0,1fr);gap:10px}
+  .sheet-body{margin-left:0}
+  .ledger .row{grid-template-columns:90px minmax(0,1fr)}
+  .ledger .row .cite{grid-column:2}
+  .layers .row{grid-template-columns:44px minmax(0,1fr)}
+  .layers .row > :last-child{grid-column:2}
+  .notes{columns:1}
+  .bar{grid-template-columns:minmax(0,1fr) 110px}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pillars{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .bar .track{grid-column:1 / -1;grid-row:2}
+  .cycle > div + div{padding-left:0;border-left:0;border-top:1px solid var(--hair)}
+}
+@media (max-width:520px){
+  body{font-size:16px}
+  .hero{padding-block:150px 56px}
+  .pillars{grid-template-columns:minmax(0,1fr)}
+  .big{font-size:44px}
+  section.sheet{padding-block:68px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+<div class="wrap">
+<a class="brand" href="/" aria-label="Redline Permit home">
+<svg width="30" height="30" viewBox="0 0 1080 1080" aria-hidden="true"><circle cx="540" cy="540" r="540" fill="#F2EDE4"/><g fill="#C8322B" stroke="#C8322B" stroke-width="32" stroke-linejoin="round"><path transform="translate(211.2,634.8) scale(0.4,-0.4)" d="M408 564V383H361Q297 383 265.0 355.5Q233 328 233 259V0H62V558H233V465Q263 511 308.0 537.5Q353 564 408 564Z"/><path transform="translate(380.0,634.8) scale(0.4,-0.4)" d="M233 740V0H62V740Z"/><path transform="translate(495.6,634.8) scale(0.4,-0.4)" d="M405 566Q474 566 530.0 531.0Q586 496 618.5 431.0Q651 366 651 280Q651 194 618.5 128.5Q586 63 530.0 27.5Q474 -8 405 -8Q347 -8 302.5 16.0Q258 40 233 78V-266H62V558H233V479Q258 518 302.0 542.0Q346 566 405 566ZM354 417Q303 417 267.5 380.0Q232 343 232 279Q232 215 267.5 178.0Q303 141 354 141Q405 141 441.0 178.5Q477 216 477 280Q477 344 441.5 380.5Q406 417 354 417Z"/></g><circle cx="808" cy="598.8" r="36" fill="#1E7A78"/></svg>
+Redline Permit</a>
+<nav aria-label="Page">
+<a href="#how">How it works</a>
+<a href="#corrections">Corrections</a>
+<a href="#pilot">Pilot</a>
+<a href="/monrovia/">/Monrovia</a>
+</nav>
+</div>
+</header>
+
+<main>
+<section class="hero">
+<div class="wrap">
+<div>
+<div class="label">For building departments</div>
+<h1>Plan check with fewer correction rounds.</h1>
+<p class="lede">Redline Permit is an online plan check portal built around your city's own codes. It gives every residential set a first read, circles each likely correction on the sheet it belongs to, and hands your plan checker a marked-up set instead of a blank one.</p>
+<p class="rule">Your reviewers approve, edit or reject every comment. Nothing reaches the applicant without staff approval.</p>
+<div class="cta">
+<a class="btn solid" href="mailto:ypan@redlinepermit.com?subject=Redline%20Permit%20walkthrough">Book a 20-minute walkthrough</a>
+<a class="btn line" href="/monrovia/">See the Monrovia example</a>
+</div>
+</div>
+<svg class="sheet-art" viewBox="0 0 534 420" role="img" aria-label="A floor plan sheet with three red revision clouds, numbered 1 to 3, and their code citations">
+<g fill="none" stroke="#F2EDE4" stroke-width="4">
+<rect x="56" y="54" width="420" height="270"/><line x1="270" y1="54" x2="270" y2="200"/><line x1="56" y1="200" x2="380" y2="200"/><line x1="380" y1="130" x2="380" y2="324"/><line x1="380" y1="130" x2="476" y2="130"/>
+</g>
+<g fill="none" stroke="#F2EDE4" stroke-width="1.5" opacity=".7">
+<line x1="100" y1="54" x2="200" y2="54" stroke="#8C2A2A" stroke-width="8"/><line x1="100" y1="50" x2="200" y2="50"/><line x1="100" y1="58" x2="200" y2="58"/>
+<path d="M270 280 a46 46 0 0 1 -46 -46"/><line x1="270" y1="280" x2="270" y2="234"/><path d="M380 174 a36 36 0 0 1 36 -36"/>
+<line x1="80" y1="232" x2="210" y2="232"/><line x1="80" y1="252" x2="210" y2="252"/><line x1="80" y1="272" x2="210" y2="272"/><line x1="80" y1="292" x2="210" y2="292"/>
+<rect x="300" y="70" width="64" height="34"/>
+</g>
+<g font-family="IBM Plex Mono, monospace" font-size="12" fill="#F2EDE4" opacity=".85"><text x="120" y="130">BEDROOM 2</text><text x="292" y="150">BATH</text><text x="400" y="240">LIVING</text><text x="96" y="222">STAIR</text></g>
+<path class="cloud" d="M90 30 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a11 11 0 0 1 0 20 a11 11 0 0 1 0 20 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a11 11 0 0 1 0 -20 a11 11 0 0 1 0 -20 Z"/>
+<path class="cloud c2" d="M288 60 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a9.9 9.9 0 0 1 18 0 a11 11 0 0 1 0 20 a11 11 0 0 1 0 20 a11 11 0 0 1 0 20 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a9.9 9.9 0 0 1 -18 0 a11 11 0 0 1 0 -20 a11 11 0 0 1 0 -20 a11 11 0 0 1 0 -20 Z"/>
+<path class="cloud c3" d="M72 212 a10.3 10.3 0 0 1 18.8 0 a10.3 10.3 0 0 1 18.8 0 a10.3 10.3 0 0 1 18.8 0 a10.3 10.3 0 0 1 18.8 0 a10.3 10.3 0 0 1 18.8 0 a10.3 10.3 0 0 1 18.8 0 a10.3 10.3 0 0 1 18.8 0 a10.3 10.3 0 0 1 18.8 0 a11 11 0 0 1 0 20 a11 11 0 0 1 0 20 a11 11 0 0 1 0 20 a11 11 0 0 1 0 20 a10.3 10.3 0 0 1 -18.8 0 a10.3 10.3 0 0 1 -18.8 0 a10.3 10.3 0 0 1 -18.8 0 a10.3 10.3 0 0 1 -18.8 0 a10.3 10.3 0 0 1 -18.8 0 a10.3 10.3 0 0 1 -18.8 0 a10.3 10.3 0 0 1 -18.8 0 a10.3 10.3 0 0 1 -18.8 0 a11 11 0 0 1 0 -20 a11 11 0 0 1 0 -20 a11 11 0 0 1 0 -20 a11 11 0 0 1 0 -20 Z"/>
+<g font-family="Inter, sans-serif" font-size="14" font-weight="700" text-anchor="middle">
+<g class="tag"><circle cx="230" cy="24" r="13" fill="#FF8B7E"/><text x="230" y="29" fill="#5A1616">1</text></g>
+<g class="tag t2"><circle cx="398" cy="58" r="13" fill="#FF8B7E"/><text x="398" y="63" fill="#5A1616">2</text></g>
+<g class="tag t3"><circle cx="236" cy="206" r="13" fill="#FF8B7E"/><text x="236" y="211" fill="#5A1616">3</text></g>
+</g>
+<g font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#F2EDE4">
+<text x="56" y="362">1 · EGRESS SILL OVER 44 IN · CRC R310 · A2.0</text>
+<text x="56" y="384">2 · SAFETY GLAZING AT TUB · CRC R308.4 · A2.0</text>
+<text x="56" y="406">3 · DIMENSION RISERS AND TREADS · CRC R311.7</text>
+</g>
+</svg>
+</div>
+</section>
+
+<section class="sheet" aria-labelledby="why">
+<div class="wrap">
+<div class="sheet-head"><div class="sheet-no">SHEET R-1</div><div><h2 id="why">The first review now has to be the complete one.</h2><p>California has put numbers on residential plan check. A city has a limited number of reviews and a clock on each, and applicants have new remedies when the clock runs out.</p></div></div>
+<div class="sheet-body">
+<div class="ledger">
+<div class="row"><div class="big">2</div><div>plan check reviews a city may require for a building permit, after which it may deny a noncompliant application.</div><div class="cite">AB 1621 · signed Sept 29, 2026</div></div>
+<div class="row"><div class="big">30</div><div>business days of review, after which an applicant for 1 to 10 units may hire a qualified private plan reviewer.</div><div class="cite">AB 253 (2025) · H&amp;S 17960.3</div></div>
+<div class="row"><div class="big">15</div><div>business days to decide completeness, judged only against the city's posted checklist; then 30 or 60 business days to decide.</div><div class="cite">AB 2234 · Gov. Code 65913.3</div></div>
+<div class="row"><div class="big">60</div><div>days to act on a complete ADU application.</div><div class="cite">Gov. Code 66317</div></div>
+</div>
+<p class="fine">Summaries for orientation, not legal advice. Confirm current text at leginfo.legislature.ca.gov and with your city attorney, including AB 1621's effective date.</p>
+</div>
+</div>
+</section>
+
+<section class="sheet" id="how" aria-labelledby="how-h">
+<div class="wrap">
+<div class="sheet-head"><div class="sheet-no">SHEET R-2</div><div><h2 id="how-h">One portal from submittal to permit pickup.</h2><p>Most correction letters repeat the same items: missing standard notes, unsigned sheets, energy and CALGreen measures, egress and separation details. Redline catches that layer before your plan checker opens the set, so staff time goes to the questions that need judgment.</p></div></div>
+<div class="sheet-body">
+<figure><img class="shot" src="process.jpg" alt="The live Redline portal showing the seven steps from Submit to Permit pickup" width="1200" height="332"><figcaption>From the live portal: every application shows where it stands and who has the next move.</figcaption></figure>
+<div class="steps">
+<div class="step"><span class="mono">1 · OWNER / DESIGNER</span><b>Submit</b><span>One short form; the PDF comes from Google Drive or Dropbox.</span></div>
+<div class="step"><span class="mono">2 · REDLINE + CITY</span><b>City review</b><span>First read in about a minute; reviewers decide each draft.</span></div>
+<div class="step"><span class="mono">3 · OWNER / DESIGNER</span><b>Corrections</b><span>One list, each comment with its clip and code note.</span></div>
+<div class="step"><span class="mono">4 · REDLINE + CITY</span><b>Resubmit and recheck</b><span>Only open items; unrequested changes listed.</span></div>
+<div class="step"><span class="mono">5 · CITY</span><b>Agency approval</b><span>Approved once every comment is cleared.</span></div>
+<div class="step"><span class="mono">6 · SCHOOL, SANITATION, WATER</span><b>Other agencies</b><span>Each clearance tracked on the same file.</span></div>
+<div class="step"><span class="mono">7 · OWNER / CONTRACTOR</span><b>Permit pickup</b><span>Pickup notice. The City collects its own fees.</span></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="sheet" id="corrections" aria-labelledby="corr-h">
+<div class="wrap">
+<div class="sheet-head"><div class="sheet-no">SHEET R-3</div><div><h2 id="corr-h">Anatomy of one correction.</h2><p>Every draft carries what a reviewer needs to decide in seconds: the spot on the sheet, the code section, the department and a priority.</p></div></div>
+<div class="sheet-body">
+<div class="anatomy">
+<div class="card">
+<div class="chips"><span class="num">1</span><span class="chip">CRC R310</span><span style="color:var(--teal);font-weight:600">BUILDING · SHEET A2.0</span><span class="chip crit">CRITICAL</span><span class="chip ai">AI DRAFT</span></div>
+<svg viewBox="0 0 360 120" role="img" aria-label="Clip of the sheet: bedroom window with a red revision cloud" style="background:#fff;border:1px solid var(--hair);width:100%;height:auto">
+<g fill="none" stroke="#242B31" stroke-width="3"><line x1="40" y1="20" x2="40" y2="110"/><line x1="320" y1="20" x2="320" y2="110"/><line x1="40" y1="90" x2="320" y2="90"/></g>
+<g font-family="IBM Plex Mono, monospace" font-size="12" fill="#242B31"><text x="70" y="50">BEDROOM 2</text><text x="70" y="74">WIN W3 · SILL 48" AFF</text></g>
+<path d="M60 58 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a9.6 9.6 0 0 1 17.5 0 a11 11 0 0 1 0 22 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a9.6 9.6 0 0 1 -17.5 0 a11 11 0 0 1 0 -22 Z" fill="none" stroke="#C8322B" stroke-width="2.4"/>
+</svg>
+<p><b>Bedroom 2 window W3 is shown with a 48 in sill.</b> An emergency escape and rescue opening may have a sill no higher than 44 in above the floor. Revise W3, or add a compliant opening, and note it on A2.0.</p>
+<div class="actions" aria-label="Reviewer decision"><span class="ok">Approve</span><span>Edit</span><span>Reject</span></div>
+<p class="fine" style="margin-top:0">Illustration of the comment format.</p>
+</div>
+<ul class="keys">
+<li><b class="k">A</b><span>The number matches the red cloud on the sheet.</span></li>
+<li><b class="k">B</b><span>Code section, linked to the official text.</span></li>
+<li><b class="k">C</b><span>Department and sheet, for routing and the letter.</span></li>
+<li><b class="k">D</b><span>Priority: Critical, Major or Minor. Critical sorts first.</span></li>
+<li><b class="k">E</b><span>Source: AI draft, standard note or reviewer.</span></li>
+<li><b class="k">F</b><span>The clip: the exact spot on the sheet.</span></li>
+<li><b class="k g">G</b><span>The reviewer's decision. Nothing goes out without it.</span></li>
+</ul>
+</div>
+
+<h3 style="font-size:24px;font-weight:800;margin-top:64px">The first read, in four layers</h3>
+<div class="layers" style="margin-top:18px">
+<div class="row"><div class="mono">L1</div><b>Completeness</b><div>The set is checked against your city's submittal list for that permit type before any code review.</div></div>
+<div class="row"><div class="mono">L2</div><b>Standard notes</b><div>Text search on every sheet the moment the set arrives, with no AI involved. A missing note becomes a draft the reviewer approves in one click.</div></div>
+<div class="row"><div class="mono">L3</div><b>Code review drafts</b><div>Likely issues against your codes and amendments, each clipped, numbered on the drawing, cited and prioritized.</div></div>
+<div class="row"><div class="mono" style="color:var(--teal)">L4</div><b>Judgment items</b><div>Design review, neighborhood compatibility, protected trees. Flagged for a planner, never decided.</div></div>
+</div>
+<p class="fine">Standard notes in the Monrovia example include:</p>
+<ul class="notes">
+<li>All sheets signed by the design professional</li><li>Attic access 22 in by 30 in, location shown</li><li>Safety glazing at hazardous locations</li><li>Smoke and CO alarms, hard-wired, interconnected</li><li>Roof covering ICC-ES report and cool-roof ID</li><li>EV-ready raceway and 40 A circuit</li><li>Electric-ready notes: water heater, cooktop, dryer</li><li>GFCI and AFCI protection as required</li><li>Surge-protective device at the service</li><li>Pressure-balance valves at showers and tubs</li><li>Dryer duct, 4 in metal, 14 ft max</li><li>Hot water pipe insulation</li>
+</ul>
+<p class="fine">The correction letter prints by department, critical items first, each with its clip, and closes with: "Every comment was reviewed and approved by City staff."</p>
+</div>
+</div>
+</section>
+
+<section class="sheet" aria-labelledby="re-h">
+<div class="wrap">
+<div class="sheet-head"><div class="sheet-no">SHEET R-4</div><div><h2 id="re-h">Rechecks that stay focused.</h2><p>Anything still open goes back with the same numbers, so cycle 2 reads like a short checklist, not a new letter.</p></div></div>
+<div class="sheet-body">
+<div class="cycle">
+<div><span class="mono">CYCLE 1</span><b>Letter sent</b><span>Approved comments only, grouped by department.</span></div>
+<div><span class="mono">RESPONSE</span><b>Answers plus one revised set</b><span>In the portal, or the designer's own response letter (PDF or Excel).</span></div>
+<div><span class="mono">CYCLE 2</span><b>Recheck open items</b><span>Revised set compared with the last; changes nobody asked for are listed.</span></div>
+<div><span class="mono g">APPROVE</span><b>Plan check cleared</b><span>Every comment cleared, every unrequested change accepted.</span></div>
+</div>
+<h3 style="font-size:24px;font-weight:800;margin-top:64px;margin-bottom:24px">For reviewers and supervisors</h3>
+<div class="tools">
+<div><b>My files</b><span>Each reviewer sees the files assigned to them, filtered by department.</span></div>
+<div><b>Sheet index</b><span>Sheets sorted by discipline: G, A, S, M, E, P, T, C, L, F.</span></div>
+<div><b>Readiness score</b><span>Completeness and standard notes on arrival, shown on every task.</span></div>
+<div><b>Internal notes</b><span>Notes between reviewers that the applicant never sees.</span></div>
+<div><b>Stats strip</b><span>Files with the City, average days waiting, share of AI drafts kept, most-cited sections.</span></div>
+<div><b>Bring in old files</b><span>Import permits already in review and earlier correction letters.</span></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="sheet" aria-labelledby="set-h">
+<div class="wrap">
+<div class="sheet-head"><div class="sheet-no">SHEET R-5</div><div><h2 id="set-h">Set up around your city, not a template.</h2><p>Every city's procedure is different. Each portal starts from a jurisdiction profile built from your own code and handouts, and we do the setup.</p></div></div>
+<div class="sheet-body">
+<div class="setup">
+<ol class="olist">
+<li><span>Confirm jurisdiction by APN and boundary map.</span></li>
+<li><span>Map your departments: Building, Planning, Fire, Police security, Public Works and outside agencies.</span></li>
+<li><span>Load the 2025 California codes (effective Jan 1, 2026), your local amendments and zoning standards.</span></li>
+<li><span>Build the rule pack: section, what to look for, severity, source, and "verified" or "needs verification."</span></li>
+<li><span>Your submittal checklists drive the completeness check. Profiles are re-verified every six months.</span></li>
+</ol>
+<figure><img class="shot" src="lot.jpg" alt="The live portal: picking a lot fills in the APN, zone, lot size and existing building" width="1000" height="569"><figcaption>Live portal: tap the lot and the APN, zone, lot size and existing building fill in. Planning confirms the zone at intake.</figcaption></figure>
+</div>
+<div class="tbl">
+<table>
+<caption class="label" style="text-align:left;padding-bottom:12px;color:var(--ink2)">Department map from the Monrovia example</caption>
+<thead><tr><th scope="col">Department</th><th scope="col">What it checks</th><th scope="col">Where the rules live</th></tr></thead>
+<tbody>
+<tr><td>Building and Safety</td><td>CRC/CBC, electrical, mechanical, plumbing, Title 24 energy, CALGreen</td><td class="mono">MMC Ch. 15.04 Codes Adopted</td></tr>
+<tr><td>Planning</td><td>Zoning, setbacks, height, FAR, parking, ADU, SB 9, compatibility, historic</td><td class="mono">MMC Title 17</td></tr>
+<tr><td>Fire</td><td>Fire code, sprinklers, access, hydrants, fire hazard zone construction</td><td class="mono">MMC Ch. 15.20</td></tr>
+<tr><td>Police (security)</td><td>Doors, locks, lighting, glazing near locks</td><td class="mono">MMC Ch. 15.08</td></tr>
+<tr><td>Public Works</td><td>Grading, erosion control, drainage and LID, undergrounding, driveways</td><td class="mono">MMC 15.28, 15.36, Title 12</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+
+<div class="band">
+<section class="sheet" aria-labelledby="rec-h">
+<div class="wrap">
+<div class="sheet-head"><div class="sheet-no">SHEET R-6</div><div><h2 id="rec-h">Records, access and who decides.</h2><p>The AI drafts and keeps the books. Your staff keep every decision, and your records stay where they belong.</p></div></div>
+<div class="sheet-body pillars">
+<div><b>Drawings stay put</b><span>Plans stay in the applicant's Google Drive or Dropbox. Redline keeps the link, the comments and small clips.</span></div>
+<div><b>City accounts only</b><span>Reviewer accounts need your City email domain. Admin access is by invitation.</span></div>
+<div><b>Fees stay with the City</b><span>The City collects its own fees. Redline only sends reminders.</span></div>
+<div><b>No citation, no comment</b><span>Every AI comment must cite a code section and a sheet. The AI never approves or denies anything.</span></div>
+</div>
+</div>
+</section>
+</div>
+
+<section class="sheet" aria-labelledby="test-h">
+<div class="wrap">
+<div class="sheet-head"><div class="sheet-no">SHEET R-7</div><div><h2 id="test-h">Tested in the open.</h2><p>We ran blind first reads on three real residential sets and scored them against the agencies' written correction lists: 75 comments from a contract plan checker for Monrovia and from LA County Building and Safety.</p></div></div>
+<div class="sheet-body">
+<div class="bars" role="img" aria-label="Test results: of 75 comments, 22 caught, 20 partly caught, 33 missed">
+<div class="bar"><span>Detached ADU</span><div class="track"><div class="a" style="width:30%"></div><div class="p" style="width:20%"></div></div><span class="n">9 · 6 · 15</span></div>
+<div class="bar"><span>Residential set</span><div class="track"><div class="a" style="width:23.5%"></div><div class="p" style="width:29.4%"></div></div><span class="n">4 · 5 · 8</span></div>
+<div class="bar"><span>ADU legalization</span><div class="track"><div class="a" style="width:32.1%"></div><div class="p" style="width:32.1%"></div></div><span class="n">9 · 9 · 10</span></div>
+<div class="bar total"><span>All three, 75 comments</span><div class="track"><div class="a" style="width:29.3%"></div><div class="p" style="width:26.7%"></div></div><span class="n">22 · 20 · 33</span></div>
+</div>
+<div class="legend"><span><i style="background:var(--teal)"></i>Caught</span><span><i style="background:var(--teal-hi)"></i>Partly caught</span><span><i style="background:#E7E2D8;border:1px solid var(--hair)"></i>Missed</span></div>
+<p style="margin-top:22px;max-width:46em">Most misses were standard notes. The standard-notes checklist was added in response; on the first set it now flags 6 of the 15 misses before any AI runs. A first read is a head start, not a replacement for a plan checker, which is why every draft waits for one.</p>
+</div>
+</div>
+</section>
+
+<section class="sheet" id="pilot" aria-labelledby="pilot-h">
+<div class="wrap">
+<div class="sheet-head"><div class="sheet-no">SHEET R-8</div><div><h2 id="pilot-h">Start small, on new projects.</h2></div></div>
+<div class="sheet-body">
+<div class="pilot">
+<div><span class="mono">STEP 1</span><b>We set up your portal around your process and code.</b></div>
+<div><span class="mono">STEP 2</span><b>First month free on new residential projects.</b></div>
+<div><span class="mono">STEP 3</span><b>Agree on cost, then bring in projects already in review.</b></div>
+</div>
+<h3 style="font-size:24px;font-weight:800;margin-top:64px;margin-bottom:16px">Questions building officials ask</h3>
+<details><summary>Does the AI approve or deny anything?</summary><p>No. It drafts comments and keeps the bookkeeping. Reviewers approve, edit or reject every comment, add their own, and approve plan check.</p></details>
+<details><summary>Where do the drawings live?</summary><p>In the applicant's own Google Drive or Dropbox. Redline keeps the link, the comments and small clips of the sheets.</p></details>
+<details><summary>Does anything change in how we collect fees?</summary><p>No. The City collects its own fees, online or at the counter. Redline only sends fee reminders to applicants and staff.</p></details>
+<details><summary>What about our local amendments?</summary><p>They are part of your city's profile. Each rule carries its source and is marked verified or needing verification, and profiles are re-verified every six months.</p></details>
+<details><summary>We already use a contract plan checker.</summary><p>Redline hands them a marked-up set to start from, which can cut outside review rounds. The final decisions stay with whoever reviews for your city.</p></details>
+<details><summary>What does it cost?</summary><p>The first month is free on new residential projects. After that we work out setup and ongoing cost together, based on what your team needs.</p></details>
+</div>
+</div>
+</section>
+</main>
+
+<section class="contact" aria-labelledby="contact-h">
+<div class="wrap grid">
+<div>
+<h2 id="contact-h">See it on one of your own plan sets.</h2>
+<p>A 20-minute walkthrough with your team, on Zoom or at City Hall. Redline Permit was built by Yifu Pan, a California architect who submits plans to cities across the San Gabriel Valley and Los Angeles County.</p>
+<div class="cta"><a class="btn solid" href="mailto:ypan@redlinepermit.com?subject=Redline%20Permit%20walkthrough">Email Yifu</a><a class="btn line" href="/monrovia/">Look around the Monrovia example</a></div>
+</div>
+<div class="card-contact">
+<b>Yifu Pan, Founder</b>
+<a href="mailto:ypan@redlinepermit.com">ypan@redlinepermit.com</a>
+<a href="tel:+18184451984">818-445-1984</a>
+<span class="addr">304 S Broadway, Los Angeles, CA 90013</span>
+</div>
+</div>
+</section>
+
+<footer>
+<div class="wrap">
+<span>Redline Permit · AI plan check for California cities</span>
+<span><a href="/">Home</a> · <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a></span>
+</div>
+</footer>
+</body>
+</html>
