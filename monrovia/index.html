@@ -191,6 +191,10 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .cite{font-family:var(--f-mono);font-size:12px;font-weight:500;color:var(--ink);background:var(--sand2);border:1px solid var(--sand3);border-radius:6px;padding:1px 7px}
 .dept{font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;font-weight:600;color:var(--teal)}
 .corr p{margin:0}
+.signoff{margin-top:10px;border:1px solid var(--hair);border-radius:12px;padding:10px 14px;background:var(--glass-solid)}
+.so-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--hair)}
+.so-row:first-of-type{border-top:0}
+.so-row b{min-width:96px}
 .corr .fix{font-size:14px;color:var(--ink2)}
 .corr .fix b{color:var(--ink);font-weight:600}
 .sub{border-top:1px solid var(--sand3);padding-top:8px;font-size:13px;display:grid;gap:4px;color:var(--ink2)}
@@ -833,6 +837,22 @@ const CITY = {
     {id:"MON-F-02",dept:"Fire",section:"MMC 15.20 / CFC",req:"Fire sprinkler requirement noted (new dwellings; ADU only if the primary dwelling is sprinklered).",look:"General notes, cover sheet",conf:"needs-verification"},
     {id:"MON-P-01",dept:"Police",section:"MMC Ch. 15.08",req:"Building security: deadbolts, strike plates, exterior lighting at entries, glazing near locks.",look:"Door schedule, electrical plan",conf:"needs-verification"},
     {id:"MON-PW-01",dept:"Public Works",section:"MMC Ch. 15.28",req:"Grading and drainage plan, erosion control and LID where grading or new impervious area triggers it.",look:"Grading/drainage sheet, site plan",conf:"needs-verification"},
+    {id:"MON-B-07",dept:"Building",section:"CRC R314 / R315",req:"Hard-wired, interconnected smoke alarms in each sleeping room, outside each sleeping area and on each story; carbon monoxide alarm outside each sleeping area.",look:"Floor plans, electrical plan, legend",conf:"verified"},
+    {id:"MON-B-08",dept:"Building",section:"CRC R305.1",req:"Habitable rooms, halls, baths and laundry: 7 ft minimum ceiling height.",look:"Sections, ceiling notes",conf:"verified"},
+    {id:"MON-B-09",dept:"Building",section:"CRC R403.1.6",req:"1/2 in. anchor bolts at 6 ft o.c. max., within 12 in. of plate ends, 7 in. embedment, two per plate piece.",look:"Foundation plan, footing details",conf:"verified"},
+    {id:"MON-B-10",dept:"Building",section:"CRC R602.10",req:"Braced wall lines or engineered shear walls shown, with hold-downs where required and a schedule.",look:"Foundation/framing plans, structural notes",conf:"verified"},
+    {id:"MON-B-11",dept:"Building",section:"CRC R401.3",req:"Grade slopes away from the foundation 6 in. in the first 10 ft (5%); no drainage onto neighboring lots.",look:"Site plan, grading notes",conf:"verified"},
+    {id:"MON-B-12",dept:"Building",section:"CRC R902.1",req:"Roof covering class stated (Class A where the site is in a fire hazard severity zone) with listing.",look:"Elevations, roof notes",conf:"verified"},
+    {id:"MON-B-13",dept:"Building",section:"CPC 507.2 / Energy Code 150.0(n)",req:"Water heater seismic strapping (upper and lower third) and heat pump or electric-ready water heating shown.",look:"Floor plan, plumbing notes",conf:"verified"},
+    {id:"MON-B-14",dept:"Building",section:"CEC 210.8 / 210.12 / 220",req:"GFCI and AFCI protection noted; load calculation when new loads are added to an existing service.",look:"Electrical plan and notes",conf:"verified"},
+    {id:"MON-B-15",dept:"Building",section:"Energy Code 150.1(c)14",req:"Newly constructed dwellings (including detached ADUs) show the required solar PV size per the CF1R, or the exception that applies.",look:"Electrical/roof plan, Title 24 forms",conf:"needs-verification"},
+    {id:"MON-B-16",dept:"Building",section:"BPC 5536.1 / CBC 107.1",req:"Every sheet signed by the person who prepared it; cover lists code editions in effect, occupancy and construction type.",look:"Title block, cover sheet",conf:"verified"},
+    {id:"MON-B-17",dept:"Building",section:"CRC R302.1",req:"Exterior walls less than 5 ft from a property line: 1-hour rated, with openings limited (none under 3 ft, 25% max. from 3 to 5 ft).",look:"Site plan distances, elevations",conf:"verified"},
+    {id:"MON-B-18",dept:"Building",section:"CRC R311.2",req:"At least one side-hinged egress door, 32 in. clear by 78 in., with a landing.",look:"Floor plan, door schedule",conf:"verified"},
+    {id:"MON-ADU-03",dept:"Planning",section:"Gov. Code §66321",req:"ADU height: 16 ft for a one-story detached ADU (18 ft near transit or on a multifamily lot, plus 2 ft to match roof pitch; 25 ft attached).",look:"Elevations, sections",conf:"verified"},
+    {id:"MON-Z-08",dept:"Planning",section:"Site plan requirements",req:"Site plan has north arrow, scale, property lines and dimensions; floor area is the same on every sheet.",look:"Site plan, cover data",conf:"verified"},
+    {id:"MON-F-03",dept:"Fire",section:"CFC 503 / 505.1",req:"Clear access path from the street to the ADU entry with hose-pull distance; address numbers for the ADU visible from the street.",look:"Site plan",conf:"needs-verification"},
+    {id:"MON-PW-02",dept:"Public Works",section:"CPC 721 / MMC Title 13",req:"Sewer lateral connection, water service and meter locations shown for the new unit.",look:"Site plan, plumbing plan",conf:"needs-verification"},
     {id:"MON-C-01",dept:"Building",section:"Plan Review Application",req:"Completeness: cover sheet with scope, valuation, APN, occupancy; site plan; floor plans; elevations; sections; structural; energy.",look:"Sheet index",conf:"verified"}
   ],
   sources:[
@@ -997,6 +1017,41 @@ const money = v => v ? "$"+Number(v).toLocaleString() : "—";
 const PLANCHECK_DEPTS = ["Building","Planning","Fire","Public Works"];
 function reviewsOf(p){ return (p.reviews&&p.reviews.length) ? p.reviews : [{dept:p.dept||appOf(p).dept, reviewerId:p.reviewerId, reviewerName:p.reviewerName}]; }
 const assignedTo = (p,id) => reviewsOf(p).some(v=>v.reviewerId===id);
+/* department sign-off: each routed department finishes its own review each cycle */
+const myDeptOf = () => isAdmin() ? null : (meRev()?.dept || null);
+const cDept = (p,c) => { const ds=reviewsOf(p).map(v=>v.dept); const d=c.dept||"Building"; return ds.includes(d) ? d : ds[0]; };
+const canAct = (p,c) => isAdmin() || !myDeptOf() || cDept(p,c)===myDeptOf();
+const signOf = (p,dept) => { const v=reviewsOf(p).find(x=>x.dept===dept); return v&&v.signoff&&v.signoff.cycle===(p.cycle||1) ? v.signoff : null; };
+function deptState(p,dept){
+  const mine=p.corrections.filter(c=>cDept(p,c)===dept);
+  const drafts=mine.filter(c=>c.state==="draft").length;
+  const open=mine.filter(c=>c.state==="approved"&&!c.resolved).length;
+  const first=reviewsOf(p)[0]?.dept===dept;
+  const changes=first?(p.changes||[]).filter(x=>x.state==="open").length:0;
+  return {drafts, open, changes, sign:signOf(p,dept)};
+}
+function signoffHtml(p){
+  if(!(p.status==="submitted"||p.status==="resubmitted")) return "";
+  const rs=reviewsOf(p), me=myDeptOf(), re=p.status==="resubmitted";
+  const rows=rs.map(v=>{ const st=deptState(p,v.dept), mineRow=isAdmin()||me===v.dept;
+    const label=st.sign?(st.sign.result==="approved"?`<span class="pill p-approved">Approved</span>`:`<span class="pill p-corrections">Done · ${st.sign.open} comment${st.sign.open===1?"":"s"}</span>`):`<span class="pill p-draft">Reviewing</span>`;
+    const wait=[st.drafts?`${st.drafts} draft${st.drafts===1?"":"s"}`:"", st.changes?`${st.changes} change${st.changes===1?"":"s"}`:""].filter(Boolean).join(" and ");
+    let btn="";
+    if(mineRow && !st.sign) btn = wait ? `<span class="small">${wait} still need a decision</span>`
+      : `<button class="btn sm ${st.open?"primary":"ok"}" data-a="signoff" data-d="${esc(v.dept)}">${st.open?`Finish ${esc(v.dept)} review · ${st.open} ${re?"still open":"to send"}`:`Approve ${esc(v.dept)}`}</button>`;
+    else if(mineRow && st.sign) btn=`<button class="btn sm" data-a="unsign" data-d="${esc(v.dept)}">Reopen</button>`;
+    return `<div class="so-row"><b>${esc(v.dept)}</b><span class="small">${esc((v.reviewerName||"").replace(" (test)",""))}</span>${label}${btn}</div>`; }).join("");
+  const left=rs.filter(v=>!signOf(p,v.dept)).map(v=>v.dept);
+  return `<div class="signoff"><div class="sec-h" style="margin:0 0 6px">Department sign-off · cycle ${p.cycle||1}</div>${rows}
+    <p class="small" style="margin:6px 0 0">${left.length?`When ${left.length===1?left[0]+" finishes":"the last of "+left.join(", ")+" finishes"}, ${re?"anything still open goes back to the applicant in one letter, or the plan check is approved if nothing is.":"every kept comment goes to the applicant in one letter. If no department has comments, the plan check is approved."}`:"All departments are done."}</p></div>`;
+}
+function finishCycle(p){
+  const rs=reviewsOf(p); if(rs.some(v=>!signOf(p,v.dept))) return false;
+  const open=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).length, before=p.status;
+  if(open) act(p,"issue"); else act(p,"approveall");
+  if(p.status===before) save(p);
+  return true;
+}
 function reviewsHtml(p){
   return reviewsOf(p).map((v,i)=>{ const rv=STAFF.find(r=>r.id===v.reviewerId);
     return `<div class="person"><span class="role">${esc(v.dept)} reviewer</span>${isAdmin()?`<select data-assign="${i}" aria-label="${esc(v.dept)} reviewer">${STAFF.filter(r=>r.dept===v.dept).map(r=>`<option value="${r.id}" ${r.id===v.reviewerId?"selected":""}>${esc(r.name)}</option>`).join("")}</select>`:`<b>${esc(rv?.name||v.reviewerName||"—")}</b>`}${rv?`<a href="mailto:${esc(rv.email)}">${esc(rv.email)}</a><span>${esc(rv.phone)}</span>`:"<span>—</span><span>—</span>"}</div>`; }).join("");
@@ -1195,7 +1250,7 @@ Tasks:
 0. Read the title block or letterhead: address, permit or plan check number, project type, applicant/designer.
 1. Name each sheet or page (e.g. "A1.0 Site Plan", "Correction list p.1") and sort it into a discipline: G general/cover, A architectural, S structural, M mechanical, E electrical, P plumbing, T energy/Title 24, C civil/grading, L landscape, F fire, X other.
 2. Mark each completeness item found true/false.
-3. Draft 4–12 comments ONLY where the drawings show a problem, omission or unclear information against a rule in the pack, most important first. Cite only sections from the pack; never invent one. For each, give the sheet page number (1-based) and a box [x,y,w,h] as fractions 0–1 of that page locating the exact spot (use [0,0,1,1] if the issue is a missing sheet or the whole page). Add "why": one plain sentence teaching why the code requires it. Set "priority": "critical" for life safety, fire, egress, structural, setbacks and height; "major" for other code issues; "minor" for labels and notes. Skip standard notes (GFCI, smoke alarms, pipe insulation and the like): a separate checklist covers them. Rules marked planner-judgment are flags for the reviewer, never decisions.
+3. Draft a comment for EVERY problem, omission or unclear item the drawings show against a rule in the pack (a typical first submittal has 10–30), most important first. One comment per issue; do not merge unrelated issues. Cite only sections from the pack; never invent one. For each, give the sheet page number (1-based) and a box [x,y,w,h] as fractions 0–1 of that page locating the exact spot (use [0,0,1,1] if the issue is a missing sheet or the whole page). Add "why": one plain sentence teaching why the code requires it. Set "priority": "critical" for life safety, fire, egress, structural, setbacks and height; "major" for other code issues; "minor" for labels and notes. Skip standard notes (GFCI, smoke alarms, pipe insulation and the like): a separate checklist covers them. Rules marked planner-judgment are flags for the reviewer, never decisions.
 4. If it is a correction letter: instead of drafting your own, extract every comment in the letter as an item (keep its own code citation, or "Not cited"), with the page and box of that comment in the letter, and set "fromLetter": true.
 
 Return JSON only:
@@ -1283,7 +1338,7 @@ async function runFirstRead(p, file, opt={}){
     if(p.placeholder && m.address){ p.address=String(m.address).slice(0,80); p.placeholder=false; }
     if(!p.permitNo && m.permitNo) p.permitNo=String(m.permitNo).slice(0,30);
     if((!p.projectType||p.projectType==="Unknown") && m.projectType) p.projectType=String(m.projectType).slice(0,40);
-    const list = (r.corrections||[]).slice(0,14);
+    const list = (r.corrections||[]).slice(0,40);
     setBusy(pid,`Clipping ${list.length} spots from the sheets…`);
     p.corrections = [];
     for(const c of list){
@@ -1461,6 +1516,12 @@ function matchByNumber(p, text){
     const c=open.find(x=>cnum(p,x)===h.n); const rq=body.search(/\b(response|answer|reply)\s*[:.]/i); if(rq>=0) body=body.slice(rq).replace(/^\w+\s*[:.]\s*/,"");
     const junk=body.search(/(?:\b[A-Z] ){4,}|\(\d{3}\)\s?\d{3}-\d{4}|\bPage \d+ of \d+/); if(junk>20) body=body.slice(0,junk).trim();
     if(c&&body.length>3) out[c.id]=body.slice(0,1500); });
+  /* trust the numbers only if the passages talk about the same code section or sheet as the City's comment with that number */
+  const key=c=>{ const m=String(c.section||"").match(/[A-Z]?\d+(?:\.\d+)?/i); return m?m[0].toLowerCase():""; };
+  const ids=Object.keys(out); let agree=0, judged=0;
+  ids.forEach(id=>{ const c=open.find(x=>x.id===id), h=first.find(x=>x.n===cnum(p,c)), seg=t.slice(h.at, h.end+400).toLowerCase(), k=key(c), sh=String(c.sheet||"").toLowerCase();
+    if(!k&&!sh) return; judged++; if((k&&seg.includes(k))||(sh&&seg.includes(sh))) agree++; });
+  if(judged>=3 && agree/judged<.5) return {};
   return out;
 }
 async function matchByAI(p, text){
@@ -1488,7 +1549,7 @@ async function loadRespLetter(p, file){
     let got = rd.kind==="sheet" ? matchSheet(p, rd.rows) : {}, how = Object.keys(got).length ? "columns" : "";
     if(Object.keys(got).length<open.length){ const byNum=matchByNumber(p, rd.text); for(const k in byNum) if(!got[k]){ got[k]=byNum[k]; how=how||"numbers"; } }
     if(Object.keys(got).length<open.length && S.sample){ setBusy(pid,"Matching your answers to the City's comments…");
-      try{ const ai=await matchByAI(p, rd.text); for(const k in ai) if(!got[k]){ got[k]=ai[k]; how=how?how+" + AI":"AI"; } }catch(e){} }
+      try{ const ai=await matchByAI(p, rd.text); let n=0; for(const k in ai) if(!got[k]){ got[k]=ai[k]; n++; } if(n) how=how?how+" + AI":"AI"; }catch(e){} }
     const ids=Object.keys(got);
     if(!ids.length && rd.kind==="sheet" && !rd.rows.length){ setBusy(pid); flash("That file looks empty. Upload the response letter again."); return; }
     ids.forEach(id=>{ const c=p.corrections.find(x=>x.id===id); c.draftResponse=got[id]; c.respFrom=file.name; });
@@ -2068,7 +2129,9 @@ function corrCard(p,c){
     if(c.recheck.snip) b+=snipHtml(c.recheck.snip, `Revised sheet · cycle ${c.recheck.cycle}`); }
   if(P && (c.replies||[]).length) b+=`<div class="replies">${c.replies.map(r=>`<div class="reply"><span class="who">${esc(nameOf(r))} · ${esc(r.dept)}</span> — ${esc(r.text)} <span class="small">${fmtT(r.at)}</span></div>`).join("")}</div>`;
   let acts="";
-  if(P && !c.resolved){
+  const mineC = P && canAct(p,c);
+  if(P && !c.resolved && !mineC && c.state!=="rejected") acts=`<span class="small">${esc(cDept(p,c))} decides this comment</span>`;
+  if(mineC && !c.resolved){
     if(c.state==="draft") acts=`<button class="btn sm ok" data-a="approve" data-c="${c.id}">Send</button><button class="btn sm" data-a="edit" data-c="${c.id}">Edit</button><button class="btn sm" data-a="reject" data-c="${c.id}">Reject</button>`;
     else if(c.state==="approved" && p.status==="resubmitted") acts=`<button class="btn sm ok" data-a="clear" data-c="${c.id}">Clear</button><button class="btn sm" data-a="edit" data-c="${c.id}">Revise</button>`;
     else if(c.state==="approved") acts=`<button class="btn sm" data-a="edit" data-c="${c.id}">Revise</button>`;
@@ -2119,7 +2182,7 @@ function projectView(p){
   if(!P){
     if(p.status==="submitted"||p.status==="resubmitted") head=`<div class="note">${p.status==="resubmitted"?"Revised set received":"Submitted"} ${fmtD(p.updatedAt||p.submittedAt)}. Monrovia reviewers are working on it. Their comments will appear here.</div>`;
     if(p.status==="corrections"){ head=`<div class="note red"><b>${openApproved} comment${openApproved===1?"":"s"} from the City.</b> Each one shows the spot on your sheets. Respond to each, then upload the revised set. Only these items get rechecked.</div>`;
-      head+=`<p class="small" style="margin:8px 0 0">Answer each comment below, or upload your own response letter (PDF or Excel) that answers them by number. A letter becomes your response to all of them, with no typing here.</p>`+letterBox(p,false);
+      head+=`<p class="small" style="margin:8px 0 0">Answer each comment below, or upload your own response letter (PDF or Excel) that answers them by number or code section. A letter becomes your response to all of them, with no typing here.</p>`+letterBox(p,false);
       primary=`<input type="file" id="re-file" accept="application/pdf" hidden><input type="file" id="resp-file" accept=".pdf,.xlsx,.xls,.csv,application/pdf" hidden><button class="btn primary" data-a="resubmit">Upload revised set</button><button class="btn" data-a="respletter">Upload response letter</button><button class="btn" data-a="respsheet">Excel response sheet</button><button class="btn" data-a="letter">Print the list</button>`; }
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
     else if(p.status==="approved") head=`<div class="note ok"><b>Plan check approved.</b> Waiting on the other agencies below. You'll get a pickup notice when they're all cleared.</div>${agencyHtml(p,false)}`;
@@ -2133,11 +2196,12 @@ function projectView(p){
     if((p.aiState==="failed"||p.aiState==="unavailable"||stale) && !busy) head=`<div class="note red"><b>Redline's first read didn't finish.</b> ${hasSheets?"Press <b>Run AI first read</b> to run it again on the sheets already submitted.":"Attach the PDF to run it."}</div>`;
     if(p.status==="submitted"||p.status==="resubmitted"){
       if(!head && p.aiState==="done") head=`<div class="note">${p.status==="resubmitted"?`Revised set in. Recheck notes sit under each open comment${openChanges?`, and <b>${openChanges} change${openChanges===1?"":"s"} nobody asked for</b> are listed below`:""}.`:`Redline drafted ${p.corrections.filter(c=>c.source==="ai").length} comments, each clipped from the sheet, plus ${p.corrections.filter(c=>c.source==="notes").length} missing standard notes. Send, edit or reject each one; only comments marked to send reach the applicant.`}</div>`;
-      primary=`<button class="btn primary" data-a="issue" ${(drafts||!openApproved)?"disabled":""}>Send ${openApproved} comment${openApproved===1?"":"s"} to applicant</button>
+      primary=!isAdmin()?"":`<span class="small" style="width:100%">Admin override, skips department sign-off:</span><button class="btn primary" data-a="issue" ${(drafts||!openApproved)?"disabled":""}>Send ${openApproved} comment${openApproved===1?"":"s"} to applicant</button>
         <button class="btn ok" data-a="approveall" ${(drafts||openApproved||openChanges||(!appOf(p).main&&feeOpen(p)))?"disabled":""}>${appOf(p).main?"Approve plan check":"Approve application"}</button>${!appOf(p).main&&feeOpen(p)&&!drafts&&!openApproved&&!openChanges?`<span class="small">Record the fees first. No fee, no permit.</span>`:""}
         ${(drafts||openChanges)?`<span class="small">${drafts?`${drafts} draft${drafts===1?"":"s"}`:""}${drafts&&openChanges?" and ":""}${openChanges?`${openChanges} change${openChanges===1?"":"s"}`:""} still need a decision</span>`:""}`;
+      head+=signoffHtml(p);
     }
-    const noteDrafts=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft").length;
+    const noteDrafts=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft"&&canAct(p,c)).length;
     if(noteDrafts&&!busy) primary+=`<button class="btn" data-a="approvenotes">Send ${noteDrafts} standard-note draft${noteDrafts===1?"":"s"}</button>`;
     if(openApproved&&!busy) primary+=`<button class="btn" data-a="letter">Print correction letter</button>`;
     if((p.aiState==="none"||p.aiState==="failed"||p.aiState==="unavailable"||stale) && !busy) primary+= hasSheets ? `<button class="btn primary" data-a="airun">Run AI first read</button>` : `<input type="file" id="fr-file" accept="application/pdf" hidden><button class="btn" data-a="firstread">Attach PDF for AI first read</button>`;
@@ -2196,7 +2260,7 @@ function projectView(p){
     ${P&&(p.changes||[]).length?`<div class="clist"><div class="sec-h" style="margin:0">Changes nobody asked for · ${(p.changes||[]).length}</div>${p.changes.slice().reverse().map(changeCard).join("")}</div>`:""}
     <div class="split" style="grid-template-columns:1fr">
       <div class="sheets">${(P&&(p.completeness||[]).length)?`<div class="sec-h" style="margin:0">Completeness</div><div class="checklist">${p.completeness.map(c=>`<div><span class="${c.found?"mark-y":"mark-n"}">${c.found?"✓":"✕"}</span>${esc(c.item)}</div>`).join("")}</div>`:""}
-        <div class="sec-h" style="margin:8px 0 0">Activity</div><div class="timeline">${(p.timeline||[]).slice().reverse().map(t=>`<div class="${t.who}"><time>${fmtT(t.at)}</time><span class="who">${t.who==="ai"?"Redline":t.who==="planner"?"City":t.who}</span> · ${esc(t.text)}</div>`).join("")}</div></div>
+        <div class="sec-h" style="margin:8px 0 0">Activity</div><div class="timeline">${(p.timeline||[]).filter(t=>P||t.who==="applicant"||/^(Sent \d+ comment|Plan check approved|Application approved|All agency clearances|Fees .* recorded|Permit issued|Restored|Voided)/.test(t.text)).slice().reverse().map(t=>`<div class="${t.who}"><time>${fmtT(t.at)}</time><span class="who">${t.who==="ai"?"Redline":t.who==="planner"?"City":t.who}</span> · ${esc(t.text)}</div>`).join("")}</div></div>
     </div>
   </div>`;
 }
@@ -2248,8 +2312,8 @@ function bindProject(p){
   const w=$("#workspace");
   w.querySelectorAll("[data-sheet]").forEach(b=>b.onclick=()=>{ if(S.adding===p.id) keepDraft(); S.sheetIdx=+b.dataset.sheet; renderWorkspace(); });
   bindDraw(p);
-  w.querySelectorAll("[data-resp]").forEach(t=>t.oninput=()=>{ const c=p.corrections.find(x=>x.id===t.dataset.resp); if(c) c.draftResponse=t.value; });
-  w.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(p,b.dataset.a,b.dataset.c));
+  w.querySelectorAll("[data-resp]").forEach(t=>{ t.oninput=()=>{ const c=p.corrections.find(x=>x.id===t.dataset.resp); if(c) c.draftResponse=t.value; }; t.onchange=()=>{ if(!S.local&&S.db){ p.updatedAt=now(); const d=JSON.parse(JSON.stringify(p)); delete d.id; S.db.collection(COL).doc(p.id).set(d).catch(()=>{}); } }; });
+  w.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(p,b.dataset.a,b.dataset.c,b.dataset.d));
   const jump=id=>{ const c=p.corrections.find(x=>x.id===id); if(!c) return; const i=(p.sheets||[]).findIndex(s=>Number(s.page)===Number(c.page)); S.focusC=id; if(i>=0) S.sheetIdx=i; renderWorkspace();
     const el=document.querySelector(i>=0?".sheets":`[data-goto="${id}"]`); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); };
   w.querySelectorAll("[data-ag]").forEach(cb=>cb.onchange=()=>{ const i=+cb.dataset.ag; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); p.agencies[i].done=cb.checked; addLog(p,"planner",`${cb.checked?"Cleared":"Reopened"}: ${p.agencies[i].name}`); save(p); });
@@ -2268,13 +2332,21 @@ function bindProject(p){
     runRecheck(p,f); };
   const ff=$("#fr-file"); if(ff) ff.onchange=()=>{ const f=ff.files[0]; if(f) runFirstRead(p,f); };
 }
-function act(p,a,cid){
+function act(p,a,cid,dept){
+  if(dept) S._signDept=dept;
   const c = cid && p.corrections.find(x=>x.id===cid);
   const ch = cid && (p.changes||[]).find(x=>x.id===cid);
   switch(a){
+    case "signoff": { const dept=S._signDept; const st=deptState(p,dept);
+      if(st.drafts||st.changes){ flash("Decide every draft first."); return; }
+      p.reviews=reviewsOf(p).map(x=>({...x})); const v=p.reviews.find(x=>x.dept===dept); if(!v) return;
+      v.signoff={cycle:p.cycle||1, result:st.open?"corrections":"approved", open:st.open, at:now(), by:S.me?.name||(meRev()?.name||"Admin")};
+      addLog(p,"planner",st.open?`${dept} review done: ${st.open} comment${st.open===1?"":"s"} ${p.status==="resubmitted"?"still open":"to send"}.`:`${dept} approved.`);
+      if(!finishCycle(p)) save(p); break; }
+    case "unsign": { const dept=S._signDept; p.reviews=reviewsOf(p).map(x=>({...x})); const v=p.reviews.find(x=>x.dept===dept); if(v) delete v.signoff; addLog(p,"planner",`${dept} review reopened.`); save(p); break; }
     case "approve": c.state="approved"; addLog(p,"planner",`Marked to send: ${c.section}`); save(p); break;
     case "reject": c.state="rejected"; addLog(p,"planner",`Rejected AI draft: ${c.section}`); save(p); break;
-    case "restore": c.state="draft"; save(p); break;
+    case "restore": if(!c){ p.status=p.voidPrev||"submitted"; delete p.voidedAt; delete p.voidReason; addLog(p,"planner","Restored from the archive."); S.archive=false; save(p); break; } c.state="draft"; save(p); break;
     case "edit": S.editing=cid; renderWorkspace(); break;
     case "canceledit": S.editing=null; renderWorkspace(); break;
     case "saveedit": { const v=$("#edit-"+cid).value.trim(); if(v){ c.plannerText=v; c.edited=true; } c.state="approved"; S.editing=null; addLog(p,"planner",`Edited and marked to send: ${c.section}`); save(p); break; }
@@ -2293,7 +2365,7 @@ function act(p,a,cid){
       else save(p); break; }
     case "chg-accept": ch.state="accepted"; addLog(p,"planner",`Accepted unrequested change: ${ch.description}`); save(p); break;
     case "chg-add": ch.state="added";
-      p.corrections.push({id:uid(), dept:"Planning", section:ch.mayAffect||"Unrequested change", sheet:ch.sheet, page:ch.page, finding:`Changed since the last set: ${ch.description} (was ${ch.previous||"—"}, now ${ch.now||"—"}).`, fix:"Explain this change and show it complies, or revert it.", severity:"correction", source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[], snip:ch.snip||null});
+      p.corrections.push({id:uid(), dept:myDeptOf()||reviewsOf(p)[0]?.dept||"Building", section:ch.mayAffect||"Unrequested change", sheet:ch.sheet, page:ch.page, finding:`Changed since the last set: ${ch.description} (was ${ch.previous||"—"}, now ${ch.now||"—"}).`, fix:"Explain this change and show it complies, or revert it.", severity:"correction", source:"reviewer", state:"approved", cycle:p.cycle, response:"", resolved:false, replies:[], snip:ch.snip||null});
       addLog(p,"planner",`Made a comment from an unrequested change: ${ch.description}`); save(p); break;
     case "issue": { p.status="corrections"; p.issuedAt=now(); p.corrections.forEach(c=>{ if(c.state==="approved"&&!c.resolved&&!c.sentAt) c.sentAt=p.issuedAt; }); const n=p.corrections.filter(c=>c.state==="approved"&&!c.resolved).length; addLog(p,"planner",`Sent ${n} comments to the applicant (cycle ${p.cycle}).`); save(p); break; }
     case "approveall": if(!appOf(p).main && feeOpen(p)){ flash("Record the fees first. No fee, no permit."); break; } if(!appOf(p).main){ p.status="approved"; p.agencies=[]; addLog(p,"planner","Application approved."); save(p); break; } p.status="approved"; p.agencies=p.agencies||AGENCIES.map(n=>({name:n,done:false})); addLog(p,"planner","Plan check approved. Waiting on other agencies."); save(p); break;
@@ -2313,7 +2385,7 @@ function act(p,a,cid){
     case "void": { const why=$("#void-reason")?.value||"Voided"; p.voidPrev=p.status; p.status="void"; p.voidedAt=now(); p.voidReason=why; addLog(p,"planner",`Voided: ${why}.`); S.voiding=null; S.sel=null; save(p); break; }
     case "restore": p.status=p.voidPrev||"submitted"; delete p.voidedAt; delete p.voidReason; addLog(p,"planner","Restored from the archive."); S.archive=false; save(p); break;
     case "board": S.sel=null; render(); break;
-    case "approvenotes": { const ns=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft"); ns.forEach(c=>c.state="approved"); addLog(p,"planner",`Marked ${ns.length} standard-note comments to send.`); save(p); break; }
+    case "approvenotes": { const ns=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft"&&canAct(p,c)); ns.forEach(c=>c.state="approved"); addLog(p,"planner",`Marked ${ns.length} standard-note comments to send.`); save(p); break; }
     case "letter": printLetter(p); break;
     case "ask": { const q=($("#ask-q")?.value||"").trim(); if(!q) return; askSet(p,q); break; }
     case "delete": if(S.confirmDel!==p.id){ S.confirmDel=p.id; renderWorkspace(); setTimeout(()=>{ if(S.confirmDel===p.id){ S.confirmDel=null; renderWorkspace(); } },4000); return; }
