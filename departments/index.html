@@ -132,6 +132,14 @@ figcaption{font-size:14px;color:var(--ink2);margin-top:10px}
 .cycle span{font-size:15px;color:var(--ink2);line-height:1.5}
 
 /* Tools grid */
+.new3{margin-top:64px;border-top:1.5px solid var(--ink);padding-top:28px}
+.new3 .tag{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;color:var(--red)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 28px;padding:16px;background:var(--ox);border-radius:4px}
+.chips span{display:inline-flex;gap:6px;align-items:center;font-size:13.5px;color:var(--cream);padding:5px 12px;border-radius:999px;background:rgba(143,211,206,.14);border:1px solid rgba(143,211,206,.4)}
+.chips span b{color:var(--teal-hi)}
+.chips span i{font-style:normal;opacity:.75}
+.chips span.w{border-style:dashed;border-color:rgba(242,237,228,.4);background:transparent}
+.chips span.w b{color:#F7C98C}
 .tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:28px 36px}
 .tools div{display:flex;flex-direction:column;gap:6px}
 .tools b{font-size:18px}
@@ -373,6 +381,19 @@ Redline Permit</a>
 <div><b>Internal notes</b><span>Notes between reviewers that the applicant never sees.</span></div>
 <div><b>Stats strip</b><span>Files with the City, average days waiting, share of AI drafts kept, most-cited sections.</span></div>
 <div><b>Bring in old files</b><span>Import permits already in review and earlier correction letters.</span></div>
+</div>
+<div class="new3">
+<div class="tag">NEW IN THE PORTAL · NOV 2026</div>
+<h3 style="font-size:24px;font-weight:800;margin:12px 0 8px">The first read shows its work.</h3>
+<p style="color:var(--ink2);font-size:16px;line-height:1.55;max-width:760px;margin:0">Every first read now lists each step it took, so a reviewer can see what was checked before trusting a single draft. Two new buttons put the same engine on one detail at a time.</p>
+<div class="chips" aria-label="Example step list from a first read">
+<span><b>✓</b>Read the set<i>14 sheets</i></span><span><b>✓</b>Sort sheets<i>G · A · S · T</i></span><span><b>✓</b>Completeness<i>11 of 12</i></span><span><b>✓</b>Standard notes<i>19 of 24 found</i></span><span><b>✓</b>Search rule pack<i>30 rules</i></span><span><b>✓</b>Draft comments<i>18, 3 critical</i></span><span><b>✓</b>Clip and cite<i>18 clips</i></span><span class="w"><b>…</b>Waiting on reviewers<i>every draft needs a yes</i></span>
+</div>
+<div class="tools">
+<div><b>Check a detail</b><span>Drop in a photo, screenshot or one PDF page of a single detail. Redline reviews just that detail against your rule pack and returns cited draft comments, each with its own clip.</span></div>
+<div><b>Photo of my markup</b><span>Still red-pen on paper? Photograph the marked sheet. Each hand mark becomes a numbered draft comment in your words, ready for the correction letter. Nothing unmarked is added.</span></div>
+<div><b>Visible step list</b><span>Sheets read, disciplines sorted, completeness, standard notes, rules searched, comments drafted and clipped. Then it stops and waits for your staff.</span></div>
+</div>
 </div>
 </div>
 </div>
