@@ -453,6 +453,13 @@ tbody tr:nth-child(even) td{background:rgba(255,255,255,.045)}
 .tabs{border-bottom-color:var(--hair)}
 .lb-x{background:#F2EDE4}
 ::selection{background:rgba(127,211,199,.35)}
+.rsteps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 12px}
+.rsteps .rs-h{font:600 10.5px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-right:4px}
+.rsteps .rs{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(127,211,199,.14);border:1px solid rgba(127,211,199,.35)}
+.rsteps .rs b{color:#8FD3CE;font-weight:700}
+.rsteps .rs i{font-style:normal;opacity:.75}
+.rsteps .rs.wait{background:rgba(242,237,228,.06);border-style:dashed;border-color:rgba(242,237,228,.35)}
+.rsteps .rs.wait b{color:#F7C98C}
 </style>
 <style id="home-simple">
 .cityart .rclouds{display:none}
@@ -792,7 +799,7 @@ body.front-on{overflow:hidden}
   <section id="view-city" hidden></section>
   <section id="view-how" hidden></section>
   <section id="view-accounts" hidden></section>
-  <footer class="foot"><span>redlinepermit.com/monrovia · Redline Permit pilot · not an official City of Monrovia website · <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a></span><span>v0.4 · drawings stay in your Google Drive or Dropbox; Redline keeps only clips</span></footer>
+  <footer class="foot"><span>redlinepermit.com/monrovia · Redline Permit pilot · not an official City of Monrovia website · <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a></span><span>v0.5 · drawings stay in your Google Drive or Dropbox; Redline keeps only clips</span></footer>
 </main>
 <div id="acct" class="acct-wrap" hidden><div class="panel acct" role="dialog" aria-modal="true" aria-labelledby="acct-h" id="acct-body"></div></div>
 <div id="lightbox" class="lightbox" hidden><button class="lb-x" id="lightbox-x" type="button" aria-label="Close">✕</button><img alt="Enlarged sheet" id="lightbox-img"><span class="lb-hint">Click the sheet to zoom to full size · Esc to close</span></div>
@@ -1305,6 +1312,88 @@ function readiness(p){
   return Math.round(100*(.6*a+.4*b));
 }
 
+
+/* ---------- v0.5: visible steps, detail check, markup photo ---------- */
+function buildSteps(p, pages, list){
+  const disc=[...new Set((p.sheets||[]).map(x=>x.disc).filter(Boolean))];
+  const comp=p.completeness||[], notes=p.notes||{items:[]};
+  const ai=p.corrections.filter(c=>c.source==="ai"), crit=ai.filter(c=>c.priority==="critical").length;
+  const nRules=CITY.rules.filter(r=>reviewsOf(p).map(v=>v.dept).includes(r.dept)).length;
+  const steps=[
+    {k:"Read the set", v:`${pages.length} sheet${pages.length===1?"":"s"}`},
+    {k:"Sort sheets", v:disc.length?disc.map(d=>DISC[d]?d:"").filter(Boolean).join(" · "):"by discipline"},
+  ];
+  if(p.docType==="correction letter") steps.push({k:"Read the letter", v:`${p.corrections.length} comments tracked`});
+  else {
+    if(comp.length) steps.push({k:"Completeness", v:`${comp.filter(c=>c.found).length} of ${comp.length}`});
+    if(notes.scanned) steps.push({k:"Standard notes", v:"scanned, check by hand"});
+    else if(notes.items.length) steps.push({k:"Standard notes", v:`${notes.items.filter(i=>i.found).length} of ${notes.items.length} found`});
+    steps.push({k:"Search rule pack", v:`${nRules} rules`});
+    steps.push({k:"Draft comments", v:`${ai.length}${crit?`, ${crit} critical`:""}`});
+    steps.push({k:"Clip and cite", v:`${ai.filter(c=>c.snip).length} clips`});
+  }
+  steps.push({k:"Waiting on reviewers", v:"every draft needs a yes", wait:true});
+  return {at:now(), steps};
+}
+function stepsHtml(p){
+  const r=p.readSteps; if(!r||!r.steps||!r.steps.length) return "";
+  return `<div class="rsteps" aria-label="What the first read did"><span class="rs-h">First read · ${esc(fmtT(r.at))}</span>${r.steps.map((x,i)=>`<span class="rs${x.wait?" wait":""}"><b>${x.wait?"…":"✓"}</b>${esc(x.k)}<i>${esc(x.v)}</i></span>`).join("")}</div>`;
+}
+async function canvasFromFile(file){
+  if(/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name)){
+    const rd=await readPdf(file,()=>{}); if(!rd.pages.length) throw new Error("That PDF has no pages.");
+    return rd.pages[0].canvas;
+  }
+  const bmp=await createImageBitmap(file);
+  const c=document.createElement("canvas"); c.width=bmp.width; c.height=bmp.height; c.getContext("2d").drawImage(bmp,0,0); return c;
+}
+async function runDetail(p, file, mode){
+  const pid=p.id, mk=mode==="markup";
+  if(!S.sample){ flash("Sign in as a reviewer to use this."); return; }
+  if(file.size>25e6){ flash("That file is over 25 MB. Try a smaller photo or one page."); return; }
+  try{
+    setBusy(pid, mk?"Reading your markup…":"Reading the detail…");
+    const canvas=await canvasFromFile(file);
+    const img=await toBlob(scaled(canvas,1800),.88);
+    const depts=reviewsOf(p).map(v=>v.dept);
+    const me=myDeptOf&&myDeptOf();
+    const task = mk ? `This image is a photo or scan of a sheet that a city plan checker marked up by hand (red pen, clouds, circles, arrows, handwritten notes).
+Transcribe EVERY hand mark into its own comment, in the order a reader would scan the sheet. Do not add issues the plan checker did not mark. For each mark: "finding" = what the mark points at; "fix" = the plan checker's note rewritten as one clear required correction (keep their meaning, fix spelling). Cite a section only when the note writes one or the rule pack clearly matches; otherwise section "Reviewer comment". If a note is illegible, say "Illegible note" in finding and copy what you can read.`
+    : `This image is ONE construction detail, section, or partial sheet from a ${p.projectType||"residential"} plan set. Review just this detail against the rule pack: missing dimensions, materials, fastening, flashing, fire or egress, energy, structural callouts and similar. Draft one comment per issue, most important first; 0 to 8 comments. Do not comment on things outside the image. If the detail looks complete, return no items and say so in "title".`;
+    const prompt = `You are Redline, helping a ${CITY.name} plan checker${me?` in ${me}`:""}. You draft comments for the reviewer; you never approve or deny.
+PROJECT: ${p.projectType} at ${p.address}, zone ${p.zone}. Scope: ${p.scope||"n/a"}.
+REVIEWING FOR: ${depts.join(", ")}.
+${task}
+RULE PACK (id | dept | section | requirement | where to look | confidence):
+${rulesText(depts)}
+Rules: cite only sections from the pack or written on the markup; never invent one. "box" is [x,y,w,h] as fractions 0 to 1 of the image around the spot. "sheet" is the sheet number if visible in a title block, else "". "priority": "critical" for life safety, fire, egress, structural, setbacks and height; "major" for other code issues; "minor" for labels and notes. "why": one plain sentence on why the code asks for it ("" for a markup note with no clear rule).
+Return JSON only:
+{"title":"short name of what the image shows","items":[{"dept":"Building","section":"CRC R703.4","sheet":"A5.1","box":[0.4,0.3,0.15,0.1],"finding":"","fix":"","why":"","priority":"major","confidence":"needs-verification"}]}`;
+    let r=null;
+    for(let t=1;t<=2;t++){
+      try{ r=await S.sample.json(prompt,{images:[img], modelTier:"complex"}); }catch(e){ if(t===2||e.code==="not_configured"||e.code==="not_granted") throw e; }
+      if(r&&Array.isArray(r.items)) break;
+      if(t===2) throw new Error("The answer came back incomplete. Try again.");
+      setBusy(pid,"Taking a second pass…");
+    }
+    const items=r.items.slice(0,30);
+    setBusy(pid,`Clipping ${items.length} spot${items.length===1?"":"s"}…`);
+    const title=String(r.title||(mk?"Markup photo":"Detail")).slice(0,60);
+    for(const c of items){
+      const num=p.corrections.length+1;
+      const dept=depts.includes(c.dept)?c.dept:(me&&depts.includes(me)?me:depts[0]||"Building");
+      p.corrections.push({id:uid(), ruleId:"", dept, section:String(c.section||"Reviewer comment").slice(0,40), sheet:String(c.sheet||"").slice(0,20)||title.slice(0,20), page:null,
+        finding:String(c.finding||""), fix:String(c.fix||""), why:String(c.why||""), severity:"correction", priority:PRIO[c.priority]!==undefined?c.priority:(mk?"major":"major"), confidence:c.confidence||"needs-verification",
+        source:mk?"markup":"detail", from:title, state:"draft", cycle:p.cycle||1, response:"", resolved:false, replies:[], box:Array.isArray(c.box)?c.box.map(Number):null,
+        snip: await clip(canvas, c.box, num)});
+    }
+    addLog(p,"ai", mk ? `Read a markup photo (${title}): ${items.length} hand mark${items.length===1?"":"s"} turned into draft comments.` : `Checked a detail (${title}): ${items.length?items.length+" draft comment"+(items.length===1?"":"s"):"no issues found"}.`);
+    if(!items.length) flash(mk?"No hand marks were found in that image.":"No issues found in that detail.");
+  }catch(e){
+    flash((mk?"Markup reading":"Detail check")+" did not finish: "+(e.message||e.code||"error"));
+  }
+  setBusy(pid); await save(p);
+}
 /* ---------- workflows ---------- */
 async function runFirstRead(p, file, opt={}){
   const pid = p.id; let fullText = "";
@@ -1349,6 +1438,7 @@ async function runFirstRead(p, file, opt={}){
     }
     p.aiState="done";
     if(p.docType!=="correction letter" && appOf(p).main) checkNotes(p, fullText);
+    try{ p.readSteps = buildSteps(p, pages, list); }catch(e){}
     addLog(p,"ai", p.docType==="correction letter" ? `Read the correction letter: ${p.corrections.length} comments now tracked.` : `First read done: ${p.corrections.length} draft comments, ${p.completeness.filter(c=>!c.found).length} completeness gaps.`);
   }catch(e){
     p.aiState="failed"; addLog(p,"ai","First read did not finish: "+(e.message||e.code||"error"));
@@ -2113,7 +2203,7 @@ function corrCard(p,c){
   const cls=["corr", c.severity==="advisory"?"adv":"", c.state==="rejected"?"rejected":"", c.resolved?"resolved":""].join(" ");
   let status="";
   if(c.resolved) status='<span class="pill p-approved">Cleared</span>';
-  else if(c.state==="draft") status=`<span class="pill p-draft">${c.source==="notes"?"Checklist draft":"AI draft"}</span>`;
+  else if(c.state==="draft") status=`<span class="pill p-draft">${c.source==="notes"?"Checklist draft":c.source==="markup"?"From your markup":c.source==="detail"?"Detail check":"AI draft"}</span>`;
   else if(c.state==="approved") status=`<span class="pill p-corrections">${!P?(p.respLetter&&p.status==="corrections"?"In your letter":"To answer"):c.source==="letter"?"From earlier letter":c.source==="reviewer"?"Reviewer comment":((c.sentAt||(p.status!=="submitted"&&p.status!=="resubmitted"))?"Sent":"Ready to send")+(c.edited?" · edited":"")}</span>`;
   else if(c.state==="rejected") status='<span class="pill p-draft">Rejected</span>';
   const num=p.corrections.indexOf(c)+1;
@@ -2199,12 +2289,13 @@ function projectView(p){
       primary=!isAdmin()?"":`<span class="small" style="width:100%">Admin override, skips department sign-off:</span><button class="btn primary" data-a="issue" ${(drafts||!openApproved)?"disabled":""}>Send ${openApproved} comment${openApproved===1?"":"s"} to applicant</button>
         <button class="btn ok" data-a="approveall" ${(drafts||openApproved||openChanges||(!appOf(p).main&&feeOpen(p)))?"disabled":""}>${appOf(p).main?"Approve plan check":"Approve application"}</button>${!appOf(p).main&&feeOpen(p)&&!drafts&&!openApproved&&!openChanges?`<span class="small">Record the fees first. No fee, no permit.</span>`:""}
         ${(drafts||openChanges)?`<span class="small">${drafts?`${drafts} draft${drafts===1?"":"s"}`:""}${drafts&&openChanges?" and ":""}${openChanges?`${openChanges} change${openChanges===1?"":"s"}`:""} still need a decision</span>`:""}`;
-      head+=signoffHtml(p);
+      head+=stepsHtml(p)+signoffHtml(p);
     }
     const noteDrafts=p.corrections.filter(c=>c.source==="notes"&&c.state==="draft"&&canAct(p,c)).length;
     if(noteDrafts&&!busy) primary+=`<button class="btn" data-a="approvenotes">Send ${noteDrafts} standard-note draft${noteDrafts===1?"":"s"}</button>`;
     if(openApproved&&!busy) primary+=`<button class="btn" data-a="letter">Print correction letter</button>`;
     if((p.aiState==="none"||p.aiState==="failed"||p.aiState==="unavailable"||stale) && !busy) primary+= hasSheets ? `<button class="btn primary" data-a="airun">Run AI first read</button>` : `<input type="file" id="fr-file" accept="application/pdf" hidden><button class="btn" data-a="firstread">Attach PDF for AI first read</button>`;
+    if((p.status==="submitted"||p.status==="resubmitted") && !busy && S.sample) primary+=`<input type="file" id="dt-file" accept="image/*,application/pdf" hidden><button class="btn" data-a="detailcheck" title="Photo, screenshot or one PDF page of a single detail">Check a detail</button><button class="btn" data-a="markup" title="Photograph a sheet you marked up by hand">Photo of my markup</button>`;
     if((p.letters||[]).length && (p.status==="resubmitted"||p.status==="submitted")) head+=letterBox(p,true);
     if(p.status==="corrections") head=`<div class="note">Comments sent ${fmtT(p.issuedAt)}. Waiting on the applicant's responses and revised set.</div>`;
     if(p.status==="approved" && !appOf(p).main) head=`<div class="note ok"><b>Approved.</b> Agency approval is complete.</div>`;
@@ -2331,6 +2422,7 @@ function bindProject(p){
     if(p.respLetter){ (p.letters ||= []).push(p.respLetter); delete p.respLetter; }
     runRecheck(p,f); };
   const ff=$("#fr-file"); if(ff) ff.onchange=()=>{ const f=ff.files[0]; if(f) runFirstRead(p,f); };
+  const dt=$("#dt-file"); if(dt) dt.onchange=()=>{ const f=dt.files[0]; dt.value=""; if(f) runDetail(p,f,S.dtMode||"detail"); };
 }
 function act(p,a,cid,dept){
   if(dept) S._signDept=dept;
@@ -2374,6 +2466,8 @@ function act(p,a,cid,dept){
     case "resubmit": { const miss=p.respLetter?0:p.corrections.filter(c=>c.state==="approved"&&!c.resolved&&!(c.draftResponse||"").trim()).length;
       if(miss){ flash(`Respond to ${miss===1?"the remaining comment":"all "+miss+" remaining comments"} first, here or in a response letter.`); return; } $("#re-file").click(); break; }
     case "firstread": $("#fr-file").click(); break;
+    case "detailcheck": S.dtMode="detail"; $("#dt-file")?.click(); break;
+    case "markup": S.dtMode="markup"; $("#dt-file")?.click(); break;
     case "respletter": $("#resp-file").click(); break;
     case "removeletter": { const n=p.respLetter?.name; p.corrections.forEach(c=>{ if(n&&c.respFrom===n){ c.draftResponse=""; c.respFrom=""; } }); delete p.respLetter; addLog(p,"applicant",`Removed response letter ${n||""}.`); save(p); break; }
     case "respsheet": downloadRespSheet(p); break;
